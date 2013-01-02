@@ -24,12 +24,14 @@ Landslide uses this information to update its internal representation of the ker
 \paragraph{Limitations}
 Landslide assumes that timer interrupts are the only nondeterministic events that influence a kernel's concurrent execution. While this prevents us from finding races related to external input such as disk or network I/O, Landslide is already able to find many types of complicated races by controlling timer-driven thread scheduling.
 Landslide's model is also restricted to uniprocessor execution.
-Supporting multiprocessor environments, device driver testing, and production kernels is left to future work.
+Supporting multiprocessor environments and device driver testing is left to future work.
+% this used to say ", and production kernels"
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Testing Mechanism}
+\subsection{Example}
+% TODO: if necessary, this can be not its own section
 
-In Figure~\ref{fig:threadfork} we show a timer-dependent bug common in many Pebbles implementations which we will use as a running example in the rest of this section. This code is a simplified example of the \x{thread_fork} system call: it constructs data structures necessary for the new thread, then asks the scheduler to make the new thread runnable, then returns its assigned thread ID. However, if the timer preempts execution at line~\ref{line:hax}, the child thread might run and invoke \x{exit}, causing \x{child} to become a dangling pointer.
+Figure~\ref{fig:threadfork} shows a timer-dependent bug common in many Pebbles implementations which we will use as a running example in the rest of this section. This code is a simplified implementation of the \x{thread_fork} system call: it constructs data structures necessary for the new thread, then asks the scheduler to make the new thread runnable, then returns its assigned thread ID. However, if the timer preempts execution at line~\ref{line:hax}, the child thread might run and invoke \x{exit}, causing \x{child} to become a dangling pointer.
 
 \begin{figure}[t]
 \small
@@ -45,13 +47,18 @@ int thread_fork() {
 \label{fig:threadfork}
 \end{figure}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Testing Mechanism}
+
 Systematic exploration, Landslide's mechanism for testing different concurrent scenarios, uses the idea of an {\em execution tree} to enumerate all possible thread interleavings in a system. These interleavings are defined around {\em decision points}, which intuitively indicate points during execution at which a preemption could cause different behaviour to arise.
 Searching with few decision points results in coarser-grained interleavings, shorter test execution, and less likelihood of finding bugs; searching with more results in the opposite.
 
 In our example bug, the necessary decision point for finding the bug is at line~\ref{line:hax}. With correct annotations (discussed in the next section and shown in Figure~\ref{fig:annotation}), Landslide can automatically identify this decision point.
-Landslide also automatically identifies a minimal set of decision points at voluntary reschedules between threads (e.g. \texttt{yield}). Together these decision points define an execution tree which exposes the bug, depicted in Figure~\ref{fig:tree}.
+Landslide also automatically identifies a minimal set of decision points at voluntary reschedules between threads (e.g. \x{yield}). Together these decision points define an execution tree which exposes the bug, depicted in Figure~\ref{fig:tree}.
 
-Of course, additional decision points are necessary to expose more subtle race conditions. We provide an interface for refining the state space, described in the next section.
+Of course, additional decision points are necessary to expose more subtle race conditions. We provide an interface for refining the state space, described in Section~\ref{sec:decision}.
+In order to cope with the exponentially-sized nature of state spaces with many decision points, Landslide uses the Dynamic Partial Order Reduction (DPOR) algorithm~\cite{dpor} to identify and prune redundant thread interleavings.
+While the specifics of the algorithm are beyond the educational scope of this work, we also provide an interface for helping Landslide further reduce the state space using domain knowledge about the kernel's implementation. We discuss this in Section~\ref{sec:focusing}.
 
 \begin{figure}[t]
 \includegraphics[width=0.48\textwidth]{threadfork/threadfork.pdf}
@@ -68,7 +75,7 @@ This tree shows the bug from Figure~\ref{fig:threadfork}, with decision points f
 
 Landslide's interface is comprised of two types of instrumentation which students must provide: {\em required annotations} and {\em configuring decision points}.
 
-\paragraph{Required annotations}
+\subsubsection{Required annotations}
 Users annotate their kernels to inform Landslide of certain important concurrency events during execution. We provide a set of annotation functions, called \x{tell_landslide}, for this purpose. The annotations denote when a thread runs \x{fork}, \x{sleep}, or \x{exit}, when a thread is added to or removed from the runqueue, and when threads become blocked on mutexes.
 Figure~\ref{fig:annotation} shows the code from Figure~\ref{fig:threadfork} with \x{tell_landslide} annotations.
 
@@ -90,13 +97,38 @@ int thread_fork() {
 	return child->tid;
 }
 \end{lstlisting}
-\caption{Landslide requires the programmer to annotate important concurrency events in their kernel. \texttt{tell\_landslide\_thread\_runnable()} indicates that a thread can henceforth be forced to run with timer interrupts, and \texttt{tell\_landslide\_forking()} announces a new thread's existence.}
+\caption{Landslide requires the programmer to annotate important concurrency events in their kernel. \x{tell_landslide_thread_runnable()} indicates that a thread can henceforth be forced to run with timer interrupts, and \x{tell_landslide_forking()} announces a new thread's existence.}
 \label{fig:annotation}
 \end{figure}
 
-\paragraph{Configuring decision points}
+\subsubsection{Configuring decision points}
+\label{sec:decision}
 
-% TODO
+Using only the decision points automatically identified on voluntary reschedules will result in coarse-grained interleavings likely to overlook bugs.
+We provide an extra annotation
+for the user to add more decision points for a finer-grained search, called
+\x{tell_landslide_decide()}.
+We recommend using it in concurrency primitives, such as at the start of \x{mutex_lock()} and at the end of \x{mutex_unlock()}.
+
+\subsubsection{Focusing the search space}
+\label{sec:focusing}
+
+The strategy we described above may cause Landslide to identify decision points in unrelated parts of the kernel, such as when accessing mutexes in unrelated system calls.
+We provide interface options in \x{config.landslide} for the student to view currently identified decision points and to selectively limit them.
+First, the student writes ``\x{DECISION_INFO_ONLY}'' to make Landslide run only one interleaving and then print all decision points instead of continuing to explore.
+Then, they write ``\x{within_function} \x{foo}'' to whitelist function \x{foo}, and ``\x{without_function} \x{bar}'' to blacklist function \x{bar}.
+For example, if testing thread death and reaping, the student should write \x{within_function exit} and \x{within_function} \x{wait}, and also
+(assuming they don't care about the virtual memory operations associated with \x{exit})
+\x{without_function} \x{destroy_address_space}.
+
+Additionally, the student may configure Landslide's state space reduction to ignore certain memory locations. DPOR's analysis requires a memory independence relation between thread transitions; the more transitions are independent from each other, the more reduction can be achieved.
+Unfortunately, in the kernel environment, every thread switch will execute through a common path that modifies shared scheduler data structures.
+Unchecked, this would cause every transition to conflict with each other and result in no reduction in execution time from DPOR.
+Certain other shared memory conflicts also arise that are irrelevant to whichever system calls are being tested; for example, if testing for races in thread lifecycle routines, the user likely does not care about accesses to the frame allocator mutex.
+
+We provide an interface with which the user can configure Landslide to ignore such unrelated conflicts to more efficiently test components of the kernel they care about. In \x{config.landslide}, the user writes ``\x{ignore_sym}'' followed by the name of the global variable to ignore and its type size, and Landslide may then identify transitions as independent even if they conflict on that memory.
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Identifying Bugs}
