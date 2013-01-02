@@ -72,6 +72,25 @@
 
 
 
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{listings}
+
+\lstset{language=C,
+        frame=none,%single,
+        basicstyle=\ttfamily\small,
+        keywordstyle=\small\bfseries,
+        commentstyle=\small\em,
+        tabsize=2,
+        showstringspaces=false,
+        flexiblecolumns=false,
+        mathescape=true,
+        escapeinside={\#}{\#},
+        % numbers=left, numberstyle=\tiny, numbersep=5pt %, stepnumber=2, 
+        numbersep=5pt,
+        % literate={->}{{$\rightarrow$}}1 {<->}{{$\leftarrow$}}1
+}
+\newcommand\x[1]{\lstinline{#1}}
 
 
 % Some very useful LaTeX packages include:
@@ -363,7 +382,7 @@
 \IEEEauthorblockA{Computer Science Department\\
 Carnegie Mellon University\\
 Pittsburgh, PA, USA\\
-\{bblum,davide,garth\}@cs.cmu.edu}
+\{bblum,David.Eckhardt,garth\}@cs.cmu.edu}
 }
 
 % conference papers do not typically use \thanks and this command
@@ -424,6 +443,9 @@ landslide terminal, ground transportation, baggage claim, ticketing
 
 
 \input{intro}
+\input{410}
+\input{landslide}
+\input{eval}
 
 % \section{Introduction}
 % no \IEEEPARstart
