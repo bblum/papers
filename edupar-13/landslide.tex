@@ -27,6 +27,10 @@ Landslide's model is also restricted to uniprocessor execution.
 Supporting multiprocessor environments and device driver testing is left to future work.
 % this used to say ", and production kernels"
 
+We also note that, in contrast with stress testing, Landslide works best with very small test cases. While a more conventional stress test achieves coverage by exercising many system calls (in parallel and/or in sequence), Landslide's coverage results from exploring the different scheduling possibilities that arise from a short sequence of system calls.
+Hence, if Landslide were used when running a stress test, the resulting state space would be too large to explore feasibly.
+When working with students, we provided a suite of four test programs, each no longer than 10 lines of code.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Example}
 % TODO: if necessary, this can be not its own section
@@ -53,10 +57,14 @@ int thread_fork() {
 Systematic exploration, Landslide's mechanism for testing different concurrent scenarios, uses the idea of an {\em execution tree} to enumerate all possible thread interleavings in a system. These interleavings are defined around {\em decision points}, which intuitively indicate points during execution at which a preemption could cause different behaviour to arise.
 Searching with few decision points results in coarser-grained interleavings, shorter test execution, and less likelihood of finding bugs; searching with more results in the opposite.
 
-In our example bug, the necessary decision point for finding the bug is at line~\ref{line:hax}. With correct annotations (discussed in the next section and shown in Figure~\ref{fig:annotation}), Landslide can automatically identify this decision point.
+Landslide ``explores'' decision trees by controlling the kernel's execution in two ways.
+First, at each decision point, it can force an arbitary thread to run in place of the current one by injecting timer interrupts to force the kernel to context switch.
+Second, whenever the kernel finishes executing a particular interleaving of the test case, it reverts the system to an earlier state to explore additional interleavings using Simics's backtracking mechanism.
+
+In our example bug, the necessary decision point for finding the bug is at line~\ref{line:hax}. With correct annotations (discussed in Section~\ref{sec:instrument} and shown in Figure~\ref{fig:annotation}), Landslide can automatically identify this decision point.
 Landslide also automatically identifies a minimal set of decision points at voluntary reschedules between threads (e.g. \x{yield}). Together these decision points define an execution tree which exposes the bug, depicted in Figure~\ref{fig:tree}.
 
-Of course, additional decision points are necessary to expose more subtle race conditions. We provide an interface for refining the state space, described in Section~\ref{sec:decision}.
+Of course, additional decision points are necessary to expose more subtle race conditions. We provide an interface for adding new decision points to refine the state space, described in Section~\ref{sec:decision}.
 In order to cope with the exponentially-sized nature of state spaces with many decision points, Landslide uses the Dynamic Partial Order Reduction (DPOR) algorithm~\cite{dpor} to identify and prune redundant thread interleavings.
 While the specifics of the algorithm are beyond the educational scope of this work, we also provide an interface for helping Landslide further reduce the state space using domain knowledge about the kernel's implementation. We discuss this in Section~\ref{sec:focusing}.
 
@@ -71,7 +79,48 @@ This tree shows the bug from Figure~\ref{fig:threadfork}, with decision points f
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Identifying Bugs}
+
+Landslide has several checks that detect when a bug arises. It can identify kernel panics, use-after-free accesses (and other memory errors such as double-free and memory leaks), and deadlocks.
+
+Landslide can optionally also check heuristically for infinite loops and livelock. This is done by comparing the length of the current interleaving against previously-explored ones: if the current interleaving has been running disproportionately longer (by a large arbitrary constant factor), it indicates the kernel is likely stuck.
+We have never found this technique to erroneously report false positives, although it may fail to trigger when it ought to if too few previous interleavings have been tested to make a reliable comparison.
+
+When Landslide identifies a bug, it outputs a {\em decision trace}, an example of which is shown in Figure~\ref{fig:trace}.
+This trace reports what kind of bug was detected (for uses-after-free, it also prints stack traces for when the block was allocated and freed), and also reports each decision point in the current interleaving: which thread was running, a trace of its stack when it was switched away from, and the thread that we caused to preempt it. With this trace, the student can better understand the concurrent execution that led to the bug.
+
+In general, with false-negative bug detection, the kernel might execute a buggy behaviour yet Landslide would miss it. However (except in the case of heuristic infinite loop detection), when Landslide does identify a bug, the student can be sure that a race exists.
+
+\newcommand\bug[1]{\hilight{red}{#1}}
+\newcommand\decision[1]{\bfseries \hilight{olivegreen}{#1}}
+\newcommand\stacktrace[1]{\hilight{darkcyan}{#1}}
+\begin{figure}[t]
+\begin{lstlisting}
+#\bfseries \bug{USE~AFTER~FREE:~read~from~0x15a8f0~at~IP~0x104209}#
+#\bug{Block~0x15a8f0~was~allocated~by~thread~3~at~(...)}#
+                   #\bug{and~freed~by~thread~4~at~(...)}#
+Decision trace follows:
+#\decision{1:  switched from thread 3 -> thread 4 at:}#
+        0x105a10 in #\stacktrace{context\_switch}#,
+        0x1041f4 in #\stacktrace{thread\_fork}#,
+        0x10362b in #\stacktrace{thread\_fork\_wrapper}#
+#\decision{2:  switched from thread 4 -> thread 3 at:}#
+        0x105a10 in #\stacktrace{context\_switch}#,
+        0x104681 in #\stacktrace{yield}#,
+        0x104570 in #\stacktrace{exit}#,
+        0x103708 in #\stacktrace{exit\_wrapper}#
+#\decision{Current thread 3 at:}#
+        0x104209 in #\stacktrace{thread\_fork}#,
+        0x10362b in #\stacktrace{thread\_fork\_wrapper}#
+Total decision points 24, total backtracks 5
+\end{lstlisting}
+\caption{Landslide outputs this trace for Figure~\ref{fig:threadfork}'s bug.}
+\label{fig:trace}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Instrumentation}
+\label{sec:instrument}
 
 Landslide's interface is comprised of two types of instrumentation which students must provide: {\em required annotations} and {\em configuring decision points}.
 
@@ -97,7 +146,7 @@ int thread_fork() {
 	return child->tid;
 }
 \end{lstlisting}
-\caption{Landslide requires the programmer to annotate important concurrency events in their kernel. \x{tell_landslide_thread_runnable()} indicates that a thread can henceforth be forced to run with timer interrupts, and \x{tell_landslide_forking()} announces a new thread's existence.}
+\caption{Landslide requires the programmer to annotate important concurrency events in their kernel. \texttt{tell\_landslide\_thread\_runnable()} indicates that a thread can henceforth be forced to run with timer interrupts, and \texttt{tell\_landslide\_forking()} announces a new thread's existence.}
 \label{fig:annotation}
 \end{figure}
 
@@ -129,43 +178,3 @@ Certain other shared memory conflicts also arise that are irrelevant to whicheve
 We provide an interface with which the user can configure Landslide to ignore such unrelated conflicts to more efficiently test components of the kernel they care about. In \x{config.landslide}, the user writes ``\x{ignore_sym}'' followed by the name of the global variable to ignore and its type size, and Landslide may then identify transitions as independent even if they conflict on that memory.
 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Identifying Bugs}
-
-Landslide has several checks that detect when a bug arises. It can identify kernel panics, use-after-free accesses (and other memory errors such as double-free and memory leaks), and deadlocks.
-
-Landslide can optionally also check heuristically for infinite loops and livelock. This is done by comparing the length of the current interleaving against previously-explored ones: if the current interleaving has been running disproportionately longer (by a large arbitrary constant factor), it indicates the kernel is likely stuck.
-We have never found this technique to erroneously report false positives, although it may fail to trigger when it ought to if too few previous interleavings have been tested to make a reliable comparison.
-
-When Landslide identifies a bug, it outputs a {\em decision trace}, an example of which is shown in Figure~\ref{fig:trace}.
-This trace reports what kind of bug was detected (for uses-after-free, it also prints stack traces for when the block was allocated and freed), and also reports each decision point in the current interleaving: which thread was running, a trace of its stack when it was switched away from, and the thread that we caused to preempt it. With this trace, the student can better understand the concurrent execution that led to the bug.
-
-In general, with false-negative bug detection, the kernel might execute a buggy behaviour yet Landslide would miss it. However (except in the case of heuristic infinite loop detection), when Landslide does identify a bug, the student can be sure that a race exists.
-
-\newcommand\bug[1]{\hilight{red}{#1}}
-\newcommand\decision[1]{\hilight{olivegreen}{#1}}
-\newcommand\stacktrace[1]{\hilight{darkcyan}{#1}}
-\begin{figure}[t]
-\begin{lstlisting}
-#\bfseries \bug{USE~AFTER~FREE:~read~from~0x15a8f0~at~IP~0x104209}#
-#\bug{Block~0x15a8f0~was~allocated~by~thread~3~at~(...)}#
-                   #\bug{and~freed~by~thread~4~at~(...)}#
-Decision trace follows:
-#\decision{1:  switched from thread 3 -> thread 4 at:}#
-        0x105a10 in #\stacktrace{context\_switch}#,
-        0x1041f4 in #\stacktrace{thread\_fork}#,
-        0x10362b in #\stacktrace{thread\_fork\_wrapper}#
-#\decision{2:  switched from thread 4 -> thread 3 at:}#
-        0x105a10 in #\stacktrace{context\_switch}#,
-        0x104681 in #\stacktrace{yield}#,
-        0x104570 in #\stacktrace{exit}#,
-        0x103708 in #\stacktrace{exit\_wrapper}#
-#\decision{Current thread 3 at:}#
-        0x104209 in #\stacktrace{thread\_fork}#,
-        0x10362b in #\stacktrace{thread\_fork\_wrapper}#
-Total decision points 24, total backtracks 5
-\end{lstlisting}
-\caption{Landslide outputs this trace for Figure~\ref{fig:threadfork}'s bug.}
-\label{fig:trace}
-\end{figure}
