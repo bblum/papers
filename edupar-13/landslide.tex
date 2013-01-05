@@ -27,9 +27,10 @@ Landslide's model is also restricted to uniprocessor execution.
 Supporting multiprocessor environments and device driver testing is left to future work.
 % this used to say ", and production kernels"
 
+% TODO: This paragraph can be removed if we're hurting for space
 We also note that, in contrast with stress testing, Landslide works best with very small test cases. While a more conventional stress test achieves coverage by exercising many system calls (in parallel and/or in sequence), Landslide's coverage results from exploring the different scheduling possibilities that arise from a short sequence of system calls.
-Hence, if Landslide were used when running a stress test, the resulting state space would be too large to explore feasibly.
-When working with students, we provided a suite of four test programs, each no longer than 10 lines of code.
+If Landslide were used when running a stress test, the resulting state space would be too large to explore feasibly.
+Hence, when working with students, we provided a suite of four test programs, each no longer than 10 lines of code.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Example}

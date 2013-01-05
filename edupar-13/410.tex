@@ -71,6 +71,7 @@ programming assignments; the first two are individual,
 and the remaining three are the products of two-person
 teams.
 
+\subsubsection{Stack Crawler}
 The first project is a ``stack crawler'':  invoked by
 a client program, it displays the program's stack
 symbolically, rendering saved program-counter values
@@ -90,7 +91,12 @@ to consider robustness.
 This project is built using a standard C tool chain
 and debugged as students see fit (generally using
 a combination of \texttt{printf()} and \texttt{gdb}).
+%% TODO I've been using "\x{printf()}" for code, an alias for \lstinline I
+%% adopted from the Rust paper template. We should be consistent because
+%% the font sizes are different (and maybe make \x{}'s font bigger too,
+%% what do you think?). -- bblum
 
+\subsubsection{Device Drivers and Game}
 The second project is a simple game, such as Hangman,
 which runs standalone (without an underlying
 operating system).
@@ -116,10 +122,12 @@ in which case it can be booted on standard PC hardware.
 However, students most often boot the floppy image
 using the Simics system emulator (described below).
 
+\subsubsection{User-space Thread Library}
 The third project is implementing a 1:1 thread library for
 user-space programs.
 The library specification is essentially a stripped-down
 version of POSIX Pthreads.
+%% TODO Should be "PThreads"? -- bblum
 The primary goal of the project is providing students
 with a laboratory for
 experimenting with concurrency and atomicity.
@@ -136,6 +144,7 @@ threads.
 Another goal is encouraging students to carefully
 consider how ingredients are assembled into
 abstractions.
+%% Good rhetoric (below). -- bblum
 One example of this is a semantic gap
 between the library-level \texttt{thr\_create()}
 call, analogous to \texttt{pthread\_create()},
@@ -172,13 +181,14 @@ In order to aid debugging of concurrency problems,
 students can manually select among these
 interleaving patterns.
 The behavior of the reference kernel is specified
-via a twelve-page document.
+via a twelve-page document~\cite{kspec}.
 % the handout for the thread library project itself
 % is nineteen pages and includes not only a specification
 % of the thread-library primitives but also
 % a suggested implementation plan, grading guidelines,
 % optional design challenges, etc.
 
+\subsubsection{Pebbles Kernel}
 For the fourth project, two-student teams
 implement a kernel which complies to the
 same specification as the reference kernel
@@ -194,13 +204,19 @@ and code for setting up and tearing down
 threads and processes.
 Students re-use the basic device drivers
 they implemented in the second project.
+%% TODO Space permitting, maybe have a table of system calls?
+%% The 410 section is otherwise lacking in visual aids. -- bblum
 These ingredients are combined to yield
 twenty-four system calls
 (life-cycle, thread management, memory management,
 console I/O, and miscellaneous).
+%% TODO Justify by mentioning average lines of code. -- bblum
 For most students in the class, this is the
 largest and most complicated software artifact they
 have produced.
+%% TODO Huh? I don't get how the sentence below is supposed to flow.
+%% Seems like it wants to elaborate on the concerns, but the next sentence
+%% is different. -- bblum
 Because the test suite and the grading criteria
 emphasize robustness and preemptibility of
 kernel code,
@@ -211,6 +227,7 @@ code in the system (kernel and user-space),
 they gain experience with debugging at both the
 ``algorithm level'' and the register/bit-field level.
 
+\subsubsection{Pebbles Extension}
 Students who complete the kernel project on time
 then work on a smaller kernel-extension project
 with various content depending on the semester.
@@ -219,7 +236,7 @@ writing a sound card driver,
 hibernation (suspend to disk),
 kernel profiling,
 and writing an in-kernel debugger.
-Two recent, more-aggressive, projects have been
+Two recent, more aggressive projects have been
 adding paravirtualization so that their kernels
 can host guest kernels and
 addding multi-processor support to their single-processor kernels.
@@ -236,7 +253,7 @@ which turn up at the end of the implementation.
 
 As mentioned above, the main execution and debugging
 platform used in the class is
-Simics~\cite{Magnusson:2002:SFS:619072.621909},
+Simics~\cite{simics},
 originally developed by the Swedish Institute of
 Computer Science and
 currently a product of Wind River.
@@ -266,10 +283,14 @@ Unlike some symbolic debuggers,
 Simics is scriptable in Python,
 and it is possible to interpose user-written measurement
 frameworks to evaluate proposed hardware
+%% TODO Fix citations. But also, maybe this mention isn't relevant and
+%% could be left out (if we're in space trouble?) -- bblum
 features~\cite{UW-GEMS,SimFlex,FeS2}.
 Performance is very reasonable (Simics can simulate certain
 cases, such as a CPU halted awaiting a clock interrupt,
 much faster than real time).
+%% TODO: One huge advantage of simics over QEMU that we should mention is
+%% that QEMU only issues timer interrupts at basic block boundaries. -- bblum
 
 % ability to quickly write small debugging-support snippets
 % in a few lines of Python (e.g., report the function name
@@ -281,9 +302,8 @@ much faster than real time).
 At present the course accepts the following limitations
 or core assumptions.
 
-\begin{description}
-
-\item[x86] Students write code that runs on one specific
+\subsubsection{x86}
+Students write code that runs on one specific
 hardware platform.
 We target x86 PCs because machines of this type are
 available from many manufacturers at many price points.
@@ -300,8 +320,11 @@ kernel which runs on anything newer than a 486DX cpu,
 i.e., almost any PC hardware which is likely to be in
 working condition.
 
-\item[32-bit] The course still targets the 32-bit
+\subsubsection{32-Bit} The course still targets the 32-bit
 subset of the x86 platform, for three reasons.
+%% TODO I'm not sure I believe this is an advantage. Instead of having
+%% to verify if each register is correct, students now have to verify
+%% both registers and stack slots. Otherwise this paragraph is good. -- bblum
 First, while the small number of registers is
 frustrating for compiler writers,
 from the point of view of OS students,
@@ -321,7 +344,7 @@ to be given a template virtual-memory implementation.
 All in all, at present we are satisifed with
 the 32-bit choice.
 
-\item[memory model] At present we allow students
+\subsubsection{Memory Model} At present we allow students
 to reason about concurrency based on a
 sequentially-consistent view of
 memory, which is consistent with
@@ -333,8 +356,6 @@ general topic of out-of-order memory systems
 and fencing,
 but at present the hands-on experience does not
 reinforce that material.
-
-\end{description}
 
 %=== Outcomes ===%
 \subsection{Outcomes}
