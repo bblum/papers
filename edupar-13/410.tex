@@ -303,6 +303,7 @@ At present the course accepts the following limitations
 or core assumptions.
 
 \subsubsection{x86}
+
 Students write code that runs on one specific
 hardware platform.
 We target x86 PCs because machines of this type are
@@ -320,7 +321,9 @@ kernel which runs on anything newer than a 486DX cpu,
 i.e., almost any PC hardware which is likely to be in
 working condition.
 
-\subsubsection{32-Bit} The course still targets the 32-bit
+\subsubsection{32-Bit}
+
+The course still targets the 32-bit
 subset of the x86 platform, for three reasons.
 %% TODO I'm not sure I believe this is an advantage. Instead of having
 %% to verify if each register is correct, students now have to verify
@@ -344,7 +347,9 @@ to be given a template virtual-memory implementation.
 All in all, at present we are satisifed with
 the 32-bit choice.
 
-\subsubsection{Memory Model} At present we allow students
+\subsubsection{Memory Model}
+
+At present we allow students
 to reason about concurrency based on a
 sequentially-consistent view of
 memory, which is consistent with
@@ -361,16 +366,76 @@ reinforce that material.
 \subsection{Outcomes}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Pebbles}
+\section{The Pebbles kernel specification}
 \label{sec:pebbles}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% primeval Unix model: fork()/exec()/wait()
-% Mach ``task/thread'' terminology/structure (as opposed to rfork()/clone())
-% keyboard input, screen output
-% thread creation
-% thread block/unblock
-% new_pages()/remove_pages()
-% swexn
+The kernel that students implement is loosely based on the
+Unix model: \texttt{fork()}, \texttt{exec()}, and \texttt{wait()}.
+We adopt the Mach~\cite{DBLP:conf/usenix/AccettaBBGRTY86}
+distinction between ``tasks,''
+which are resource containers,
+and threads,
+each of which executes within a single task.
+This partitioning is a different approach from that of
+Plan~9's \texttt{rfork()} or Linux's \texttt{clone()},
+which allow a continuum of sharing between
+identical threads and independent processes,
+at the cost of implementation complexity which we wish to avoid.
+A task's address space can be edited through two system
+calls that add and delete contiguous regions of memory.
+Students are expected to implement zero-fill-on-demand,
+but copy-on-write and demand-loading of executables are
+optional.
+Threads can print text to and read lines of text from
+the simple console that students implemented at
+the start of the semester.
 
-% swexn - what an auto-growing stack really means
+Within a task, threads are created using the
+\texttt{thread\_fork} system call, which closely
+mirrors the specification of \texttt{fork()}:
+the new thread begins with an exact copy of the
+register values of the old thread, except that
+the return-value register, \texttt{\%eax}, contains
+zero;
+in the old thread, the return value is the thread i.d.\
+of the newly created thread.
+This minimal formulation defers all policy decisions
+(e.g., stack size, location, and contents) to the
+user-space thread library.
+A thread may suspend its execution via the
+\texttt{deschedule()} system call,
+and a blocked thread can be reactivated via
+\texttt{make\_runnable()}.
+
+Each thread has the ability to register a handler
+for hardware exceptions (illegal instruction,
+division by zero, etc.)
+via the \texttt{swexn()} system call,
+which specifies the addresses of handler code
+and a handler stack.
+When a thread encounters an exception,
+the kernel reflects the exception to user space
+by
+de-registering the handler,
+pushing the thread's register state onto the stack,
+and invoking the handler code.
+The handler has the ability to re-register itself
+(or register some other handler),
+to run arbitrary code,
+and/or to atomically adopt a new set of register
+values.
+The \texttt{swexn()} facility is used to enable
+the thread library to detect when a managed
+thread has crashed
+and, more importantly,
+to enable user-space
+implementation of automatically-growing stack
+regions.
+Removing the auto-stack policy and mechanism from
+its traditional position in Unix-like kernels
+was done because it simplfies the kernel and
+``front-loads'' the policy question to an earlier
+part of the course,
+before students are facing the substantial pressure
+of the kernel project.
