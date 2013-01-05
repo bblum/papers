@@ -1,6 +1,355 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The 15-410 Curriculum}
 \label{sec:curriculum}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+The work described takes place in the context of a
+Computer Science class called
+15-410, Operating System Design and Implementation.
+It is designed for juniors and seniors in Computer Science
+and Electrical and Computer Engineering.
+For CS students it is one of five courses which fulfill
+the ``Software Systems'' requirement (at present, the others
+are Compiler Design,
+Parallel Computer Architecture and Programming,
+Distributed Systems,
+and Computer Networks.
+The prerequisite course is 15-213,
+Introduction to Computer Systems,
+a course which has been adopted at other
+universities in the U.S.\ and worldwide~\cite{sigcse01:CSaPP}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% XXX How do we say politely "Some M.S. students
+% manage to pass it too"?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+In this section we will discuss the course learning
+objectives,
+outline the programming projects,
+discuss our use of Wind River Simics as the
+the basic simulation/debugging environment,
+and close by mentioning current limitations in the scope
+of the course material.
 
+The course learning objectives vary widely.
+%
+Students study high-level concepts
+such as protection (least privilege, access control lists vs.
+capabilities)
+and
+file-system internals,
+and log-based storage.
+%
+Emphasis is placed on acquiring information from ``primary sources,''
+including both manufacturer-provided hardware documentation
+and a non-textbook technical-literature reading assignment.
+%
+Students begin with a ``blank slate'' rather than a
+kernel-source template or an existing operating system,
+so they must synthesize design requirements from multiple sources
+and are provided with an opportunity to 
+decide on module boundaries and inter-module conventions
+themselves.
+%
+Due to the foundational nature of kernel code,
+assignment design and grading encourage students to
+think about corner cases including resource exhaustion
+instead of being satisfied by ``the right basic idea''
+implementations that handle only auspicious situations.
+%
+Finally, most relevant to this work,
+students gain substantial experience in
+analyzing and writing lock-based multi-threaded code and
+thread-synchronization objects, including detecting and documenting race conditions and deadlock,
+including
+the relationship between interrupts and other forms of concurrency.
+
+%=== Projects ===%
+\subsection{Projects}
+
+In the course of a semester, students work on five
+programming assignments; the first two are individual,
+and the remaining three are the products of two-person
+teams.
+
+The first project is a ``stack crawler'':  invoked by
+a client program, it displays the program's stack
+symbolically, rendering saved program-counter values
+as function names and printing function parameters
+in accordance with their types.
+This project meets a variety of goals:
+it enables students to review key process-model and
+language-runtime concepts from the
+prerequisite course;
+it introduces students to our expectations about
+design, analysis, and making choices;
+finally,
+because C pointers are unsafe, it requires students
+to consider robustness.
+%
+% and we READ THEIR CODE
+This project is built using a standard C tool chain
+and debugged as students see fit (generally using
+a combination of \texttt{printf()} and \texttt{gdb}).
+
+The second project is a simple game, such as Hangman,
+which runs standalone (without an underlying
+operating system).
+We provide students with selected C~library routines
+(\texttt{strcmp()}, \texttt{memmove()}, \texttt{printf()});
+they write a device-driver library consisting of
+console output (to a memory-mapped text-mode video display),
+keyboard input (interrupt driven),
+and a countdown timer.
+The game, which varies by semester, provides students
+with the ability to test their drivers.
+%
+% and the need to write enough code to get into trouble
+%
+This project and the remaining ones are written in
+C with a bit of x86-32 assembly code,
+compiled and linked into an ELF executable,
+stored into a 1.44-megabyte 3.5-inch floppy-disk image,
+and booted via GRUB.
+The floppy-disk image can be copied to a real floppy disk
+or embedded into an ``El Torito'' bootable compact disc image,
+in which case it can be booted on standard PC hardware.
+However, students most often boot the floppy image
+using the Simics system emulator (described below).
+
+The third project is implementing a 1:1 thread library for
+user-space programs.
+The library specification is essentially a stripped-down
+version of POSIX Pthreads.
+The primary goal of the project is providing students
+with a laboratory for
+experimenting with concurrency and atomicity.
+Students begin by designing mutexes using any
+x86-32 atomic instructions they choose
+(there is substantial variation across groups).
+They then write other thread-synchronization
+primitives (condition variables, semaphores,
+and reader/writer locks), infrastructure
+components (stack allocation/recycling and
+a thread registry),
+and low-level code to launch and shut down
+threads.
+Another goal is encouraging students to carefully
+consider how ingredients are assembled into
+abstractions.
+One example of this is a semantic gap
+between the library-level \texttt{thr\_create()}
+call, analogous to \texttt{pthread\_create()},
+and the \texttt{thread\_fork} system call provided
+by the underlying kernel,
+which takes no parameters,
+makes no changes to the user's address space,
+and cannot meaningfully
+be invoked from C~code.
+Because these abstractions are so different,
+students have the opportunity to
+understand each as an independent entity while
+deciding how to bridge them.
+A similar semantic gap exists between
+\texttt{cond\_wait()} and the system call
+which suspends execution of a thread.
+
+Student library code is linked against small
+test programs provided by the course staff,
+producing one statically linked ELF executable
+per test program.
+The test programs are bundled into a RAM-disk
+image and linked against a kernel written by
+the course staff
+and provided in binary form.
+%
+In addition to providing a reliable execution
+substrate,
+this ``reference kernel'' schedules
+the execution of user-space threads created by
+student code according to a variety of
+interleaving patterns.
+In order to aid debugging of concurrency problems,
+students can manually select among these
+interleaving patterns.
+The behavior of the reference kernel is specified
+via a twelve-page document.
+% the handout for the thread library project itself
+% is nineteen pages and includes not only a specification
+% of the thread-library primitives but also
+% a suggested implementation plan, grading guidelines,
+% optional design challenges, etc.
+
+For the fourth project, two-student teams
+implement a kernel which complies to the
+same specification as the reference kernel
+they previously relied on.
+They implement some approach to
+synchronizing and blocking threads while
+they are in kernel space,
+a simple round-robin scheduler,
+basic virtual memory,
+a program loader,
+code to handle various x86 exceptions,
+and code for setting up and tearing down
+threads and processes.
+Students re-use the basic device drivers
+they implemented in the second project.
+These ingredients are combined to yield
+twenty-four system calls
+(life-cycle, thread management, memory management,
+console I/O, and miscellaneous).
+For most students in the class, this is the
+largest and most complicated software artifact they
+have produced.
+Because the test suite and the grading criteria
+emphasize robustness and preemptibility of
+kernel code,
+there are many cross-cutting concerns.
+Because the students are responsible for ensuring
+the run-time invariants underlying all compiler-generated
+code in the system (kernel and user-space),
+they gain experience with debugging at both the
+``algorithm level'' and the register/bit-field level.
+
+Students who complete the kernel project on time
+then work on a smaller kernel-extension project
+with various content depending on the semester.
+Past projects have included
+writing a sound card driver,
+hibernation (suspend to disk),
+kernel profiling,
+and writing an in-kernel debugger.
+Two recent, more-aggressive, projects have been
+adding paravirtualization so that their kernels
+can host guest kernels and
+addding multi-processor support to their single-processor kernels.
+Meanwhile, students who were unable to complete
+the kernel project on time receive additional time
+to finish up and improve their code quality---this
+requirement is based on our belief that important
+learning experiences are obtained by solving the
+hard problems,
+which turn up at the end of the implementation.
+
+%=== Simics ===%
+\subsection{Simics}
+
+As mentioned above, the main execution and debugging
+platform used in the class is
+Simics~\cite{Magnusson:2002:SFS:619072.621909},
+originally developed by the Swedish Institute of
+Computer Science and
+currently a product of Wind River.
+Unlike some emulators,
+which focus on fast execution of correct code,
+Simics
+provides very faithful bit-level support
+not only for code that behaves correctly but
+also for code that is ``incorrect within reason.''
+Occasionally student code manages to invoke an unsupported
+function of some hardware device or even to cause the
+simulator to crash, but this is quite rare, and in almost
+every case when the ``bad event'' is characterized it turns
+out that what the software requested from the hardware was
+a mistake.
+Meanwhile, inside its large envelope, Simics supports
+\textit{very} detailed models of various x86 processors.
+Unlike hardware virtualization environments,
+Simics contains substantial debugger support:
+single-stepping,
+printing of source-level symbolic
+expressions,
+stack tracing,
+display of TLB entries,
+and even summaries of x86 hardware-defined descriptor tables.
+Unlike some symbolic debuggers,
+Simics is scriptable in Python,
+and it is possible to interpose user-written measurement
+frameworks to evaluate proposed hardware
+features~\cite{UW-GEMS,SimFlex,FeS2}.
+Performance is very reasonable (Simics can simulate certain
+cases, such as a CPU halted awaiting a clock interrupt,
+much faster than real time).
+
+% ability to quickly write small debugging-support snippets
+% in a few lines of Python (e.g., report the function name
+% every time a RET instruction is executed)
+
+%=== Limitations ===%
+\subsection{Limitations}
+
+At present the course accepts the following limitations
+or core assumptions.
+
+\begin{description}
+
+\item[x86] Students write code that runs on one specific
+hardware platform.
+We target x86 PCs because machines of this type are
+available from many manufacturers at many price points.
+This means that it is easy for students to obtain access
+to a machine (virtual or real) which will let them boot
+up their code, type commands, and observe the results.
+Also, unlike many System-on-a-Chip platforms,
+detailed hardware descriptions are readily available.
+% rather than being proprietary or "documented"
+% by labyrinthine Linux source code
+Finally, the platform is fairly stable---with only a
+little care, it is possible to write a compliant
+kernel which runs on anything newer than a 486DX cpu,
+i.e., almost any PC hardware which is likely to be in
+working condition.
+
+\item[32-bit] The course still targets the 32-bit
+subset of the x86 platform, for three reasons.
+First, while the small number of registers is
+frustrating for compiler writers,
+from the point of view of OS students,
+the existence of fewer registers means less work
+when it is necessary to verify that each register's
+value is correct.
+Likewise, the old-fashioned focus on the stack
+makes it easier to track function parameter values.
+Second, implementing virtual memory on x86-64 as
+opposed to x86-32 requires more code and more
+debugging time without imparting greater insight.
+Finally, since it is impossible for an x86 processor
+to be in 64-bit mode with virtual memory off,
+students would need to be coached through the
+32-bit--to--64-bit transition or would need
+to be given a template virtual-memory implementation.
+All in all, at present we are satisifed with
+the 32-bit choice.
+
+\item[memory model] At present we allow students
+to reason about concurrency based on a
+sequentially-consistent view of
+memory, which is consistent with
+existing x86 hardware~\cite{SewellSOZNM:x86tso-cacm10}
+but simplistic compared to most other
+architectures.
+Lecture material educates students about the
+general topic of out-of-order memory systems
+and fencing,
+but at present the hands-on experience does not
+reinforce that material.
+
+\end{description}
+
+%=== Outcomes ===%
+\subsection{Outcomes}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Pebbles}
 \label{sec:pebbles}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% primeval Unix model: fork()/exec()/wait()
+% Mach ``task/thread'' terminology/structure (as opposed to rfork()/clone())
+% keyboard input, screen output
+% thread creation
+% thread block/unblock
+% new_pages()/remove_pages()
+% swexn
+
+% swexn - what an auto-growing stack really means
