@@ -30,6 +30,7 @@ the basic simulation/debugging environment,
 and close by mentioning current limitations in the scope
 of the course material.
 
+%% TODO: Nwf says "vary widely" does not read as intended. -- bblum
 The course learning objectives vary widely.
 %
 Students study high-level concepts
@@ -52,7 +53,7 @@ themselves.
 %
 Due to the foundational nature of kernel code,
 assignment design and grading encourage students to
-think about corner cases including resource exhaustion
+think about corner cases, including resource exhaustion,
 instead of being satisfied by ``the right basic idea''
 implementations that handle only auspicious situations.
 %
@@ -90,7 +91,7 @@ to consider robustness.
 % and we READ THEIR CODE
 This project is built using a standard C tool chain
 and debugged as students see fit (generally using
-a combination of \texttt{printf()} and \texttt{gdb}).
+a combination of \x{printf()} and \x{gdb}).
 %% TODO I've been using "\x{printf()}" for code, an alias for \lstinline I
 %% adopted from the Rust paper template. We should be consistent because
 %% the font sizes are different (and maybe make \x{}'s font bigger too,
@@ -101,7 +102,7 @@ The second project is a simple game, such as Hangman,
 which runs standalone (without an underlying
 operating system).
 We provide students with selected C~library routines
-(\texttt{strcmp()}, \texttt{memmove()}, \texttt{printf()});
+(\x{strcmp()}, \x{memmove()}, \x{printf()});
 they write a device-driver library consisting of
 console output (to a memory-mapped text-mode video display),
 keyboard input (interrupt driven),
@@ -127,7 +128,6 @@ The third project is implementing a 1:1 thread library for
 user-space programs.
 The library specification is essentially a stripped-down
 version of POSIX Pthreads.
-%% TODO Should be "PThreads"? -- bblum
 The primary goal of the project is providing students
 with a laboratory for
 experimenting with concurrency and atomicity.
@@ -146,9 +146,9 @@ consider how ingredients are assembled into
 abstractions.
 %% Good rhetoric (below). -- bblum
 One example of this is a semantic gap
-between the library-level \texttt{thr\_create()}
-call, analogous to \texttt{pthread\_create()},
-and the \texttt{thread\_fork} system call provided
+between the library-level \x{thr_create()}
+call, analogous to \x{pthread_create()},
+and the \x{thread_fork} system call provided
 by the underlying kernel,
 which takes no parameters,
 makes no changes to the user's address space,
@@ -158,8 +158,8 @@ Because these abstractions are so different,
 students have the opportunity to
 understand each as an independent entity while
 deciding how to bridge them.
-A similar semantic gap exists between
-\texttt{cond\_wait()} and the system call
+A similar deliberate semantic gap exists between
+\x{cond_wait()} and the system call
 which suspends execution of a thread.
 
 Student library code is linked against small
@@ -170,16 +170,7 @@ The test programs are bundled into a RAM-disk
 image and linked against a kernel written by
 the course staff
 and provided in binary form.
-%
-In addition to providing a reliable execution
-substrate,
-this ``reference kernel'' schedules
-the execution of user-space threads created by
-student code according to a variety of
-interleaving patterns.
-In order to aid debugging of concurrency problems,
-students can manually select among these
-interleaving patterns.
+
 The behavior of the reference kernel is specified
 via a twelve-page document~\cite{kspec}.
 % the handout for the thread library project itself
@@ -187,6 +178,17 @@ via a twelve-page document~\cite{kspec}.
 % of the thread-library primitives but also
 % a suggested implementation plan, grading guidelines,
 % optional design challenges, etc.
+In addition to providing a reliable execution
+substrate,
+this ``reference kernel'' schedules
+the execution of user-space threads created by
+student code according to a variety of
+interleaving patterns.
+In order to aid debugging of concurrency problems,
+% students can manually select among these
+% interleaving patterns.
+the kernel offers a variety of (specification-conformant, yet deliberately undocumented) interleaving policies;
+the \x{misbehave()} system call is provided to select the current global policy.
 
 \subsubsection{Pebbles Kernel}
 For the fourth project, two-student teams
@@ -368,19 +370,19 @@ reinforce that material.
 \framebox{Some text should go here!}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The Pebbles kernel specification}
+\section{The Pebbles Kernel Specification}
 \label{sec:pebbles}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 The kernel that students implement is loosely based on the
-Unix model: \texttt{fork()}, \texttt{exec()}, and \texttt{wait()}.
+Unix model: \x{fork()}, \x{exec()}, and \x{wait()}.
 We adopt the Mach~\cite{DBLP:conf/usenix/AccettaBBGRTY86}
 distinction between ``tasks,''
 which are resource containers,
 and threads,
 each of which executes within a single task.
 This partitioning is a different approach from that of
-Plan~9's \texttt{rfork()} or Linux's \texttt{clone()},
+Plan~9's \x{rfork()} or Linux's \x{clone()},
 which allow a continuum of sharing between
 identical threads and independent processes,
 at the cost of implementation complexity which we wish to avoid.
@@ -394,11 +396,11 @@ the simple console that students implemented at
 the start of the semester.
 
 Within a task, threads are created using the
-\texttt{thread\_fork} system call, which closely
-mirrors the specification of \texttt{fork()}:
+\x{thread_fork} system call, which closely
+mirrors the specification of \x{fork()}:
 the new thread begins with an exact copy of the
 register values of the old thread, except that
-the return-value register, \texttt{\%eax}, contains
+the return-value register, \x{\%eax}, contains
 zero;
 in the old thread, the return value is the thread i.d.\
 of the newly created thread.
@@ -406,14 +408,14 @@ This minimal formulation defers all policy decisions
 (e.g., stack size, location, and contents) to the
 user-space thread library.
 A thread may suspend its execution via the
-\texttt{deschedule()} system call,
+\x{deschedule()} system call,
 and a blocked thread can be reactivated via
-\texttt{make\_runnable()}.
+\x{make_runnable()}.
 
 Each thread has the ability to register a handler
 for hardware exceptions (illegal instruction,
 division by zero, etc.)
-via the \texttt{swexn()} system call,
+via the \x{swexn()} system call,
 which specifies the addresses of handler code
 and a handler stack.
 When a thread encounters an exception,
@@ -427,7 +429,7 @@ The handler has the ability to re-register itself
 to run arbitrary code,
 and/or to atomically adopt a new set of register
 values.
-The \texttt{swexn()} facility is used to enable
+The \x{swexn()} facility is used to enable
 the thread library to detect when a managed
 thread has crashed
 and, more importantly,
