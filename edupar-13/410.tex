@@ -209,9 +209,10 @@ they implemented in the second project.
 %% TODO Space permitting, maybe have a table of system calls?
 %% The 410 section is otherwise lacking in visual aids. -- bblum
 These ingredients are combined to yield
-twenty-four system calls
+twenty-five system calls
 (life-cycle, thread management, memory management,
-console I/O, and miscellaneous).
+console I/O, and miscellaneous),
+which are summarized in Figure~\ref{fig:syscalls}.
 %% TODO Justify by mentioning average lines of code. -- bblum
 For most students in the class, this is the
 largest and most complicated software artifact they
@@ -228,6 +229,57 @@ the run-time invariants underlying all compiler-generated
 code in the system (kernel and user-space),
 they gain experience with debugging at both the
 ``algorithm level'' and the register/bit-field level.
+
+\begin{figure}
+	\center \footnotesize
+	\begin{tabular}{|l|p{0.28\textwidth}|}
+		\hline
+		\bf System call name & \bf Summary \\
+		\hline
+		\multicolumn{2}{c}{\em Lifecycle management} \\
+		\hline
+		\x{fork} & Duplicates the invoking task, including all memory regions. \\
+		\x{thread_fork} & Creates a new thread in the current task.\\
+		\x{exec} & Replaces the program currently running in the invoking task with a new one specified. \\
+		\x{set_status} & Records the exit status of the current task. \\
+		\x{vanish} & Terminates execution of the calling thread. \\
+		\x{wait} & Blocks execution until another task terminates, and collects its exit status.\\
+		\x{task_vanish}* & Causes all threads of a task to \x{vanish}. \\
+		\hline
+		\multicolumn{2}{c}{\em Thread management} \\
+		\hline
+		\x{gettid} & Returns the ID of the invoking thread. \\
+		\x{yield} & Defers execution to a specified thread. \\
+		\x{deschedule} & Blocks execution of the invoking thread. \\
+		\x{make_runnable} & Wakes up another \x{deschedule}d thread. \\
+		\x{get_ticks} & Gets the number of timer ticks since bootup. \\
+		\x{sleep} & Blocks a thread for a given number of ticks. \\
+		\x{swexn} & Registers a given user-space function as a software exception handler.\\
+		\hline
+		\multicolumn{2}{c}{\em Memory management} \\
+		\hline
+		\x{new_pages} & Allocates a specified region of memory. \\
+		\x{remove_pages} & Deallocates same. \\
+		\hline
+		\multicolumn{2}{c}{\em Console I/O} \\
+		\hline
+		\x{getchar}* & Reads one character from keyboard input. \\
+		\x{readline} & Reads the next line from keyboard input. \\
+		\x{print} & Prints a given memory buffer to the console. \\
+		\x{set_term_color} & Sets the color for future console output. \\
+		\x{set_cursor_pos} & Sets the console cursor location. \\
+		\x{get_cursor_pos} & Retrieves the console cursor location. \\
+		\hline
+		\multicolumn{2}{c}{\em Miscellaneous} \\
+		\hline
+		\x{ls} & Loads a given buffer with the names of files stored in the RAM disk ``file system''. \\
+		\x{halt} & Ceases execution of the operating system. \\
+		\x{misbehave}* & Selects among several behaviors for thread interleaving in certain scenarios. \\
+		\hline
+	\end{tabular}
+	\caption{The Pebbles specifcation defines 25 system calls. Students are not required to implement ones marked with an asterisk (*), though the reference kernel provides them. }
+	\label{fig:syscalls}
+\end{figure}
 
 \subsubsection{Pebbles Extension}
 Students who complete the kernel project on time
