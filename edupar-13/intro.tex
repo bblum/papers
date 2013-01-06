@@ -8,6 +8,7 @@ Low-level systems programmers must often reason about parallel code without the 
 In this paper, we describe our experience teaching concurrent programming at the operating systems level to advanced undergraduate students at Carnegie Mellon University (CMU).
 In 15-410, the Operating Systems Design and Implementation class at CMU, students complete an aggressively challenging kernel project, in which they implement threads and processes in code that will boot on real hardware.
 Presented with a kernel specification, called Pebbles~\cite{kspec}, students build a threading and synchronization library that runs in userspace on top of a Pebbles reference kernel in a two-week project, and subsequently, in a 6-week project, write their own kernel implementation.
+During these projects students face very demanding synchronization problems, including how to implement locking primitives and how to coordinate a parent and a child process that are exiting simultaneously.
 Finally, in another two-week project, students implement a small extension to their Pebbles kernel. This project changes every semester, and in the past has included extending the kernel to be able to hypervise other kernels and to be able to run in SMP systems.
 
 As we ask our students to write more and more difficult concurrent code in the same semester, we want to ease their burden of debugging concurrency errors, which often consumes a significant fraction of their time during the projects.

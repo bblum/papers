@@ -213,6 +213,7 @@ twenty-five system calls
 (life-cycle, thread management, memory management,
 console I/O, and miscellaneous),
 which are summarized in Figure~\ref{fig:syscalls}.
+
 %% TODO Justify by mentioning average lines of code. -- bblum
 For most students in the class, this is the
 largest and most complicated software artifact they
@@ -224,6 +225,16 @@ Because the test suite and the grading criteria
 emphasize robustness and preemptibility of
 kernel code,
 there are many cross-cutting concerns.
+%
+%% TODO: Dave, is it OK to say the following sentence? -- bblum
+Widely regarded as the most difficult concurrency problem in the project
+is that of coordinating a parent and a child task that ``simultaneously''
+invoke \x{vanish()}: the parent task must reassign ownership of the child to
+\x{init}, the root process, while the child task must check its parent's state
+for any \x{wait()}ing threads which need to be woken up.
+Many solutions, due to design constraints imposed by other parts of the kernel,
+are prone to data races or deadlocks without careful thought.
+%
 Because the students are responsible for ensuring
 the run-time invariants underlying all compiler-generated
 code in the system (kernel and user-space),
