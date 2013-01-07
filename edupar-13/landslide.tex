@@ -66,8 +66,8 @@ In our example bug, the necessary decision point for finding the bug is at line~
 Landslide also automatically identifies a minimal set of decision points at voluntary reschedules between threads (e.g. \x{yield}). Together these decision points define an execution tree which exposes the bug, depicted in Figure~\ref{fig:tree}.
 
 Of course, additional decision points are necessary to expose more subtle race conditions. We provide an interface for adding new decision points to refine the state space, described in Section~\ref{sec:decision}.
-In order to cope with the exponentially-sized nature of state spaces with many decision points, Landslide uses the Dynamic Partial Order Reduction (DPOR) algorithm~\cite{dpor} to identify and prune redundant thread interleavings.
-While the specifics of the algorithm are beyond the educational scope of this work, we also provide an interface for helping Landslide further reduce the state space using domain knowledge about the kernel's implementation. We discuss this in Section~\ref{sec:focusing}.
+In order to cope with the exponentially-sized nature of state spaces with many decision points, Landslide uses the Dynamic Partial Order Reduction (DPOR) algorithm~\cite{dpor} to identify and prune redundant thread interleavings, the specifics of which are beyond the educational scope of this work.
+We also provide an interface for helping Landslide further reduce the state space by considering decision points only from certain components of the kernel, which we discuss in Section~\ref{sec:focusing}.
 
 \begin{figure}[t]
 \includegraphics[width=0.48\textwidth]{threadfork/threadfork.pdf}
@@ -171,12 +171,14 @@ For example, if testing thread death and reaping, the student should write \x{wi
 (assuming they don't care about the virtual memory operations associated with \x{exit})
 \x{without_function} \x{destroy_address_space}.
 
-Additionally, the student may configure Landslide's state space reduction to ignore certain memory locations. DPOR's analysis requires a memory independence relation between thread transitions; the more transitions are independent from each other, the more reduction can be achieved.
-Unfortunately, in the kernel environment, every thread switch will execute through a common path that modifies shared scheduler data structures.
-Unchecked, this would cause every transition to conflict with each other and result in no reduction in execution time from DPOR.
-Certain other shared memory conflicts also arise that are irrelevant to whichever system calls are being tested; for example, if testing for races in thread lifecycle routines, the user likely does not care about accesses to the frame allocator mutex.
-
-We provide an interface with which the user can configure Landslide to ignore such unrelated conflicts to more efficiently test components of the kernel they care about. In \x{config.landslide}, the user writes ``\x{ignore_sym}'' followed by the name of the global variable to ignore and its type size, and Landslide may then identify transitions as independent even if they conflict on that memory.
+% Additionally, the student may configure Landslide's state space reduction to ignore certain memory locations.
+% DPOR's analysis requires a memory independence relation between thread transitions; the more transitions are independent from each other, the more reduction can be achieved.
+% Unfortunately, in the kernel environment, every thread switch will execute through a common path that modifies shared scheduler data structures.
+% Unchecked, this would cause every transition to conflict with each other and result in no reduction in execution time from DPOR.
+% Certain other shared memory conflicts also arise that are irrelevant to whichever system calls are being tested; for example, if testing for races in thread lifecycle routines, the user likely does not care about accesses to the frame allocator mutex.
+%
+% We provide an interface with which the user can configure Landslide to ignore such unrelated conflicts to more efficiently test components of the kernel they care about.
+% In \x{config.landslide}, the user writes ``\x{ignore_sym}'' followed by the name of the global variable to ignore and its type size, and Landslide may then identify transitions as independent even if they conflict on that memory.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Evaluation}
