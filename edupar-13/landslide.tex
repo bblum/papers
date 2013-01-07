@@ -96,6 +96,7 @@ In general, with false-negative bug detection, the kernel might execute a buggy 
 \newcommand\decision[1]{\bfseries \hilight{olivegreen}{#1}}
 \newcommand\stacktrace[1]{\hilight{darkcyan}{#1}}
 \begin{figure}[t]
+\small
 \begin{lstlisting}
 #\bfseries \bug{USE~AFTER~FREE:~read~from~0x15a8f0~at~IP~0x104209}#
 #\bug{Block~0x15a8f0~was~allocated~by~thread~3~at~(...)}#
@@ -147,7 +148,7 @@ int thread_fork() {
 	return child->tid;
 }
 \end{lstlisting}
-\caption{Landslide requires the programmer to annotate important concurrency events in their kernel. \texttt{tell\_landslide\_thread\_runnable()} indicates that a thread can henceforth be forced to run with timer interrupts, and \texttt{tell\_landslide\_forking()} announces a new thread's existence.}
+\caption{Landslide requires the programmer to annotate important concurrency events in their kernel. \x{tell_landslide_thread_runnable()} indicates that a thread can henceforth be forced to run with timer interrupts, and \x{tell_landslide_forking()} announces a new thread's existence.}
 \label{fig:annotation}
 \end{figure}
 
