@@ -207,13 +207,11 @@ and code for setting up and tearing down
 threads and processes.
 Students re-use the basic device drivers
 they implemented in the second project.
-%% TODO Space permitting, maybe have a table of system calls?
-%% The 410 section is otherwise lacking in visual aids. -- bblum
 These ingredients are combined to yield
 twenty-five system calls
 (life-cycle, thread management, memory management,
 console I/O, and miscellaneous),
-which are summarized in Figure~\ref{fig:syscalls}.
+which we discuss further in Section~\ref{sec:pebbles}.
 
 %% TODO Justify by mentioning average lines of code. -- bblum
 For most students in the class, this is the
@@ -242,57 +240,6 @@ code in the system (kernel and user-space),
 they gain experience with debugging at both the
 ``algorithm level'' and the register/bit-field level.
 
-\begin{figure}
-	\center \footnotesize
-	\begin{tabular}{|l|p{0.28\textwidth}|}
-		\hline
-		\bf System call name & \bf Summary \\
-		\hline
-		\multicolumn{2}{c}{\em Lifecycle management} \\
-		\hline
-		\x{fork} & Duplicates the invoking task, including all memory regions. \\
-		\x{thread_fork} & Creates a new thread in the current task.\\
-		\x{exec} & Replaces the program currently running in the invoking task with a new one specified. \\
-		\x{set_status} & Records the exit status of the current task. \\
-		\x{vanish} & Terminates execution of the calling thread. \\
-		\x{wait} & Blocks execution until another task terminates, and collects its exit status.\\
-		\x{task_vanish}* & Causes all threads of a task to \x{vanish}. \\
-		\hline
-		\multicolumn{2}{c}{\em Thread management} \\
-		\hline
-		\x{gettid} & Returns the ID of the invoking thread. \\
-		\x{yield} & Defers execution to a specified thread. \\
-		\x{deschedule} & Blocks execution of the invoking thread. \\
-		\x{make_runnable} & Wakes up another \x{deschedule}d thread. \\
-		\x{get_ticks} & Gets the number of timer ticks since bootup. \\
-		\x{sleep} & Blocks a thread for a given number of ticks. \\
-		\x{swexn} & Registers a given user-space function as a software exception handler.\\
-		\hline
-		\multicolumn{2}{c}{\em Memory management} \\
-		\hline
-		\x{new_pages} & Allocates a specified region of memory. \\
-		\x{remove_pages} & Deallocates same. \\
-		\hline
-		\multicolumn{2}{c}{\em Console I/O} \\
-		\hline
-		\x{getchar}* & Reads one character from keyboard input. \\
-		\x{readline} & Reads the next line from keyboard input. \\
-		\x{print} & Prints a given memory buffer to the console. \\
-		\x{set_term_color} & Sets the color for future console output. \\
-		\x{set_cursor_pos} & Sets the console cursor location. \\
-		\x{get_cursor_pos} & Retrieves the console cursor location. \\
-		\hline
-		\multicolumn{2}{c}{\em Miscellaneous} \\
-		\hline
-		\x{ls} & Loads a given buffer with the names of files stored in the RAM disk ``file system''. \\
-		\x{halt} & Ceases execution of the operating system. \\
-		\x{misbehave}* & Selects among several behaviors for thread interleaving in certain scenarios. \\
-		\hline
-	\end{tabular}
-	\caption{The Pebbles specifcation defines 25 system calls. Students are not required to implement ones marked with an asterisk (*), though the reference kernel provides them. }
-	\label{fig:syscalls}
-\end{figure}
-
 \subsubsection{Pebbles Extension}
 Students who complete the kernel project on time
 then work on a smaller kernel-extension project
@@ -306,13 +253,6 @@ Two recent, more aggressive projects have been
 adding paravirtualization so that their kernels
 can host guest kernels and
 addding multi-processor support to their single-processor kernels.
-Meanwhile, students who were unable to complete
-the kernel project on time receive additional time
-to finish up and improve their code quality---this
-requirement is based on our belief that important
-learning experiences are obtained by solving the
-hard problems,
-which turn up at the end of the implementation.
 
 %=== Simics ===%
 \subsection{Simics}
@@ -361,32 +301,6 @@ much faster than real time).
 % ability to quickly write small debugging-support snippets
 % in a few lines of Python (e.g., report the function name
 % every time a RET instruction is executed)
-
-%=== Grading ===%
-\subsection{Grading}
-
-Pebbles kernels are graded in three ways: passing the ``hurdle'', running an automated test suite, and undergoing manual inspection by course staff.
-
-\subsubsection{Hurdle}
-%% TODO: Dave, write about the criteria (and what it means, i.e., "getting a shell up and running, getting processes to exit")
-The hurdle is a set of criteria that Pebbles implementations must meet to be considered sastisfactory
-(TODO: what are they?).
-Towards the end of the kernel project, students fill out the ``hurdle form'', a checklist of these criteria.
-Students who pass the hurdle are permitted to turn in their kernels and move on to the final, shorter, project; otherwise, they must spend the remaining two weeks continuing to work towards the hurdle.
-The hurdle criteria constitute 50\% of the kernel project's grade.
-
-\subsubsection{Automated tests}
-We run submitted kernels in an automated testing harness. The test suite is a number of userspace programs which test functionality ranging from the basic process lifecycle, to robustness against corner-case security vulnerabilities, to long-term stability under large stress tests.
-Performance on these tests constitutes 30\% of the kernel project's grade.
-
-Of course, due to the nondeterministic nature of many common bugs in student code, these tests are unable to verify a submission's correctness with complete certainty.
-(This hit-or-miss nature motivated our work on Landslide.)
-
-\subsubsection{Manual inspection}
-Finally, both to make up for the tests' incompleteness and to provide personalized human feedback, each student kernel is manually graded by a member of course staff.
-The instructors and teaching assistants print out each group's submitted kernel and mark it with red ink, auditing the code for code style, architectural issues, race conditions, and preemptibility.
-After the inking process, each group meets with the staff member who graded them for an hour-long ``kernel interview'', essentially a debriefing in which any final misconceptions the students might have can be rectified.
-Staff discretionary points constitute 20\% of the kernel project's grade.
 
 %=== Limitations ===%
 \subsection{Limitations}
@@ -455,11 +369,68 @@ but at present the hands-on experience does not
 reinforce that material.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The Pebbles Kernel Specification}
+\section{The Pebbles Kernel}
 \label{sec:pebbles}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The kernel that students implement is loosely based on the
+\begin{figure}
+	\center \footnotesize
+	\begin{tabular}{|l|p{0.28\textwidth}|}
+		\hline
+		\bf System call name & \bf Summary \\
+		\hline
+		\multicolumn{2}{c}{\em Lifecycle management} \\
+		\hline
+		\x{fork} & Duplicates the invoking task, including all memory regions. \\
+		\x{thread_fork} & Creates a new thread in the current task.\\
+		\x{exec} & Replaces the program currently running in the invoking task with a new one specified. \\
+		\x{set_status} & Records the exit status of the current task. \\
+		\x{vanish} & Terminates execution of the calling thread. \\
+		\x{wait} & Blocks execution until another task terminates, and collects its exit status.\\
+		\x{task_vanish}* & Causes all threads of a task to \x{vanish}. \\
+		\hline
+		\multicolumn{2}{c}{\em Thread management} \\
+		\hline
+		\x{gettid} & Returns the ID of the invoking thread. \\
+		\x{yield} & Defers execution to a specified thread. \\
+		\x{deschedule} & Blocks execution of the invoking thread. \\
+		\x{make_runnable} & Wakes up another \x{deschedule}d thread. \\
+		\x{get_ticks} & Gets the number of timer ticks since bootup. \\
+		\x{sleep} & Blocks a thread for a given number of ticks. \\
+		\x{swexn} & Registers a given user-space function as a software exception handler.\\
+		\hline
+		\multicolumn{2}{c}{\em Memory management} \\
+		\hline
+		\x{new_pages} & Allocates a specified region of memory. \\
+		\x{remove_pages} & Deallocates same. \\
+		\hline
+		\multicolumn{2}{c}{\em Console I/O} \\
+		\hline
+		\x{getchar}* & Reads one character from keyboard input. \\
+		\x{readline} & Reads the next line from keyboard input. \\
+		\x{print} & Prints a given memory buffer to the console. \\
+		\x{set_term_color} & Sets the color for future console output. \\
+		\x{set_cursor_pos} & Sets the console cursor location. \\
+		\x{get_cursor_pos} & Retrieves the console cursor location. \\
+		\hline
+		\multicolumn{2}{c}{\em Miscellaneous} \\
+		\hline
+		\x{ls} & Loads a given buffer with the names of files stored in the RAM disk ``file system''. \\
+		\x{halt} & Ceases execution of the operating system. \\
+		\x{misbehave}* & Selects among several behaviors for thread interleaving in certain scenarios. \\
+		\hline
+	\end{tabular}
+	\caption{The Pebbles specifcation defines 25 system calls. Students are not required to implement ones marked with an asterisk (*), though the reference kernel provides them. }
+	\label{fig:syscalls}
+\end{figure}
+
+\subsection{Specification}
+
+
+The kernel that students implement consists of twenty-five
+system calls, which are summarized in Figure~\ref{fig:syscalls}.
+%
+The process lifecycle is loosely based on the
 Unix model: \x{fork()}, \x{exec()}, and \x{wait()}.
 We adopt the Mach~\cite{DBLP:conf/usenix/AccettaBBGRTY86}
 distinction between ``tasks,''
@@ -528,3 +499,35 @@ was done because it simplfies the kernel and
 part of the course,
 before students are facing the substantial pressure
 of the kernel project.
+
+%=== Grading ===%
+\subsection{Grading}
+
+Pebbles kernels are graded in three ways: passing the ``hurdle'', running an automated test suite, and undergoing manual inspection by course staff.
+
+\subsubsection{Hurdle}
+%% TODO: Dave, write about the criteria (and what it means, i.e., "getting a shell up and running, getting processes to exit")
+The hurdle is a set of criteria that Pebbles implementations must meet to be considered sastisfactory
+(TODO: what are they?).
+Towards the end of the kernel project, students fill out the ``hurdle form'', a checklist of these criteria.
+Students who pass the hurdle turn in their kernels and move on to the shorter ``Pebbles Extension'' project.
+Meanwhile, students who were unable to meet the
+hurdle criteria on time receive additional time
+to finish up and improve their code quality---this
+requirement is based on our belief that important
+learning experiences are obtained by solving the
+hard problems,
+which turn up at the end of the kernel implementation.
+The hurdle criteria constitute 50\% of the kernel project's grade.
+
+\subsubsection{Automated tests}
+We run submitted kernels in an automated testing harness. The test suite is a number of userspace programs which test functionality ranging from the basic process lifecycle, to robustness against corner-case security vulnerabilities, to long-term stability under large stress tests.
+Of course, due to the nondeterministic nature of many common bugs in student code, these tests can only provide a rough estimate of a submission's correctness, rather than verifying it with certainty.
+Nevertheless, performance on these tests constitutes 30\% of the kernel project's grade.
+(This hit-or-miss nature motivated our work on Landslide.)
+
+\subsubsection{Manual inspection}
+Finally, both to make up for the tests' incompleteness and to provide personalized human feedback, each student kernel is manually graded by a member of course staff.
+The instructors and teaching assistants print out each group's submitted kernel and mark it with red ink, auditing the code for code style, architectural issues, race conditions, and preemptibility.
+After the inking process, each group meets with the staff member who graded them for an hour-long ``kernel interview'', essentially a debriefing in which any final misconceptions the students might have can be rectified.
+Staff discretionary points constitute 20\% of the kernel project's grade.
