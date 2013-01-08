@@ -10,7 +10,7 @@ count_lines() {
 			C=`  echo "$SLOC" | grep '^ansic:' | sed 's/ansic: *//' | sed 's/ *(.*)//'`
 			ASM=`echo "$SLOC" | grep '^asm:'   | sed 's/asm: *//'   | sed 's/ *(.*)//'`
 			if [ -z "$C" -o -z "$ASM" ]; then
-					echo -n "(huh? couldn't parse)"
+					echo -n "(huh, couldn't parse??)"
 			else
 					echo -n "$C,$ASM"
 			fi

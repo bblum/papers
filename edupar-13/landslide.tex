@@ -90,6 +90,8 @@ We have never found this technique to erroneously report false positives, althou
 When Landslide identifies a bug, it outputs a {\em decision trace}, an example of which is shown in Figure~\ref{fig:trace}.
 This trace reports what kind of bug was detected (for uses-after-free, it also prints stack traces for when the block was allocated and freed), and also reports each decision point in the current interleaving: which thread was running, a trace of its stack when it was switched away from, and the thread that we caused to preempt it. With this trace, the student can better understand the concurrent execution that led to the bug.
 
+Note that our use of the term ``race condition'' refers to concurrency errors in general, a category that includes data races, atomicity violations, and nondeterministic deadlocks.
+In contrast with analyses that directly detect data races~\cite{tsan}, Landslide does not identify bugs merely upon suspicious memory accesses, but rather detects failure conditions that can arise from many different types of errors.
 In general, with false-negative bug detection, the kernel might execute a buggy behaviour yet Landslide would miss it. However (except in the case of heuristic infinite loop detection), when Landslide does identify a bug, the student can be sure that a race exists.
 
 \newcommand\bug[1]{\hilight{red}{#1}}
