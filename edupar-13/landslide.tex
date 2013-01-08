@@ -66,7 +66,7 @@ In our example bug, the necessary decision point for finding the bug is at line~
 Landslide also automatically identifies a minimal set of decision points at voluntary reschedules between threads (e.g. \x{yield}). Together these decision points define an execution tree which exposes the bug, depicted in Figure~\ref{fig:tree}.
 
 Of course, additional decision points are necessary to expose more subtle race conditions. We provide an interface for adding new decision points to refine the state space, described in Section~\ref{sec:decision}.
-In order to cope with the exponentially-sized nature of state spaces with many decision points, Landslide uses the Dynamic Partial Order Reduction (DPOR) algorithm~\cite{dpor} to identify and prune redundant thread interleavings, the specifics of which are beyond the educational scope of this work.
+In order to cope with the exponentially-sized nature of state spaces with many decision points, Landslide uses the Dynamic Partial Order Reduction algorithm~\cite{dpor} to identify and prune redundant thread interleavings, the specifics of which are beyond the educational scope of this work.
 We also provide an interface for helping Landslide further reduce the state space by considering decision points only from certain components of the kernel, which we discuss in Section~\ref{sec:focusing}.
 
 \begin{figure}[t]

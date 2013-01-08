@@ -14,5 +14,5 @@ In addition to finding all five races, Landslide also found a sixth previously u
 Using decision points only on calls to \x{mutex_lock} and on voluntary reschedules, Landslide found each of the six bugs in 11 to 57 seconds, executing between 1 and 377 distinct interleavings for each.
 
 In the user study of current students, we found that students spent on average 119 minutes (60 to 158) on the required instrumentation, and a further 36 minutes (10 to 60) refining Landslide's search.
-Of the four groups who finished the required part, all four found previously unknown bugs with Landslide: two races and two deterministic errors.
+Of the four groups who finished the required part, all four found previously unknown bugs in their kernels: two races and two deterministic errors.
 These bugs manifested as infinite loops, a kernel panic, and a use-after-free.
