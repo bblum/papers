@@ -10,33 +10,22 @@
 \section{Landslide}
 \label{sec:landslide}
 
-Landslide is based on the technique of systematic exploration~\cite{verisoft}, a way of exploring the state space of different possible thread interleavings in a concurrent system.
-It follows in the footsteps of related tools such as CHESS~\cite{chess}, dBug~\cite{dbug-ssv}, and DeMeter~\cite{demeter}, but is the first tool we know of to apply systematic exploration in a kernel environment.
-In this section we give an overview of Landslide's design and interface, and point out the annotations students need to provide to make Landslide work with their own code.
+Landslide is an experimental tool for helping kernel authors find and debug concurrency errors.
+It is based on the technique of systematic exploration~\cite{verisoft}, a way of exploring the state space of different possible thread interleavings in a concurrent system.
+It follows in the footsteps of related tools such as CHESS~\cite{chess}, dBug~\cite{dbug-ssv}, and DeMeter~\cite{demeter}, but is the first tool we know of to apply systematic exploration in a kernel development environment.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Scope}
 
-\paragraph{Testing environment}
-Landslide is implemented as a module for Simics, the simulator our students use as an execution environment for their kernels. Simics can load Landslide while booting a kernel, and calls into Landslide once per instruction and once per memory access of the simulated execution.
+Landslide is implemented as a module for Simics, the simulator our students use as an execution environment for their kernels. Simics can load Landslide while booting a student's kernel, and calls into Landslide once per simulated instruction and once per simulated memory access.
 Landslide uses this information to update its internal representation of the kernel's state, which it in turn uses to decide how to control the kernel's execution.
-
-\paragraph{Limitations}
-Landslide assumes that timer interrupts are the only nondeterministic events that influence a kernel's concurrent execution. While this prevents us from finding races related to external input such as disk or network I/O, Landslide is already able to find many types of complicated races by controlling timer-driven thread scheduling.
-Landslide's model is also restricted to uniprocessor execution.
-Supporting multiprocessor environments and device driver testing is left to future work.
-% this used to say ", and production kernels"
-
-% TODO: This paragraph can be removed if we're hurting for space
-We also note that, in contrast with stress testing, Landslide works best with very small test cases. While a more conventional stress test achieves coverage by exercising many system calls (in parallel and/or in sequence), Landslide's coverage results from exploring the different scheduling possibilities that arise from a short sequence of system calls.
-If Landslide were used when running a stress test, the resulting state space would be too large to explore feasibly.
-Hence, when working with students, we provided a suite of four test programs, each no longer than 10 lines of code, but carefully written to bring about system call interactions known to be troublesome.
+In this section we give an overview of Landslide's design and interface, and point out the annotations students need to provide to make Landslide work with their own code.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Example}
 % TODO: if necessary, this can be not its own section
 
-Figure~\ref{fig:threadfork} shows a timer-dependent bug common in many Pebbles implementations which we will use as a running example in the rest of this section. This code is a simplified implementation of the \x{thread_fork} system call: it constructs data structures necessary for the new thread, then asks the scheduler to make the new thread runnable, then returns its assigned thread ID. However, if the timer preempts execution at line~\ref{line:hax}, the child thread might run and invoke \x{exit}, causing \x{child} to become a dangling pointer.
+Figure~\ref{fig:threadfork} shows a timer-dependent bug common in many Pebbles implementations which we will use as a running example in the rest of this section.
+This code is a simplified implementation of the \x{thread_fork} system call: it constructs data structures necessary for the new thread, then asks the scheduler to make the new thread runnable, then returns its assigned thread ID.
+However, if the timer preempts execution at line~\ref{line:hax}, the child thread might run long enough to invoke \x{exit}, causing \x{child} to become a dangling pointer.
 
 \begin{figure}[t]
 \small
@@ -55,18 +44,20 @@ int thread_fork() {
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Testing Mechanism}
 
-Systematic exploration, Landslide's mechanism for testing different concurrent scenarios, uses the idea of an {\em execution tree} to enumerate all possible thread interleavings in a system. These interleavings are defined around {\em decision points}, which intuitively indicate points during execution at which a preemption could cause different behaviour to arise.
-Searching with few decision points results in coarser-grained interleavings, shorter test execution, and less likelihood of finding bugs; searching with more results in the opposite.
+Systematic exploration, Landslide's mechanism for testing many different concurrent scenarios, uses the idea of an {\em execution tree} to enumerate all possible thread interleavings of a specific test. These interleavings are defined around {\em decision points}, which intuitively indicate points during execution at which a preemption could cause different behaviour to arise.
+Searching with few decision points results in coarser-grained interleavings, shorter test execution, and less likelihood of finding unexpected bugs; searching with more results in the opposite.
+The primary advantage of systematic testing is the ability to force execution sequences that might be very rare in simple repeated testing.
 
 Landslide ``explores'' decision trees by controlling the kernel's execution in two ways.
 First, at each decision point, it can force an arbitary thread to run in place of the current one by injecting timer interrupts to force the kernel to context switch.
-Second, whenever the kernel finishes executing a particular interleaving of the test case, it reverts the system to an earlier state to explore additional interleavings using Simics's backtracking mechanism.
+Second, whenever the kernel finishes executing a particular interleaving of the test case, it reverts the system to an earlier state to explore additional interleavings using Simics's reverse execution.
 
-In our example bug, the necessary decision point for finding the bug is at line~\ref{line:hax}. With correct annotations (discussed in Section~\ref{sec:instrument} and shown in Figure~\ref{fig:annotation}), Landslide can automatically identify this decision point.
-Landslide also automatically identifies a minimal set of decision points at voluntary reschedules between threads (e.g. \x{yield}). Together these decision points define an execution tree which exposes the bug, depicted in Figure~\ref{fig:tree}.
+In Figure~\ref{fig:threadfork}, the necessary decision point for finding the bug is at line~\ref{line:hax}. With correct instrumentation (discussed in Section~\ref{sec:instrument} and shown in Figure~\ref{fig:annotation}), Landslide can automatically identify this decision point when the child thread becomes runnable.
+Landslide also automatically identifies decision points at voluntary reschedules between threads (e.g. \x{yield()}). Together these decision points define an execution tree which exposes the bug, depicted in Figure~\ref{fig:tree}.
 
-Of course, additional decision points are necessary to expose more subtle race conditions. We provide an interface for adding new decision points to refine the state space, described in Section~\ref{sec:decision}.
-In order to cope with the exponentially-sized nature of state spaces with many decision points, Landslide uses the Dynamic Partial Order Reduction algorithm~\cite{dpor} to identify and prune redundant thread interleavings, the specifics of which are beyond the educational scope of this work.
+Of course, additional decision points are necessary to expose more subtle race conditions. We provide an interface for adding new decision points to expand the state space, described in Section~\ref{sec:decision}.
+In order to cope with the exponentially-growing nature of state spaces with many decision points,
+Landslide uses the Dynamic Partial Order Reduction algorithm~\cite{dpor} to identify and prune redundant thread interleavings, the specifics of which are beyond the scope of this educational work~\cite{landslide}.
 We also provide an interface for helping Landslide further reduce the state space by considering decision points only from certain components of the kernel, which we discuss in Section~\ref{sec:focusing}.
 
 \begin{figure}[t]
@@ -74,7 +65,7 @@ We also provide an interface for helping Landslide further reduce the state spac
 \caption{The state space of possible thread interleavings can be viewed as an {\em execution tree}.
 Landslide uses timer interrupts to force different threads to run as it explores this tree.
 If a kernel has concurrency errors, they will show up in some branches, but not others.
-This tree shows the bug from Figure~\ref{fig:threadfork}, with decision points from the parent thread shaded.
+This tree shows the bug from Figure~\ref{fig:threadfork}, with operations from the parent thread shaded.
 }
 \label{fig:tree}
 \end{figure}
@@ -83,16 +74,18 @@ This tree shows the bug from Figure~\ref{fig:threadfork}, with decision points f
 \subsection{Identifying Bugs}
 
 Landslide has several checks that detect when a bug arises. It can identify kernel panics, use-after-free accesses (and other memory errors such as double-free and memory leaks), and deadlocks.
-
-Landslide can optionally also check heuristically for infinite loops and livelock. This is done by comparing the length of the current interleaving against previously-explored ones: if the current interleaving has been running disproportionately longer (by a large arbitrary constant factor), it indicates the kernel is likely stuck.
-We have never found this technique to erroneously report false positives, although it may fail to trigger when it ought to if too few previous interleavings have been tested to make a reliable comparison.
+Landslide can optionally also check heuristically for infinite loops and livelock. This is done by comparing the length of the current interleaving against previously-explored ones: if the current interleaving has been running disproportionately longer (by a large arbitrary constant factor), we assume the kernel is stuck.
+We have not found this technique to erroneously report false positives, although it may fail to trigger when it ought to if too few previous interleavings have been tested to make a reliable comparison.
 
 When Landslide identifies a bug, it outputs a {\em decision trace}, an example of which is shown in Figure~\ref{fig:trace}.
-This trace reports what kind of bug was detected (for uses-after-free, it also prints stack traces for when the block was allocated and freed), and also reports each decision point in the current interleaving: which thread was running, a trace of its stack when it was switched away from, and the thread that we caused to preempt it. With this trace, the student can better understand the concurrent execution that led to the bug.
+The trace reports what kind of bug was detected (for uses-after-free, it also prints stack traces to show when the block was allocated and freed), and also reports each decision point in the current interleaving: which thread was running, a trace of its stack when it was switched away from, and the thread that Landslide caused to preempt it.
+With this trace, the student can better understand the concurrent execution that led to the bug.
 
 Note that our use of the term ``race condition'' refers to concurrency errors in general, a category that includes data races, atomicity violations, and nondeterministic deadlocks.
-In contrast with analyses that directly detect data races~\cite{tsan}, Landslide does not identify bugs merely upon suspicious memory accesses, but rather detects failure conditions that can arise from many different types of errors.
-In general, with false-negative bug detection, the kernel might execute a buggy behaviour yet Landslide would miss it. However (except in the case of heuristic infinite loop detection), when Landslide does identify a bug, the student can be sure that a race exists.
+In contrast with analyses that directly detect data races~\cite{tsan}, Landslide does not identify bugs at suspicious memory accesses, but rather detects failure conditions that can arise from many different types of errors.
+In general,
+% with false-negative bug detection,
+a kernel might contain a buggy behaviour that Landslide could overlook (i.e., a false negative). However (except in the case of heuristic infinite loop detection), when Landslide does identify a bug, the student can be sure that an error exists.
 
 \newcommand\bug[1]{\hilight{red}{#1}}
 \newcommand\decision[1]{\bfseries \hilight{olivegreen}{#1}}
@@ -129,10 +122,10 @@ Total decision points 24, total backtracks 5
 Landslide's interface is comprised of two types of instrumentation which students must provide: {\em required annotations} and {\em configuring decision points}.
 
 \subsubsection{Required annotations}
-Users annotate their kernels to inform Landslide of certain important concurrency events during execution. We provide a set of annotation functions, called \x{tell_landslide}, for this purpose. The annotations denote when a thread runs \x{fork}, \x{sleep}, or \x{exit}, when a thread is added to or removed from the runqueue, and when threads become blocked on mutexes.
-Figure~\ref{fig:annotation} shows the code from Figure~\ref{fig:threadfork} with \x{tell_landslide} annotations.
+Users annotate their kernels to inform Landslide of certain important concurrency events during execution. We provide a set of annotation functions, named with the prefix \x{tell_landslide}, for this purpose. The annotations denote when a thread runs \x{fork}, \x{sleep}, or \x{exit}, when a thread is added to or removed from the runqueue, and when threads become blocked on mutexes.
+Figure~\ref{fig:annotation} shows annotated code corresponding to Figure~\ref{fig:threadfork}.
 
-There is also a configuration file, \x{config.landslide}, in which the user must specify constant information such as the function names of the timer handler and context switcher, which threads exist when the kernel boots, and which userspace test program Landslide should invoke.
+There is also a configuration file, \x{config.landslide}, in which the student must specify constant information such as the function names of the timer handler and context switcher, which threads exist when the kernel boots, and which userspace test program Landslide should invoke.
 Finally, there are two short (nominally two-line) functions used within Landslide itself that the user must implement. These are predicates on the kernel's scheduler state, and express potentially nontrivial conditions: whether the current thread is runnable but not on the runqueue, and whether preemption is disabled while interrupts are on.
 
 \newcommand\telllandslide[1]{\bfseries \color{violet}{#1}}
@@ -157,19 +150,21 @@ int thread_fork() {
 \subsubsection{Configuring decision points}
 \label{sec:decision}
 
-Using only the decision points automatically identified on voluntary reschedules will result in coarse-grained interleavings likely to overlook bugs.
+Using only decision points that Landslide automatically identifies on voluntary reschedules will result in coarse-grained interleavings likely to overlook bugs.
 We provide an extra annotation
-for the user to add more decision points for a finer-grained search, called
+for students to add more decision points for a finer-grained search, called
 \x{tell_landslide_decide()}.
-We recommend using it in concurrency primitives, such as at the start of \x{mutex_lock()} and at the end of \x{mutex_unlock()}.
+We recommend inserting it into concurrency primitives, such as at the start of \x{mutex_lock()} and at the end of \x{mutex_unlock()}.
 
 \subsubsection{Focusing the search space}
 \label{sec:focusing}
 
-The strategy we described above may cause Landslide to identify decision points in unrelated parts of the kernel, such as when accessing mutexes in unrelated system calls.
-We provide interface options in \x{config.landslide} for the student to view currently identified decision points and to selectively limit them.
-First, the student writes ``\x{DECISION_INFO_ONLY}'' to make Landslide run only one interleaving and then print all decision points instead of continuing to explore.
-Then, they write ``\x{within_function} \x{foo}'' to whitelist function \x{foo}, and ``\x{without_function} \x{bar}'' to blacklist function \x{bar}.
+The strategy we describe above may cause Landslide to identify decision points in unrelated parts of the kernel, such as when accessing mutexes in unrelated and/or already-trusted system calls.
+We provide interface options in \x{config.landslide} for the student to view currently identified decision points and to selectively eliminate them.
+% First, the student writes ``\x{DECISION_INFO_ONLY}'' to make Landslide run only one interleaving and then print all decision points instead of continuing to explore.
+% In this file, students can write ``\x{within_function} \x{foo}'' to whitelist function \x{foo}, and ``\x{without_function} \x{bar}'' to blacklist function \x{bar}.
+In this file, students can use the ``\x{within_function}'' and ``\x{without_function}'' directives to require that given functions are or are not on the call stack when decision points are identified.
+% make Landslide ignore any decision points that don't arise from the execution of specific functions.
 For example, if testing thread death and reaping, the student should write \x{within_function exit} and \x{within_function} \x{wait}, and also
 (assuming they don't care about the virtual memory operations associated with \x{exit})
 \x{without_function} \x{destroy_address_space}.
@@ -182,4 +177,18 @@ For example, if testing thread death and reaping, the student should write \x{wi
 %
 % We provide an interface with which the user can configure Landslide to ignore such unrelated conflicts to more efficiently test components of the kernel they care about.
 % In \x{config.landslide}, the user writes ``\x{ignore_sym}'' followed by the name of the global variable to ignore and its type size, and Landslide may then identify transitions as independent even if they conflict on that memory.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Limitations}
+
+Landslide currently assumes that timer interrupts are the only nondeterministic events that influence a kernel's concurrent execution. While this prevents us from finding races related to external input such as disk or network I/O, Landslide is already able to find many types of complicated races by controlling timer-driven thread scheduling.
+Landslide's model is also currently restricted to uniprocessor execution.
+Supporting multiprocessor environments and device driver testing is left to future work.
+% this used to say ", and production kernels"
+
+% TODO: This paragraph can be removed if we're hurting for space
+We also note that, in contrast with conventional stress testing, in which the test program exercises many system calls (in parallel and/or in sequence), Landslide works best with very small test cases.
+Landslide's coverage results from exploring the different scheduling possibilities that arise from a short sequence of system calls.
+If Landslide were used when running a stress test, the resulting state space would be too large to explore feasibly.
+Hence, when working with students, we provided a suite of four test programs, each no longer than 10 lines of code, but carefully written to bring about system call interactions known to be troublesome.
 
