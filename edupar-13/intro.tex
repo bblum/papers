@@ -1,18 +1,22 @@
 \section{Introduction}
 
 Managing parallel computation, whether on thousand-node clusters or on one single-core machine, is often taught by resorting to powerful abstractions that simplify the hardest problems.
-Programming patterns such as divide-and-conquer and fork/join parallelism enable developers to reason about parallel algorithms at a high, abstract level.
-With the advent of massively multicore hardware and distributed systems, however, there is also a need for reasoning about parallelism at lower levels: those of operating system kernels and concurrent systems applications, which are built on (or even below) the abstractions of threads and processes.
-Low-level systems programmers must often reason about parallel code without the convenience of high-level simplifications, and hence are often susceptible to notoriously difficult concurrency errors.
+Programming patterns such as SPMD, divide-and-conquer, and fork/join parallelism enable developers to reason about parallel algorithms at a high, abstract level.
+The user-level libraries and distributed systems that provide these abstractions, in turn, rely on operating system kernels to simplify the hardware and communication mechanisms on which they are built. % garth's
+
+With the advent of massively multicore hardware,
+kernels themselves have increasing hardware concurrency and complexity. % garth's
+% there is also a need for reasoning about parallelism at lower levels: those of operating system kernels and concurrent systems applications, which are built on (or even below) the abstractions of threads and processes. % ben's old text
+Low-level systems programmers must reason about concurrent code without the convenience of high-level simplifications, and hence are often susceptible to notoriously difficult concurrency errors.
 
 In this paper, we describe our experience teaching concurrent programming at the operating systems level to advanced undergraduate students at Carnegie Mellon University (CMU).
-In 15-410, the Operating Systems Design and Implementation class at CMU, students complete an aggressively challenging kernel project, in which they implement threads and processes in code that will boot on real hardware.
-Presented with a kernel specification, called Pebbles~\cite{kspec}, students build a threading and synchronization library that runs in userspace on top of a Pebbles reference kernel in a two-week project, and subsequently, in a 6-week project, write their own kernel implementation.
-During these projects students face very demanding synchronization problems, including how to implement locking primitives and how to coordinate a parent and a child process that are exiting simultaneously.
-Finally, in another two-week project, students implement a small extension to their Pebbles kernel. This project changes every semester, and in the past has included extending the kernel to be able to hypervise other kernels and to be able to run in SMP systems.
+In 15-410, the Operating Systems Design and Implementation class at CMU, students complete an aggressively low-level kernel project, in which they implement threads and processes to boot on real hardware.
+Presented with a kernel specification, called Pebbles~\cite{kspec}, students build a threading and synchronization library that runs in userspace on top of a Pebbles reference kernel in a two-week project, and subsequently, in a six-week project, write their own multi-threaded kernel implementation.
+During these projects students face demanding synchronization problems, including how to implement locking primitives and how to coordinate a parent and child process that exit simultaneously.
+Finally, in another two-week project, students implement a small extension to their Pebbles kernel. This project changes every semester, and in the past has included extending the kernel to be able to hypervise other kernels and to be able to run on SMP systems.
 
-As we ask our students to write more and more difficult concurrent code in the same semester, we want to ease their burden of debugging concurrency errors, which often consumes a significant fraction of their time during the projects.
-However, we also want to avoid compromising the complexity and difficulty of the project's concurrency challenges. % how to say... "because it's the most valuable thing we do"
+As we ask our students to write more and more difficult concurrent code in one semester, we want to ease their burden of debugging concurrency errors, which often consumes a significant fraction of their time.
+However, we also want to avoid compromising the complexity, hardware fidelity, and learning experience of the project.
 Hence, we have built Landslide~\cite{landslide}, a tool that uses systematic exploration~\cite{verisoft} to force kernel threads into execution sequences that expose concurrency bugs.
 We present our experience sharing a prototype of Landslide with volunteering students who used it to find bugs in their own code, and discuss the possibility for integrating it as a main component of the 15-410 curriculum.
 

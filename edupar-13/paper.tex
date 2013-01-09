@@ -423,7 +423,22 @@ Pittsburgh, PA, USA\\
 
 \begin{abstract}
 % The abstract goes here. DO NOT USE SPECIAL CHARACTERS, SYMBOLS, OR MATH IN YOUR TITLE OR ABSTRACT.
-we are great
+In Carnegie Mellon University's undergraduate operating systems course,
+students learn how to write correct and principled concurrent code through
+a series of low-level programming projects.
+The curriculum includes implementing hardware device drivers and a user-level
+threading library, and culminates in a six-week long project in which students
+build from the ground up a fully-preemptible, UNIX-like kernel that can run
+on real hardware.
+We present Pebbles, our kernel architecture, outline the projects built around it,
+and discuss what our students are able to achieve in this framework.
+
+However, we also plan to expand the scope of these time-limited projects to match the growing trends of complex memory semantics and massive multicore in modern processors.
+For this to be feasible, we hope to reduce the time students need to spend debugging
+by introducing new testing tools.
+To this end, we present Landslide, a systematic testing tool which offers a more principled approach than stress testing for finding concurrency errors.
+We report on our preliminary experience working with students using Landslide to find previously-overlooked bugs in their own code, and discuss future methods for making Landslide more accessible to struggling students.
+
 \end{abstract}
 
 \begin{IEEEkeywords}
