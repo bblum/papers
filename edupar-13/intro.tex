@@ -13,7 +13,7 @@ In this paper we describe our experience teaching concurrent programming at the 
 In 15-410, the Operating Systems Design and Implementation class at CMU, students complete an aggressively low-level kernel project, which runs on real hardware, in which they implement threads and processes.
 Presented with a kernel specification, called Pebbles~\cite{kspec}, students build a threading and synchronization library that runs in user space on top of a Pebbles-compliant kernel in a two-week project, and subsequently, in a six-week project, write their own multi-threaded kernel implementation.
 During these projects students face demanding synchronization problems, including how to implement locking primitives and how to coordinate the possibly-simultaneous exiting of parent and child processes.
-Finally, in another two-week project, students implement a small extension to their Pebbles kernel. This project changes every semester, and in the past has included extending their kernel serve as a hypervisor, or to support symmetric multiprocessing.
+Finally, in another two-week project, students implement a small extension to their Pebbles kernel. This project changes every semester, and in the past has included extending their kernel to serve as a hypervisor, or to support symmetric multiprocessing.
 
 As we ask our students to write more and more difficult concurrent code in one semester, we wish to ease their burden of debugging concurrency errors, which often consumes a significant fraction of their time.
 However, we also want to avoid compromising the complexity, hardware fidelity, and learning experience of the project set.
