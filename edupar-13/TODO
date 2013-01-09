@@ -1,0 +1,29 @@
+== Always ==
+
+grep TODO *.tex
+
+== "In progress"
+
+[Dave] finish work on "Grading" (esp. hurdle)
+[Dave] pending clarifications in "Landslide" (when Ben is "done")
+
+== Evaluation ==
+
+[Dave] amass sloc numbers
+[Dave] 410 successes: how many groups do P4?
+[Dave] 410 successes: how many groups got "somewhere real" on SMP4?
+[???] Boot kernels on real hardware?
+
+== Future Work ==
+
+[Garth] ...
+
+== Related Work ==
+
+We don't have one?
+
+Other approaches (NACHOS, Harvard)
+
+== Trim? ==
+
+ * "configuring DPOR with ignore_sym" paragraphs
