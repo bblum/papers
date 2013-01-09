@@ -517,9 +517,38 @@ of the kernel project.
 %=== Grading ===%
 \subsection{Grading}
 
-Pebbles kernels are graded in three ways: passing the ``hurdle'', running an automated test suite, and undergoing manual inspection by course staff.
+Pebbles kernels are graded through a combination
+of three methods:
+performance on a test suite,
+compliance with ``hurdle criteria,''
+and detailed code review by a member of the course staff.
+
+\subsubsection{Automated tests}
+
+While developing their code, students uncover both bugs
+and design misunderstandings by running test code we
+provide.
+%Some tests are simple, exercising one feature or condition
+%(e.g., allocating and freeing a large amount of memory),
+%while other tests exercise a mix of kernel features
+%simultaneously (creating and destroying processes,
+%some of which do I/O while others handle or are killed
+%by various exceptions) over an extended period of time.
+The test suite is a number of user-space programs which test
+functionality ranging from the basic process lifecycle, to robustness
+against corner-case security vulnerabilities, to long-term stability
+under large stress tests.
+%
+When students submit their kernels,
+we use an automated testing harness to
+run a superset of the public test suite.
+%
+Of course, due to the nondeterministic nature of many common bugs in student code, these tests can only provide a rough estimate of a submission's correctness, rather than verifying it with certainty.
+Nevertheless, performance on these tests constitutes 30\% of the kernel project's grade.
+(This hit-or-miss nature motivated our work on Landslide.)
 
 \subsubsection{Hurdle}
+
 %% TODO: Dave, write about the criteria (and what it means, i.e., "getting a shell up and running, getting processes to exit")
 The hurdle is a set of criteria that Pebbles implementations must meet to be considered sastisfactory
 (TODO: what are they?).
@@ -533,12 +562,6 @@ learning experiences are obtained by solving the
 hard problems,
 which turn up at the end of the kernel implementation.
 The hurdle criteria constitute 50\% of the kernel project's grade.
-
-\subsubsection{Automated tests}
-We run submitted kernels in an automated testing harness. The test suite is a number of userspace programs which test functionality ranging from the basic process lifecycle, to robustness against corner-case security vulnerabilities, to long-term stability under large stress tests.
-Of course, due to the nondeterministic nature of many common bugs in student code, these tests can only provide a rough estimate of a submission's correctness, rather than verifying it with certainty.
-Nevertheless, performance on these tests constitutes 30\% of the kernel project's grade.
-(This hit-or-miss nature motivated our work on Landslide.)
 
 \subsubsection{Manual inspection}
 Finally, both to make up for the tests' incompleteness and to provide personalized human feedback, each student kernel is manually graded by a member of course staff.
