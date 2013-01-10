@@ -5,8 +5,11 @@ grep TODO *.tex
 == "In progress"
 
 [Dave] finish work on "Grading" (esp. hurdle)
-[Dave] pending clarifications in "Landslide" (when Ben is "done")
+[Dave] pending clarifications in "Landslide"
 [Dave] parse Garth's PDF files
+
+[Ben] SMP4 section
+[Ben] Future work section needs to be 30%-50% shorter
 
 == Evaluation ==
 
@@ -15,16 +18,17 @@ grep TODO *.tex
 [Dave] 410 successes: how many groups got "somewhere real" on SMP4?
 [???] Boot kernels on real hardware?
 
-== Future Work ==
-
-[Garth] ...
-
 == Related Work ==
 
 We don't have one?
 
 Other approaches (NACHOS, Harvard)
 
-== Trim? ==
+== Trim? (ordered by ease & unimportance) ==
 
- * "configuring DPOR with ignore_sym" paragraphs
+- DPOR sentence and citation
+- Data race justification paragraph (and tsan citation)
+- I guess we could not cite dBug or demeter
+- Landslide-friendly test characteristics
+- Write 410 limitations section in fewer sentences
+- The 410 system call table if *absolutely necessary*
