@@ -2,6 +2,11 @@
 
 grep TODO *.tex
 
+== Readers ==
+
+Jiri
+Roger Dannenberg
+
 == "In progress"
 
 [Dave] finish work on "Grading" (esp. hurdle)
@@ -17,10 +22,13 @@ grep TODO *.tex
 [Dave] 410 successes: how many groups do P4?
 [Dave] 410 successes: how many groups got "somewhere real" on SMP4?
 [???] Boot kernels on real hardware?
+[Dave] in grading section, could say something about where students typically "lose points"
 
 == Related Work ==
 
-We don't have one?
+Ben says: My vote would be to write one paragraph in the introduction,
+along the lines of "Compared to OS courses at other universities[1][2],
+Pebbles offers an experience unique in the following ways:".
 
 Other approaches (NACHOS, Harvard)
 
