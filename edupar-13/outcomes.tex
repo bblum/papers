@@ -6,13 +6,14 @@
 
 \subsection{Evaluating Landslide}
 
-We evaluated Landslide in two ways: first, by instrumenting two kernels we were familiar with to measure time spent to find different races, and second, by meeting with students of 15-410 in the Spring 2012 semester, before they submitted their kernel for grading, to see if they could find bugs on their own with Landslide.
+We evaluated Landslide in two ways: first, by instrumenting two prior student kernels to measure the exploration time needed to find different races, and second, by meeting with current students of 15-410 in the Spring 2012 semester, before they submitted their kernel for grading, to see if they could find bugs on their own with Landslide.
 
 We instrumented one kernel written by an author in a previous year, and also one kernel the same author manually graded as a teaching assistant.
-We configured Landslide to search for five complicated already-known race conditions.
+We configured Landslide to search for five complicated well-known race conditions.
 In addition to finding all five races, Landslide also found a sixth previously unknown race in said author's own kernel.
-Using decision points only on calls to \x{mutex_lock} and on voluntary reschedules, Landslide found each of the six bugs in 11 to 57 seconds, executing between 1 and 377 distinct interleavings for each.
+Using additional decision points only on calls to \x{mutex_lock}, Landslide found each of the six bugs in 11 to 57 seconds on a 2.6 GHz Xeon server, executing between 1 and 377 distinct interleavings for each.
 
 In the user study of current students, we found that students spent on average 119 minutes (60 to 158) on the required instrumentation, and a further 36 minutes (10 to 60) refining Landslide's search.
 Of the four groups who finished the required part, all four found previously unknown bugs in their kernels: two races and two deterministic errors.
 These bugs manifested as infinite loops, a kernel panic, and a use-after-free.
+Despite wishing the instrumentation were easier, the students reported that they found working with Landslide rewarding.
