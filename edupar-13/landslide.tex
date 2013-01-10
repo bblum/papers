@@ -14,16 +14,39 @@ Landslide is an experimental tool for helping kernel authors find and debug conc
 It is based on the technique of systematic exploration~\cite{verisoft}, a way of exploring the state space of different possible thread interleavings in a concurrent system.
 It follows in the footsteps of related tools such as CHESS~\cite{chess}, dBug~\cite{dbug-ssv}, and DeMeter~\cite{demeter}, but is the first tool we know of to apply systematic exploration in a kernel development environment.
 
-
-Landslide is implemented as a module for Simics, the simulator our students use as an execution environment for their kernels. Simics can load Landslide while booting a student's kernel, and calls into Landslide once per simulated instruction and once per simulated memory access.
-Landslide uses this information to update its internal representation of the kernel's state, which it in turn uses to decide how to control the kernel's execution.
+Conceptually,
+Landslide is implemented as follows.
+Students annotate their kernel code so Landslide knows
+which kernel thread is currently running.
+After Landslide has run one kernel thread for some time,
+it feeds artificial clock interrupts to the kernel
+to force a switch to the thread Landslide wishes to execute.
+As the executing thread completes each instruction,
+Landslide applies multiple bug-detection predicates to
+the kernel's state to detect
+illegal heap references,
+deadlock, livelock, infinite loops, and kernel panics.
+If a given test scenario runs to completion according
+to one pattern of thread switches,
+Landslide rewinds the kernel's state to some previous time
+and executes forward according to a different thread interleaving.
+In theory,
+by forcing a thread switch after every non-scheduler instruction,
+Landslide could apply its bug-detection predicates to every reachable
+execution state.
+Because this would require prohibitive time to complete,
+in practice Landslide uses a variety of techniques to
+thread-switch less often and to avoid repeating
+bug-equivalent execution paths.
+%Landslide is implemented as a module for Simics, the simulator our students use as an execution environment for their kernels. Simics can load Landslide while booting a student's kernel, and calls into Landslide once per simulated instruction and once per simulated memory access.
+%Landslide uses this information to update its internal representation of the kernel's state, which it in turn uses to decide how to control the kernel's execution.
 In this section we give an overview of Landslide's design and interface, and point out the annotations students need to provide to make Landslide work with their own code.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Example}
 % TODO: if necessary, this can be not its own section
 
-Figure~\ref{fig:threadfork} shows a timer-dependent bug common in many Pebbles implementations which we will use as a running example in the rest of this section.
+Figure~\ref{fig:threadfork} shows code containing a timer-dependent bug common in many Pebbles implementations which we will use as a running example in the rest of this section.
 This code is a simplified implementation of the \x{thread_fork} system call: it constructs data structures necessary for the new thread, then asks the scheduler to make the new thread runnable, then returns its assigned thread ID.
 However, if the timer preempts execution at line~\ref{line:hax}, the child thread might run long enough to invoke \x{exit}, causing \x{child} to become a dangling pointer.
 
@@ -45,7 +68,7 @@ int thread_fork() {
 \subsection{Testing Mechanism}
 
 Systematic exploration, Landslide's mechanism for testing many different concurrent scenarios, uses the idea of an {\em execution tree} to enumerate all possible thread interleavings of a specific test. These interleavings are defined around {\em decision points}, which intuitively indicate points during execution at which a preemption could cause different behaviour to arise.
-Searching with few decision points results in coarser-grained interleavings, shorter test execution, and less likelihood of finding unexpected bugs; searching with more results in the opposite.
+Searching with few decision points results in coarser-grained interleavings, faster test completion, and less likelihood of finding unexpected bugs; searching with more decision points results in the opposite.
 The primary advantage of systematic testing is the ability to force execution sequences that might be very rare in simple repeated testing.
 
 Landslide ``explores'' decision trees by controlling the kernel's execution in two ways.
