@@ -1,7 +1,37 @@
 \section{Future Work and Conclusion}
 \label{sec:future}
 
-we did stuff
+With the radical changes in computer architecture induced by the switch from speed through faster cycle time to speed through more cores, and more complex memory system semantics, operating systems kernels are experiencing rapid change and effective education of kernel
+programmers becomes much more labor intensive, especially in terms of concurrency error debugging, or much less detailed and hardware accurate.
+
+Carnegie Mellon University's undergraduate operating systems course has a tradition of requiring students to tackle highly hardware accurate kernel design and development.
+Rather than compromise the low level detail that our students overcome in a semester, as we include more hardware concurrency and the resulting complexity, we are experimenting with tools that simplify some of the most time consuming changes challenges our students face.
+
+Landslide is a tool that integrates into the Simics x86 hardware simulator and drives repeated execution of a given test with a unique scheduling of context switches on each execution, known as systematic testing, ensuring that extremely rare execution sequencings can be
+experienced by the test in a short period of time relative to simple repeated execution of tests, known as stress testing.
+
+Landslide automates a minimal set of context switch points, known as decision points, given annotations that expose invocation of fundamental operating system kernel operations, and offers student users additional annotations to add, and refine, decision points to focus
+exploration on user guided aspects of their kernels.
+
+Experiments with Landslide on single-core multi-threaded kernels, both completed in prior course offerings and during an ongoing course offering show promising results.
+Students were able to find unknown and unexpected bugs after a couple of hours of tool learning and kernel annotating.
+
+With this promising result, and our recent experience with a quad core symmetric multi-processor kernel extension project, we believe that systematic testing of kernel code can be useful for helping our students accomplish more complex concurrent hardware in the same time and effort.
+
+Landslide needs to be extended to cope with the multiple scheduler queues that occur in multi-core hardware, however, much of this can be managed with slight variations of the annotations student provide, naming the core a thread will runs on, for example.
+
+To fully realize this benefit Landslide usability should be improved.
+For example, our class notes communicate execution sequencing with a tabular representation of thread execution; Landslide's presentation of a buggy sequence could be tailored to match our teaching methodology.
+
+Tool usability is greatly improved by lowering the start up effort required of each student.
+Much of the annotation our students must add to their kernel could be eliminated if the course project specification required prescribed names for prescribed functions, so Landslide could easily identify what the student kernel is doing.
+There is a downside to doing too much of this, as the design of kernel interfaces is an important part of the course project, and prescribed templates could constrain the design space too much.
+
+Pebbles and Landslide have lots of future challenges as we introduce memory systems with complex consistency rules exposed to the kernel programmer, or decide to explore performance issues with data non-locality and sharing patterns.
+
+Landslide utility is also not restricted to Pebbles.
+It could be extracted from Simics and embedded in a virtual machine platform, to begin the transition to supporting production operating system kernel development.
+
 
 \section*{Acknowledgments}
 
