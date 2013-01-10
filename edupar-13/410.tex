@@ -570,13 +570,12 @@ for a long period without crashing.
 
 \item Robust code often requires a different structure
 than a ``usually works'' solution.
-The most straightforward way for an exiting task to
-convey its exit status to its parent is for it to
-\x{malloc()} an exit-status blob and enqueue it for
-later processing by the parent.
-However, this design suffers from a ``terminal irony'':
+It is easy to write task-exit code which
+needs to allocate memory in order to notify its
+parent that it has exited.
+However, such designs suffer from ``terminal irony'':
 a program wishing to exit,
-which will free up kernel memory,
+which would free up kernel memory,
 is unable to do so if kernel memory has been exhausted.
 
 \end{itemize}
