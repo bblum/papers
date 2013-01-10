@@ -40,6 +40,7 @@ thread-switch less often and to avoid repeating
 bug-equivalent execution paths.
 %Landslide is implemented as a module for Simics, the simulator our students use as an execution environment for their kernels. Simics can load Landslide while booting a student's kernel, and calls into Landslide once per simulated instruction and once per simulated memory access.
 %Landslide uses this information to update its internal representation of the kernel's state, which it in turn uses to decide how to control the kernel's execution.
+
 In this section we give an overview of Landslide's design and interface, and point out the annotations students need to provide to make Landslide work with their own code.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
