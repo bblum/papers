@@ -6,10 +6,12 @@ grep TODO *.tex
 
 Jiri
 Roger Dannenberg
+nwf
 
-== "In progress"
+== "In progress" ==
 
 [Dave] parse Garth's PDF files
+[Dave] Fix broken citations in II-B simics section
 
 [Ben] SMP4 section
 [Ben] Future work section needs to be 30%-50% shorter
@@ -33,8 +35,10 @@ Other approaches (NACHOS, Harvard)
 == Trim? (ordered by ease & unimportance) ==
 
 - DPOR sentence and citation
+- Hurdle criteria section is now too long
 - Data race justification paragraph (and tsan citation)
 - I guess we could not cite dBug or demeter
+- Can make tree picture smaller
 - Landslide-friendly test characteristics
 - Write 410 limitations section in fewer sentences
 - The 410 system call table if *absolutely necessary*
