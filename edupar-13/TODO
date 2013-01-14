@@ -34,6 +34,7 @@ Other approaches (NACHOS, Harvard)
 
 == Trim? (ordered by ease & unimportance) ==
 
+- The first two paragraphs of the conclusion are redundant
 - DPOR sentence and citation
 - Hurdle criteria section is now too long
 - Data race justification paragraph (and tsan citation)
