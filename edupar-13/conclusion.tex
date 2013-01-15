@@ -22,7 +22,7 @@ We believe some annotations can be automatically detected;
 for example, rather than requiring students to indicate if their kernel has a mechanism for disabling preemption apart from disabling interrupts, Landslide could detect when a timer interrupt is received but doesn't induce a context switch.
 Other annotations, such as \x{tell_landslide_thread_runnable()}, could be replaced by mandating that the kernel's code paths in such cases include a function with a predetermined name.
 Landslide already automatically instruments the memory allocator by detecting function names in the starter code; similar could be done for thread lifecycle and context switch events if their APIs were specified.
-However, prescribing such templates has the downside of constrain the project's design space.
+However, prescribing such templates has the downside of constraining the project's design space.
 As open-ended decisions of interface design are important to the course philosophy, we foresee a tradeoff: in some cases, fundamental design challenges may be the cost for increasing Landslide's usability to enable teaching more advanced concepts such as SMP.
 
 \shortversion{}{
