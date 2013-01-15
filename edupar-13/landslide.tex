@@ -98,7 +98,8 @@ We also provide an interface for helping Landslide further reduce the state spac
 decision points only from certain components of the kernel, which we discuss in Section~\ref{sec:focusing}.
 
 \begin{figure}[t]
-\includegraphics[width=0.48\textwidth]{threadfork/threadfork.pdf}
+	\centering
+\includegraphics[width=0.42\textwidth]{threadfork/threadfork.pdf}
 \caption{The state space of possible thread interleavings can be viewed as an {\em execution tree}.
 Landslide uses timer interrupts to force different threads to run as it explores this tree.
 If a kernel has concurrency errors, they will show up in some branches, but not others.
