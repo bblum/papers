@@ -18,16 +18,18 @@ Due to the open-ended design problems students solve in their kernels, Landslide
 However, by the very nature of having enough spare time to volunteer, the selection of students we worked with to use Landslide was necessarily biased towards the ``top of the class''.
 Though our experiments with these students show promising results, we need to reduce Landslide's annotation burden as much as possible to make it useful for struggling students as well.
 
-% some things we can automate -- inspired by automatic malloc instrumentation -- but some things require changing the spec
+We believe some annotations can be automatically detected;
+for example, rather than requiring students to indicate if their kernel has a mechanism for disabling preemption apart from disabling interrupts, Landslide could detect when a timer interrupt is received but doesn't induce a context switch.
+Other annotations, such as \x{tell_landslide_thread_runnable()}, could be replaced by mandating that the kernel's code paths in such cases include a function with a predetermined name.
+Landslide already automatically instruments the memory allocator by detecting function names in the starter code; similar could be done for thread lifecycle and context switch events if their APIs were specified.
+However, prescribing such templates has the downside of constrain the project's design space.
+As open-ended decisions of interface design are important to the course philosophy, we foresee a tradeoff: in some cases, fundamental design challenges may be the cost for increasing Landslide's usability to enable teaching more advanced concepts such as SMP.
 
-\subsubsection{Automatic instrumentation}
-TODO
-
-\subsubsection{Mandating API names}
-For example, rather than providing \x{tell_landslide_thread_runnable()}, we could mandate that the scheduler's code path to making a thread runnable include a function with a specified name.
-
-\subsubsection{Mandating design}
-TODO
+\shortversion{}{
+Additionally, various improvements in Landslide's interface could increase its accessibility. 
+For example, our class notes communicate execution sequencing with a tabular representation of thread execution; Landslide's presentation of a buggy sequence could be tailored to match our teaching methodology.
+Landslide could also be extended with a mechanism for minimizing execution traces after a buggy one is found, to more accurately reflect which context switches are most relevant to the bug at hand.
+}
 
 % tighten
 % Landslide is a tool that integrates into the Simics x86 hardware simulator and drives repeated execution of a given test with a unique scheduling of context switches on each execution, known as systematic testing, ensuring that extremely rare execution sequencings can be experienced by the test in a short period of time relative to simple repeated execution of tests, known as stress testing.
@@ -48,15 +50,14 @@ TODO
 % Add: "However, ... top students vs struggling students" transition sentence
 % Replace following two paragraphs with a new one
 
-Landslide needs to be extended to cope with the multiple scheduler queues that occur in multi-core hardware, however, much of this can be managed with slight variations of the annotations student provide, naming the core a thread will runs on, for example.
+% Landslide needs to be extended to cope with the multiple scheduler queues that occur in multi-core hardware, however, much of this can be managed with slight variations of the annotations student provide, naming the core a thread will runs on, for example.
 
-To fully realize this benefit Landslide usability should be improved.
-For example, our class notes communicate execution sequencing with a tabular representation of thread execution; Landslide's presentation of a buggy sequence could be tailored to match our teaching methodology.
+% To fully realize this benefit Landslide usability should be improved.
 
 % this should all turn into a bulleted list of improvement areas
-Tool usability is greatly improved by lowering the start up effort required of each student.
-Much of the annotation our students must add to their kernel could be eliminated if the course project specification required prescribed names for prescribed functions, so Landslide could easily identify what the student kernel is doing.
-There is a downside to doing too much of this, as the design of kernel interfaces is an important part of the course project, and prescribed templates could constrain the design space too much.
+% Tool usability is greatly improved by lowering the start up effort required of each student.
+% Much of the annotation our students must add to their kernel could be eliminated if the course project specification required prescribed names for prescribed functions, so Landslide could easily identify what the student kernel is doing.
+% There is a downside to doing too much of this, as the design of kernel interfaces is an important part of the course project, and prescribed templates could constrain the design space too much.
 
 % condense below two into a single sentence
 
