@@ -13,18 +13,21 @@ In this paper we describe our experience teaching concurrent programming at the 
 In 15-410, the Operating Systems Design and Implementation class at CMU, students complete an aggressively low-level kernel project, which runs on real hardware, in which they implement threads and processes.
 Presented with a kernel specification, called Pebbles~\cite{kspec}, students build a threading and synchronization library that runs in user space on top of a Pebbles-compliant kernel in a two-week project, and subsequently, in a six-week project, write their own multi-threaded kernel implementation.
 During these projects students face demanding synchronization problems, including how to implement locking primitives and how to coordinate the possibly-simultaneous exiting of parent and child processes.
-Finally, in another two-week project, students implement a small extension to their Pebbles kernel. This project changes every semester, and in the past has included extending their kernel to serve as a hypervisor, or to support symmetric multiprocessing.
+Finally, in another two-week project, students implement an extension to their Pebbles kernel. This project changes every semester, and recently has involved supporting symmetric multiprocessing.
+% in the past has included extending their kernel to serve as a hypervisor, or to support symmetric multiprocessing.
 
-In comparison with other educational kernels,
+In comparison with other educational kernel projects,
 % such as Pintos~\cite{pintos} and Xv6~\cite{xv6},
-Pebbles allows students to design and implement their systems ``from the ground up''.
-At MIT, students study Xv6~\cite{xv6}, a kernel for multiprocessor x86 machines,
-and build their own in a series of labs.
-At Stanford, students build kernels following the Pintos architecture~\cite{pintos}.
-In both courses, students are supplied with starter code which already implements thread lifecycle, stack management, and synchronization primitives.
-In 15-410, we give starter code only for the machine boot sequence and for dynamic memory allocation, leaving students to design threading and scheduling primitives from scratch.
+Pebbles focuses more on ground-up design than on teaching a broad feature-set.
+% Pebbles allows students to design and implement their systems ``from the ground up.''
+At Stanford, students build kernels following the Pintos architecture~\cite{pintos}, and at MIT, following the Xv6/JOS architecture~\cite{xv6}.
+In both courses, student kernels support multiprocessor execution;
+however, students are also supplied with starter code that already implements thread creation/destruction, context switching, and locking primitives.
+In 15-410, we give starter code only for the machine boot sequence and for a standard library including dynamic memory allocation, leaving students to design threading and scheduling primitives from scratch.
 
-As we ask our students to write more and more difficult concurrent code in one semester, we wish to ease their burden of debugging concurrency errors, which often consumes a significant fraction of their time.
+% As we ask our students to write more and more difficult concurrent code in one semester,
+As we plan to incorporate SMP into 15-410's curriculum, expanding the challenges our students face in one semester,
+we wish to ease their burden of debugging concurrency errors, which often consumes a significant fraction of their time.
 However, we also want to avoid compromising the complexity, hardware fidelity, and learning experience of the project set.
 Hence, we have built Landslide~\cite{landslide}, a tool that uses systematic exploration~\cite{verisoft} to force kernel threads to take execution paths that expose concurrency bugs.
 We present our experience sharing a prototype of Landslide with volunteering students who used it to find bugs in their own code, and discuss the possibility for integrating it as a main component of the 15-410 curriculum.
