@@ -12,7 +12,8 @@
 
 Landslide is an experimental tool for helping kernel authors find and debug concurrency errors.
 It is based on the technique of systematic exploration~\cite{verisoft}, a way of exploring the state space of different possible thread interleavings in a concurrent system.
-It follows in the footsteps of related tools such as CHESS~\cite{chess}, dBug~\cite{dbug-ssv}, and DeMeter~\cite{demeter}, but is the first tool we know of to apply systematic exploration in a kernel development environment.
+It follows in the footsteps of related tools such as
+CHESS~\cite{chess} and dBug~\cite{dbug-ssv}, but is the first tool we know of to apply systematic exploration in a kernel development environment.
 
 Conceptually,
 Landslide is designed as follows.
@@ -83,8 +84,13 @@ Landslide also automatically identifies decision points at voluntary reschedules
 
 Of course, additional decision points are necessary to expose more subtle race conditions. We provide an interface for adding new decision points to expand the state space, described in Section~\ref{sec:decision}.
 In order to cope with the exponentially-growing nature of state spaces with many decision points,
+\shortversion{
+we also provide an interface for making Landslide consider
+}{
 Landslide uses the Dynamic Partial Order Reduction algorithm~\cite{dpor} to identify and prune redundant thread interleavings, the specifics of which are beyond the scope of this educational work~\cite{landslide}.
-We also provide an interface for helping Landslide further reduce the state space by considering decision points only from certain components of the kernel, which we discuss in Section~\ref{sec:focusing}.
+We also provide an interface for helping Landslide further reduce the state space by considering
+}
+decision points only from certain components of the kernel, which we discuss in Section~\ref{sec:focusing}.
 
 \begin{figure}[t]
 \includegraphics[width=0.48\textwidth]{threadfork/threadfork.pdf}
