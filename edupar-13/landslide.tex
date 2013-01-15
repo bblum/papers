@@ -15,21 +15,22 @@ It is based on the technique of systematic exploration~\cite{verisoft}, a way of
 It follows in the footsteps of related tools such as CHESS~\cite{chess}, dBug~\cite{dbug-ssv}, and DeMeter~\cite{demeter}, but is the first tool we know of to apply systematic exploration in a kernel development environment.
 
 Conceptually,
-Landslide is implemented as follows.
-Students annotate their kernel code so Landslide knows
+Landslide is designed as follows.
+Students annotate their code so Landslide knows
 which kernel thread is currently running.
-After Landslide has run one kernel thread for some time,
-it feeds artificial clock interrupts to the kernel
-to force a switch to the thread Landslide wishes to execute.
-As the executing thread completes each instruction,
-Landslide applies multiple bug-detection predicates to
-the kernel's state to detect
-illegal heap references,
-deadlock, livelock, infinite loops, and kernel panics.
-If a given test scenario runs to completion according
+After one kernel thread has run for some time,
+Landslide triggers artificial clock interrupts
+to force a new thread to interleave with the current one.
+When a test program finishes execution according
 to one pattern of thread switches,
-Landslide rewinds the kernel's state to some previous time
-and executes forward according to a different thread interleaving.
+Landslide rewinds the kernel's state
+and resumes the test according to a different thread interleaving.
+After each instruction,
+Landslide applies several bug-detection predicates to
+the kernel's state to detect
+illegal heap accesses,
+deadlock, infinite loops, and panics.
+\shortversion{}{
 In theory,
 by forcing a thread switch after every non-scheduler instruction,
 Landslide could apply its bug-detection predicates to every reachable
@@ -38,6 +39,7 @@ Because this would require prohibitive time to complete,
 in practice Landslide uses a variety of techniques to
 thread-switch less often and to avoid repeating
 bug-equivalent execution paths.
+}
 %Landslide is implemented as a module for Simics, the simulator our students use as an execution environment for their kernels. Simics can load Landslide while booting a student's kernel, and calls into Landslide once per simulated instruction and once per simulated memory access.
 %Landslide uses this information to update its internal representation of the kernel's state, which it in turn uses to decide how to control the kernel's execution.
 
@@ -97,19 +99,26 @@ This tree shows the bug from Figure~\ref{fig:threadfork}, with operations from t
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Identifying Bugs}
 
-Landslide has several checks that detect when a bug arises. It can identify kernel panics, use-after-free accesses (and other memory errors such as double-free and memory leaks), and deadlocks.
+Landslide has several checks that detect when a bug arises. It can identify kernel panics, use-after-free accesses (and other heap-related errors such as double-free and memory leaks), and
+\shortversion{
+deadlocks, and also includes a heuristic check for infinite loops and livelock.
+}{
+deadlocks.
 Landslide can optionally also check heuristically for infinite loops and livelock. This is done by comparing the length of the current interleaving against previously-explored ones: if the current interleaving has been running disproportionately longer (by a large arbitrary constant factor), we assume the kernel is stuck.
 We have not found this technique to erroneously report false positives, although it may fail to trigger when it ought to if too few previous interleavings have been tested to make a reliable comparison.
+}
 
 When Landslide identifies a bug, it outputs a {\em decision trace}, an example of which is shown in Figure~\ref{fig:trace}.
 The trace reports what kind of bug was detected (for uses-after-free, it also prints stack traces to show when the block was allocated and freed), and also reports each decision point in the current interleaving: which thread was running, a trace of its stack when it was switched away from, and the thread that Landslide caused to preempt it.
 With this trace, the student can better understand the concurrent execution that led to the bug.
 
-Note that our use of the term ``race condition'' refers to concurrency errors in general, a category that includes data races, atomicity violations, and nondeterministic deadlocks.
+Note that our use of the term ``race condition'' throughout this paper refers to concurrency errors in general, a category that includes data races, atomicity violations, and nondeterministic deadlocks.
 In contrast with analyses that directly detect data races~\cite{tsan}, Landslide does not identify bugs at suspicious memory accesses, but rather detects failure conditions that can arise from many different types of errors.
+\shortversion{}{
 In general,
 % with false-negative bug detection,
 a kernel might contain a buggy behaviour that Landslide could overlook (i.e., a false negative). However (except in the case of heuristic infinite loop detection), when Landslide does identify a bug, the student can be sure that an error exists.
+}
 
 \newcommand\bug[1]{\hilight{red}{#1}}
 \newcommand\decision[1]{\bfseries \hilight{olivegreen}{#1}}
@@ -185,13 +194,17 @@ We recommend inserting it into concurrency primitives, such as at the start of \
 
 The strategy we describe above may cause Landslide to identify decision points in unrelated parts of the kernel, such as when accessing mutexes in unrelated and/or already-trusted system calls.
 We provide interface options in \x{config.landslide} for the student to view currently identified decision points and to selectively eliminate them.
+Suppose a student were testing thread death and reaping, and wanted decision points to appear in \x{wait} and \x{vanish} but not if they're also associated with virtual memory operations.
+They should write \x{within_function wait vanish} and \x{without_function} \x{destroy_address_space}.
+The \x{within_function} directive requires that at least one of the specified functions shall be on the call stack when decision points are identified, and \x{without_function} requires the opposite.
+
 % First, the student writes ``\x{DECISION_INFO_ONLY}'' to make Landslide run only one interleaving and then print all decision points instead of continuing to explore.
 % In this file, students can write ``\x{within_function} \x{foo}'' to whitelist function \x{foo}, and ``\x{without_function} \x{bar}'' to blacklist function \x{bar}.
-In this file, students can use the ``\x{within_function}'' and ``\x{without_function}'' directives to require that given functions are or are not on the call stack when decision points are identified.
+% In this file, students can use the ``\x{within_function}'' and ``\x{without_function}'' directives to require that given functions are or are not on the call stack when decision points are identified.
 % make Landslide ignore any decision points that don't arise from the execution of specific functions.
-For example, if testing thread death and reaping, the student should write \x{within_function exit} and \x{within_function} \x{wait}, and also
-(assuming they don't care about the virtual memory operations associated with \x{exit})
-\x{without_function} \x{destroy_address_space}.
+% For example, if testing thread death and reaping, the student should write \x{within_function exit} and \x{within_function} \x{wait}, and also
+% (assuming they don't care about the virtual memory operations associated with \x{exit})
+% \x{without_function} \x{destroy_address_space}.
 
 % Additionally, the student may configure Landslide's state space reduction to ignore certain memory locations.
 % DPOR's analysis requires a memory independence relation between thread transitions; the more transitions are independent from each other, the more reduction can be achieved.
@@ -210,8 +223,7 @@ Landslide's model is also currently restricted to uniprocessor execution.
 Supporting multiprocessor environments and device driver testing is left to future work.
 % this used to say ", and production kernels"
 
-% TODO: This paragraph can be removed if we're hurting for space
-We also note that, in contrast with conventional stress testing, in which the test program exercises many system calls (in parallel and/or in sequence), Landslide works best with very small test cases.
+In contrast with conventional stress testing, in which the test program exercises many system calls (in parallel and/or in sequence), Landslide works best with very small test cases.
 Landslide's coverage results from exploring the different scheduling possibilities that arise from a short sequence of system calls.
 If Landslide were used when running a stress test, the resulting state space would be too large to explore feasibly.
 Hence, when working with students, we provided a suite of four test programs, each no longer than 10 lines of code, but carefully written to bring about system call interactions known to be troublesome.
