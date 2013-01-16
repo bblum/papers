@@ -13,9 +13,6 @@ nwf
 [Dave] parse Garth's PDF files
 [Dave] Fix broken citations in II-B simics section
 
-[Ben] SMP4 section
-[Ben] Future work section needs to be 30%-50% shorter
-
 == Evaluation ==
 
 [Dave] amass sloc numbers
@@ -26,20 +23,12 @@ nwf
 
 == Related Work ==
 
-Ben says: My vote would be to write one paragraph in the introduction,
-along the lines of "Compared to OS courses at other universities[1][2],
-Pebbles offers an experience unique in the following ways:".
-
 Other approaches (NACHOS, Harvard)
 
 == Trim? (ordered by ease & unimportance) ==
 
-- The first two paragraphs of the conclusion are redundant
-- DPOR sentence and citation
 - Hurdle criteria section is now too long
 - Data race justification paragraph (and tsan citation)
-- I guess we could not cite dBug or demeter
-- Can make tree picture smaller
 - Landslide-friendly test characteristics
 - Write 410 limitations section in fewer sentences
 - The 410 system call table if *absolutely necessary*
