@@ -25,7 +25,7 @@ universities in the U.S.\ and worldwide~\cite{sigcse01:CSaPP}.
 In this section we will discuss the course learning
 objectives,
 outline the programming projects,
-discuss our use of Wind River Simics as the
+discuss our use of Wind River Simics~\cite{simics} as the
 the basic simulation/debugging environment
 and our approaches to grading,
 and close by mentioning current limitations in the scope
@@ -151,7 +151,7 @@ abstractions.
 %% Good rhetoric (below). -- bblum
 One example of this is a semantic gap
 between the library-level \x{thr_create()}
-call, analogous to \x{pthread_create()},
+call (analogous to \x{pthread_create()})
 and the \x{thread_fork} system call provided
 by the underlying kernel,
 which takes no parameters,
@@ -249,13 +249,26 @@ then work on a smaller kernel-extension project
 with various content depending on the semester.
 Past projects have included
 writing a sound card driver,
+a filesystem,
 hibernation (suspend to disk),
 kernel profiling,
-and writing an in-kernel debugger.
-Two recent, more aggressive projects have been
+and an in-kernel debugger.
+Two recent, more aggressive, projects have been
 adding paravirtualization so that their kernels
 can host guest kernels and
 addding multi-processor support to their single-processor kernels.
+
+In the multi-processor project, students extended their kernels to schedule multiple threads at once on up to eight cores.
+We provided base code for determining the system's number of CPUs, for booting the application processors (APs), and for sending inter-processor interrupts (IPIs).
+Students needed to design a way to synchronize removing virtual memory mappings in the TLB,
+to implement moving threads between processors,
+and
+to redesign their scheduler's locking primitives to account for the fact that disabling interrupts on a CPU no longer necessarily prevents concurrent accesses.
+To allow struggling groups to make progress on the project without solving every synchronization challenge, we allowed the use of a ``big kernel lock'', and rewarded groups according to how little they needed to use it.
+Submissions were also graded according to
+correctness of the scheduler and spinlocks,
+stability on a suite of stress tests,
+and the use of IPIs for efficient processor coordination.
 
 %=== Simics ===%
 \subsection{Simics}
@@ -445,14 +458,15 @@ The kernel that students implement consists of twenty-five
 system calls, which are summarized in Figure~\ref{fig:syscalls}.
 %
 The process lifecycle is loosely based on the
-Unix model: \x{fork()}, \x{exec()}, and \x{wait()}.
+Unix model: \x{fork()}, \x{exec()}, \x{wait()},
+and \x{vanish()} (the Pebbles name for \x{exit()}).
 We adopt the Mach~\cite{DBLP:conf/usenix/AccettaBBGRTY86}
 distinction between ``tasks,''
 which are resource containers,
 and threads,
 each of which executes within a single task.
 This partitioning is a different approach from that of
-Plan~9's \x{rfork()} or Linux's \x{clone()},
+Plan~9's \x{rfork()}~\cite{plan9} or Linux's \x{clone()},
 which allow a continuum of sharing between
 identical threads and independent processes,
 at the cost of implementation complexity which we wish to avoid.
@@ -592,7 +606,7 @@ Instead, we require student kernels to pass a
 specified percentage of each segment of the test
 suite to be considered complete.
 Furthermore,
-because the test suit cannot detect certain
+because the test suite cannot detect certain
 structural shortcuts (e.g., papering over a concurrency
 problem by disabling interrupts during \textit{all}
 kernel execution),

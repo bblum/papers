@@ -207,7 +207,7 @@ We recommend inserting it into concurrency primitives, such as at the start of \
 The strategy we describe above may cause Landslide to identify decision points in unrelated parts of the kernel, such as when accessing mutexes in unrelated and/or already-trusted system calls.
 We provide interface options in \x{config.landslide} for the student to view currently identified decision points and to selectively eliminate them.
 If a student were testing thread death and reaping, they might want decision points to appear in \x{wait} and \x{vanish} but not if unrelated virtual memory operations are also in progress.
-They should write \x{within_function wait vanish} and \x{without_function} \x{destroy_address_space}.
+Accordingly, they could write \x{within_function wait vanish} and \x{without_function} \x{destroy_address_space}.
 The \x{within_function} directive requires that at least one of the specified functions shall be on the call stack when decision points are identified, and \x{without_function} requires the opposite.
 
 % First, the student writes ``\x{DECISION_INFO_ONLY}'' to make Landslide run only one interleaving and then print all decision points instead of continuing to explore.
