@@ -4,6 +4,31 @@
 
 \framebox{Some text should go here!}
 
+\newcommand{\mathcols}{\multicolumn{1}{c}{$\downarrow$} & \multicolumn{1}{c}{$M$} & \multicolumn{1}{c}{$\mu$} & \multicolumn{1}{c}{$\sigma$} & \multicolumn{1}{c|}{$\uparrow$} }
+
+\begin{table*}[htb]
+\typeout{Manually banging a table* to 9 points...}
+\fontsize{9}{12}\selectfont
+\centering
+\begin{tabular}{|l|r||r r r r r|r r r r r|} 
+\hline
+Project   & Number    & \multicolumn{5}{c|}{C SLOC} & \multicolumn{5}{c|}{Assembly SLOC} \\
+Type      & Submitted & \mathcols              & \mathcols                     \\
+\hline
+\hline
+Thread libraries & 39 &  491 &  805 &  837 & (225) & 1693   &  29 &  43 & 52.5 & (25.0) & 142 \\
+\hline
+All kernels      & 31 & 2545 & 3408 & 3620 & (824) & 6697   & 107 & 365 &  391 & (198) & 829 \\
+\hline
+On-time kernels  & 24 & 2545 & 3459 & 3703 & (881) & 6697   & 107 & 373 &  391 & (208) & 829 \\
+\hline
+Late kernels     &  7 & 2576 & 3288 & 3336 & (490) & 4124   & 189 & 354 &  391 & (155) & 716 \\
+\hline
+\end{tabular}
+\caption{Code-size statistics}
+\label{table:sizes}
+\end{table*}
+
 \subsection{Evaluating Landslide}
 
 We evaluated Landslide in two ways: first, by instrumenting two prior student kernels to measure the exploration time needed to find different races, and second, by meeting with current students of 15-410 in the Spring 2012 semester, before they submitted their kernel for grading, to see if they could find bugs on their own with Landslide.
