@@ -569,15 +569,16 @@ provide.
 %some of which do I/O while others handle or are killed
 %by various exceptions) over an extended period of time.
 The test suite is a number of user-space programs which test
-functionality ranging from the basic process lifecycle, to robustness
-against corner-case security vulnerabilities, to long-term stability
+functionality
+including the basic process lifecycle, robustness
+against corner-case security vulnerabilities, and long-term stability
 under large stress tests.
 %
 When students submit their kernels,
 we use an automated testing harness to
 run a superset of the public test suite.
 %
-Of course, due to the nondeterministic nature of many common bugs in student code,
+Of course, due to the nondeterministic nature of many bugs in student code,
 these tests can provide only a rough estimate of a submission's correctness,
 rather than verifying it with certainty.
 (This hit-or-miss nature motivated our work on Landslide.)
@@ -592,7 +593,7 @@ The ``hurdle model'' is based on the following observations:
 
 \begin{itemize}
 
-\item We believe that students learn more from bugs
+\item \shortversion{Students}{We believe that students} learn more from bugs
 that are harder to find.
 In extreme cases, a software component may do
 ``almost everything right,'' but ``the last bug'' may
@@ -614,12 +615,12 @@ is unable to do so if kernel memory has been exhausted.
 
 \end{itemize}
 
-For these reasons, we believe much of the learning
+For these reasons, \shortversion{}{we believe} much of the learning
 associated with the kernel project necessarily occurs
 at the end of the experience,
 so it is important for students to finish the process.
 % [suppressed: bad to build P4 on a shaky P3]
-We believe it would be particularly detrimental to
+\shortversion{It}{We believe it} would be particularly detrimental to
 assign ``partial credit'' to a large body of non-working
 code.
 Instead, we require student kernels to pass a
@@ -648,8 +649,8 @@ and to avoid certain distasteful x86-specific code structures.
 % (TODO: what are they?).
 %Towards the end of the kernel project, students fill out the ``hurdle form'', a checklist of these criteria.
 Students who pass the completeness ``hurdle'' submit their kernels
-and can move on to the ``Pebbles Extension'' project.
-Meanwhile, students who were unable to meet the
+and can move on to the kernel-extension project.
+\shortversion{Students}{Meanwhile, students} who were unable to meet the
 hurdle criteria on time receive additional time
 to finish up and improve their code quality.
 %---this
@@ -662,6 +663,6 @@ The hurdle criteria constitute 50\% of the kernel project's grade.
 \subsubsection{Code review and interview}
 
 Finally, both to make up for the tests' incompleteness and to provide personalized human feedback, each student kernel is manually graded by a member of course staff.
-The instructors and teaching assistants print out each group's submitted kernel and mark it with red ink, auditing the code for style, architectural issues, race conditions, and preemptibility.
-After the inking process, each group meets with the staff member who graded them for an hour-long ``kernel interview'', essentially a debriefing in which any final misconceptions the students might have can be rectified.
+The instructors and teaching assistants print each group's submitted kernel and mark it with red ink, auditing the code for style, architectural issues, race conditions, and preemptibility.
+After the inking process, each group meets with \shortversion{their grader}{the staff member who graded them} for an hour-long ``kernel interview,'' essentially a debriefing in which student misconceptions can be rectified.
 Staff discretionary points constitute 20\% of the kernel project's grade.
