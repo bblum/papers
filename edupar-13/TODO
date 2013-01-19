@@ -13,7 +13,8 @@ nwf
 == "In progress" ==
 
 [Dave] parse Garth's PDF files
-[Dave] Fix broken citations in II-B simics section
+
+[Dave] I don't think that's the right Plan 9 citation.
 
 Dave:
 I note in the SMP section I mentioned the BKL option but we never
