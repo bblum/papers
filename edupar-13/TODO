@@ -15,13 +15,9 @@ nwf
 
 == Evaluation ==
 
-Dave: Outcomes: 1/4 page: sloc + "how smp4 went"
 Dave: "definitely" shrink "Simics" 50% (and fix citations)
 Dave: "probably" shrink "Limitations" "25%-50%"
 
-[Dave] amass sloc numbers
-[Dave] 410 successes: how many groups do P4?
-[Dave] 410 successes: how many groups got "somewhere real" on SMP4?
 [???] Boot kernels on real hardware?
 [Dave] in grading section, could say something about where students typically "lose points"
 
