@@ -424,12 +424,12 @@ or a network protocol stack.
 		\x{make_runnable} & Wakes up another \x{deschedule}d thread. \\
 		\x{get_ticks} & Gets the number of timer ticks since bootup. \\
 		\x{sleep} & Blocks a thread for a given number of ticks. \\
-		\x{swexn} & Registers a given user-space function as a software exception handler.\\
+		\x{swexn} & Registers a user-space software exception handler.\\
 		\hline
 		\multicolumn{2}{c}{\em Memory management} \\
 		\hline
 		\x{new_pages} & Allocates a specified region of memory. \\
-		\x{remove_pages} & Deallocates same. \\
+		\x{remove_pages} & Deallocates a memory region. \\
 		\hline
 		\multicolumn{2}{c}{\em Console I/O} \\
 		\hline
@@ -442,9 +442,9 @@ or a network protocol stack.
 		\hline
 		\multicolumn{2}{c}{\em Miscellaneous} \\
 		\hline
-		\x{ls} & Loads a given buffer with the names of files stored in the RAM disk ``file system''. \\
+		\x{ls} & Loads a given buffer with the names of files stored in the RAM disk ``file system.'' \\
 		\x{halt} & Ceases execution of the operating system. \\
-		\x{misbehave}* & Selects among several behaviors for thread interleaving in certain scenarios. \\
+		\x{misbehave}* & Selects among several thread-scheduling policies. \\
 		\hline
 	\end{tabular}
 	\caption{The Pebbles specifcation defines 25 system calls. Students are not required to implement ones marked with an asterisk (*), though the reference kernel provides them. }
