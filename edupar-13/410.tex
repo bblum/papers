@@ -236,7 +236,8 @@ they gain experience with debugging at both the
 
 Widely regarded as the most difficult concurrency problem in the project
 is that of coordinating a parent and a child task that ``simultaneously''
-invoke \x{vanish()}:
+exit:
+% invoke \x{vanish()}:
 when a task completes,
 live children and exited zombies must be handed off
 to the task's parent or to the system's \x{init} process,
