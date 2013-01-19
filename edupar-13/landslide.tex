@@ -11,7 +11,7 @@
 \label{sec:landslide}
 
 Landslide is an experimental tool for helping kernel authors find and debug concurrency errors.
-It is based on the technique of systematic exploration~\cite{verisoft}, a way of exploring the state space of different possible thread interleavings in a concurrent system.
+It is based on the technique of systematic exploration~\cite{verisoft}, a way of exploring the state space of different thread interleavings in a concurrent system.
 It follows in the footsteps of related tools such as
 \shortversion{
 CHESS~\cite{chess},
@@ -26,7 +26,8 @@ Students annotate their code so Landslide knows
 which kernel thread is currently running.
 After one kernel thread has run for some time,
 Landslide triggers artificial clock interrupts
-to force a new thread to interleave with the current one.
+% to force a new thread to interleave with the current one.
+to force the scheduler to run a different thread.
 When a test program finishes execution according
 to one pattern of thread switches,
 Landslide rewinds the kernel's state
@@ -55,9 +56,9 @@ In this section we give an overview of Landslide's design and interface, and poi
 \subsection{Example}
 % TODO: if necessary, this can be not its own section
 
-Figure~\ref{fig:threadfork} shows code containing a timer-dependent bug common in many Pebbles implementations which we will use as a running example in the rest of this section.
+Figure~\ref{fig:threadfork} shows code containing a timer-dependent bug common in many Pebbles implementations which we will use as a running example\shortversion{.}{in the rest of this section.}
 This code is a simplified implementation of the \x{thread_fork} system call: it constructs data structures necessary for the new thread, then asks the scheduler to make the new thread runnable, then returns its assigned thread ID.
-However, if the timer preempts execution at line~\ref{line:hax}, the child thread might run long enough to invoke \x{exit}, causing \x{child} to become a dangling pointer.
+However, if the timer preempts execution at line~\ref{line:hax}, the child thread might run long enough to exit, causing \x{child} to become a dangling pointer.
 
 \begin{figure}[t]
 \small
