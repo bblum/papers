@@ -9,11 +9,13 @@ Computer Science class called
 It is designed for juniors and seniors in Computer Science
 and Electrical and Computer Engineering.
 For CS students it is one of five courses which fulfill
+\shortversion{a ``systems programming'' degree requirement.}{
 the ``Software Systems'' requirement (at present, the others
 are Compiler Design,
 Parallel Computer Architecture and Programming,
 Distributed Systems,
 and Computer Networks).
+}
 The prerequisite course is 15-213,
 Introduction to Computer Systems,
 a course which has been adopted at other
@@ -25,9 +27,9 @@ universities in the U.S.\ and worldwide~\cite{sigcse01:CSaPP}.
 In this section we will discuss the course learning
 objectives,
 outline the programming projects,
-discuss our use of Wind River Simics~\cite{simics} as the
-the basic simulation/debugging environment
-and our approaches to grading,
+discuss our use of Wind River Simics~\cite{simics} as
+the simulation/debugging environment,
+discuss our grading approach,
 and close by mentioning current limitations in the scope
 of the course material.
 
@@ -38,9 +40,8 @@ through practicing advanced cognitive processes
 such as open-ended design.
 %
 Students study high-level concepts
-such as protection (least privilege, access control lists vs.
-capabilities)
-and
+such as
+\shortversion{least privilege}{protection (least privilege, access control lists vs.\ capabilities)},
 file-system internals,
 and log-based storage.
 %
@@ -51,14 +52,14 @@ and a non-textbook technical-literature reading assignment.
 Students begin with a ``blank slate'' rather than a
 kernel-source template or an existing operating system,
 so they must synthesize design requirements from multiple sources
-and are provided with an opportunity to 
-decide on module boundaries and inter-module conventions
-themselves.
+and must
+choose their own module boundaries and inter-module conventions.
 %
-Due to the foundational nature of kernel code,
+\sortversion{The}{Due to the foundational nature of kernel code, the}
 assignment design and grading encourage students to
 think about corner cases, including resource exhaustion,
-instead of being satisfied by ``the right basic idea''
+instead of being satisfied by
+\shortversion{}{``the right basic idea''}
 implementations that handle only auspicious situations.
 %
 Finally, most relevant to this work,
@@ -79,11 +80,15 @@ teams.
 \subsubsection{Stack Crawler}
 The first project is a ``stack crawler'':  when invoked by
 a client program, it displays the program's stack
-symbolically, rendering saved program-counter values
+symbolically,
+\shortversion
+{showing function names, strings, floating-point values, etc.}
+{rendering saved program-counter values
 as function names and printing function parameters
-in accordance with their types.
-This project meets a variety of goals:
-it enables students to review key process-model and
+in accordance with their types.}
+This project
+\shortversion{}{meets a variety of goals: it}
+enables students to review key process-model and
 language-runtime concepts from the
 prerequisite course;
 it introduces students to our expectations about
@@ -94,8 +99,9 @@ to consider robustness.
 %
 % and we READ THEIR CODE
 This project is built using a standard C tool chain
-and debugged as students see fit (generally using
-a combination of \x{printf()} and \x{gdb}).
+and debugged as students see fit (generally
+\shortversion{}{using a combination of}
+\x{printf()} and \x{gdb}).
 %% TODO I've been using "\x{printf()}" for code, an alias for \lstinline I
 %% adopted from the Rust paper template. We should be consistent because
 %% the font sizes are different (and maybe make \x{}'s font bigger too,
@@ -122,7 +128,7 @@ compiled and linked into an ELF executable,
 stored into a 1.44-megabyte 3.5-inch floppy-disk image,
 and booted via GRUB.
 If the floppy-disk image is copied to a real floppy disk
-or embedded into an ``El Torito'' bootable compact disc image,
+or \shortversion{compact disc,}{embedded into an ``El Torito'' bootable compact disc image,}
 it can be booted on standard PC hardware.
 However, students most often boot the floppy image
 using the Simics system emulator (described below).
@@ -130,11 +136,11 @@ using the Simics system emulator (described below).
 \subsubsection{User-space Thread Library}
 The third project is implementing a 1:1 thread library for
 user-space programs.
-The library specification is essentially a stripped-down
+The \shortversion{}{library} specification is essentially a stripped-down
 version of POSIX Pthreads.
-The primary goal of the project is providing students
-with a laboratory for
-experimenting with concurrency and atomicity.
+The primary goal of the project is
+\shortversion{for students to experiment}{providing students with a laboratory for experimenting}
+with concurrency and atomicity.
 Students begin by designing mutexes using any
 x86-32 atomic instructions they choose
 (there is substantial variation across groups).
@@ -145,11 +151,11 @@ components (stack allocation/recycling and
 a thread registry),
 and low-level code to launch and shut down
 threads.
-A second goal is encouraging students to carefully
+A second goal is encouraging students to
 consider how ingredients are assembled into
 abstractions.
 %% Good rhetoric (below). -- bblum
-One example of this is a semantic gap
+\shortversion{There is a semantic gap}{One example of this is a semantic gap}
 between the library-level \x{thr_create()}
 call (analogous to \x{pthread_create()})
 and the \x{thread_fork} system call provided
@@ -159,7 +165,7 @@ makes no changes to the user's address space,
 and cannot meaningfully
 be invoked from C~code.
 Because these abstractions are so different,
-students have the opportunity to
+students must
 understand each as an independent entity while
 deciding how to bridge them.
 A similar deliberate semantic gap exists between
@@ -167,34 +173,34 @@ A similar deliberate semantic gap exists between
 which suspends execution of a thread.
 
 Student library code is linked against small
-test programs provided by the course staff,
+test programs provided by the course staff\shortversion{.}{,
 producing one statically linked ELF executable
-per test program.
+per test program.}
 The test programs are bundled into a RAM-disk
-image and linked against a kernel written by
+image and linked against a ``reference kernel'' written by
 the course staff
 and provided in binary form.
 
-The behavior of the reference kernel is specified
+Pebbles kernel behavior is specified
 via a twelve-page document~\cite{kspec}.
-% the handout for the thread library project itself
-% is nineteen pages and includes not only a specification
-% of the thread-library primitives but also
-% a suggested implementation plan, grading guidelines,
-% optional design challenges, etc.
+\shortversion{}{The handout for the thread library project itself
+is nineteen pages and includes not only a specification
+of the thread-library primitives but also
+a suggested implementation plan, grading guidelines,
+optional design challenges, etc.}
 In addition to providing a reliable execution
 substrate,
-this ``reference kernel'' schedules
-the execution of user-space threads created by
+the reference kernel schedules
+\shortversion{}{the execution of} user-space threads created by
 student code according to a variety of
 interleaving policies.
-In order to aid debugging of concurrency problems,
+\shortversion{}{In order to aid debugging of concurrency problems,
 the \x{misbehave()} system call enables
-students to manually select an interleaving policy.
+students to manually select an interleaving policy.}
 
 \subsubsection{Pebbles Kernel}
 For the fourth project, two-student teams
-implement a kernel which complies with the
+implement a kernel which implements the
 same specification as the reference kernel
 they previously relied on.
 They implement some approach to
@@ -205,14 +211,13 @@ basic virtual memory,
 a program loader,
 code to handle various x86 exceptions,
 and code for setting up and tearing down
-threads and processes.
-Students re-use the basic device drivers
-they implemented in the second project.
-These ingredients are combined to yield
+threads and processes
+(they re-use their game-project device drivers).
+\shortversion{}{These ingredients are combined to yield
 twenty-five system calls
 (life-cycle, thread management, memory management,
 console I/O, and miscellaneous),
-which we discuss further in Section~\ref{sec:pebbles}.
+which we discuss further in Section~\ref{sec:pebbles}.}
 
 %% TODO Justify by mentioning average lines of code. -- bblum
 For most students in the class, this is the
@@ -256,15 +261,18 @@ and an in-kernel debugger.
 Two recent, more aggressive, projects have been
 adding paravirtualization so that their kernels
 can host guest kernels and
-addding multi-processor support to their single-processor kernels.
+adding multi-processor support to their single-processor kernels.
 
-In the multi-processor project, students extended their kernels to schedule multiple threads at once on up to eight cores.
-We provided base code for determining the system's number of CPUs, for booting the application processors (APs), and for sending inter-processor interrupts (IPIs).
-Students needed to design a way to synchronize removing virtual memory mappings in the TLB,
-to implement moving threads between processors,
-and
-to redesign their scheduler's locking primitives to account for the fact that disabling interrupts on a CPU no longer necessarily prevents concurrent accesses.
-To allow struggling groups to make progress on the project without solving every synchronization challenge, we allowed the use of a ``big kernel lock'', and rewarded groups according to how little they needed to use it.
+In the multi-processor project, students extended their kernels to schedule multiple threads across up to eight cores.
+We provided base code for determining a system's CPU count, for booting the application processors (APs), and for sending inter-processor interrupts (IPIs).
+% Students needed to design a way to synchronize removing virtual memory mappings in the TLB,
+% to implement moving threads between processors,
+% and
+% to redesign their scheduler's locking primitives to account for the fact that disabling interrupts on a CPU no longer necessarily prevents concurrent accesses.
+Students must move threads between processors,
+synchronize the removal of memory mappints from multiple TLBs,
+and must account for the fact that disabling interrupts on a CPU doesn't prevent concurrent data accesses.
+To allow struggling groups to make progress on the project without solving every synchronization challenge, we allowed the use of a ``big kernel lock,'' and rewarded groups according to how little they needed to use it.
 Submissions were also graded according to
 correctness of the scheduler and spinlocks,
 stability on a suite of stress tests,
@@ -283,8 +291,10 @@ Unlike some emulators,
 which focus on fast execution of correct code,
 Simics
 provides very faithful bit-level support
-not only for code that behaves correctly but
-also for code that is ``incorrect within reason.''
+not only for code that behaves correctly
+\shortversion
+{but also for student kernels that accidentally ``abuse'' hardware.}
+{but also for code that is ``incorrect within reason.''
 Occasionally student code manages to invoke an unsupported
 function of some hardware device or even to cause the
 simulator to crash, but this is quite rare, and in almost
@@ -292,7 +302,7 @@ every case when the ``bad event'' is characterized it turns
 out that what the software requested from the hardware was
 a mistake.
 Meanwhile, inside its large envelope, Simics supports
-\textit{very} detailed models of various x86 processors.
+\textit{very} detailed models of various x86 processors.}
 Unlike hardware virtualization environments,
 Simics contains substantial debugger support:
 single-stepping,
@@ -326,8 +336,8 @@ or core assumptions.
 
 \subsubsection{x86}
 
-Students write code that runs on one specific
-hardware platform.
+\shortversion{}{Students write code that runs on one specific
+hardware platform.}
 We target x86 PCs because machines of this type are
 available from many manufacturers at many price points.
 This means that it is easy for students to obtain access
@@ -337,11 +347,11 @@ Also, unlike many System-on-a-Chip platforms,
 detailed hardware descriptions are readily available.
 % rather than being proprietary or "documented"
 % by labyrinthine Linux source code
-Finally, the platform is fairly stable---with only a
+\shortversion{}{Finally, the platform is fairly stable---with only a
 little care, it is possible to write a compliant
 kernel which runs on anything newer than a 486DX processor,
 i.e., almost any PC hardware which is likely to be in
-working condition.
+working condition.}
 
 \subsubsection{32-bit}
 
@@ -352,7 +362,7 @@ subset of the x86 platform, for three reasons.
 %% both registers and stack slots. Otherwise this paragraph is good. -- bblum
 First, while the small number of registers is
 frustrating for compiler writers,
-from the point of view of OS students,
+\shortversion{}{from the point of view of OS students,}
 the existence of fewer registers means less work
 when it is necessary to verify that each register's
 value is correct.
@@ -361,11 +371,11 @@ makes it easier to track function parameter values.
 Second, implementing virtual memory on x86-64 as
 opposed to x86-32 requires more code and more
 debugging time without imparting greater insight.
-Finally, since it is impossible for an x86 processor
+\shortversion{}{Finally, since it is impossible for an x86 processor
 to be in 64-bit mode with virtual memory off,
 students would need to be coached through the
 32-bit--to--64-bit transition or would need
-to be given a template virtual-memory implementation.
+to be given a template virtual-memory implementation.}
 All in all, at present we are satisifed with
 the 32-bit choice.
 
@@ -378,8 +388,9 @@ memory, which is consistent with
 existing x86 hardware~\cite{SewellSOZNM:x86tso-cacm10}
 but simplistic compared to most other
 architectures.
-Lecture material educates students about the
-general topic of out-of-order memory systems
+Lecture material educates students about
+%the general topic of
+out-of-order memory systems
 and fencing,
 but at present the hands-on experience does not
 reinforce that material.
@@ -457,9 +468,17 @@ or a network protocol stack.
 The kernel that students implement consists of twenty-five
 system calls, which are summarized in Figure~\ref{fig:syscalls}.
 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Warning: vanish() is *not* "the Pebbles name for exit()"--
+%% exit() used to mean one thing, and now means some other
+%% thing which is muddy.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% The process lifecycle is loosely based on the
+%% Unix model: \x{fork()}, \x{exec()}, \x{wait()},
+%% and \x{vanish()} (the Pebbles name for \x{exit()}).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The process lifecycle is loosely based on the
-Unix model: \x{fork()}, \x{exec()}, \x{wait()},
-and \x{vanish()} (the Pebbles name for \x{exit()}).
+Unix \x{fork()}/\x{exec()}/\x{wait()} model.
 We adopt the Mach~\cite{DBLP:conf/usenix/AccettaBBGRTY86}
 distinction between ``tasks,''
 which are resource containers,
@@ -522,7 +541,7 @@ implementation of automatically-growing stack
 regions.
 Removing the auto-stack policy and mechanism from
 its traditional position in Unix-like kernels
-was done because it simplfies the kernel and
+simplfies the kernel and
 ``front-loads'' policy questions to an earlier
 part of the course,
 before students are facing the substantial pressure
