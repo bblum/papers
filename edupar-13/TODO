@@ -2,6 +2,8 @@
 
 grep TODO *.tex
 
+"only scan"
+
 == Readers ==
 
 Jiri
@@ -13,10 +15,26 @@ nwf
 [Dave] parse Garth's PDF files
 [Dave] Fix broken citations in II-B simics section
 
-== Evaluation ==
+Dave:
+I note in the SMP section I mentioned the BKL option but we never
+mention it again. Is there an easy number we could say in the results
+section for how many students handed in BKL solutions?
+
+Dave:
+I'm confused by your comment about vanish/exit. It's fine to use the
+change you made there, but we do need to say *somewhere* what vanish
+means. We first mention it in section 2-A-4 and the current version
+will confuse people.
+
+Dave:
+I note that the hurdle section is still about as long. Hopefully it's
+slated for after dinner, but at the very least, turning the bulleted
+list into prose can save a bunch of horizontal space.
 
 Dave: "definitely" shrink "Simics" 50% (and fix citations)
 Dave: "probably" shrink "Limitations" "25%-50%"
+
+== Evaluation ==
 
 [???] Boot kernels on real hardware?
 [Dave] in grading section, could say something about where students typically "lose points"
