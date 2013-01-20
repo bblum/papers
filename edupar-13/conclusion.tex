@@ -1,29 +1,44 @@
 \section{Conclusions and Future Work}
 \label{sec:future}
 
-Carnegie Mellon University's operating systems course offers a series of concurrency-focused projects to advanced undergraduates focused on low-level software development.
-These projects culminate in the development of a Pebbles kernel, a fully preemptible UNIX-like kernel which includes process lifecycle management, virtual memory, and some device drivers, during the course's six-week-long fourth project.
+Carnegie Mellon University's operating systems course offers
+advanced undergraduates
+a series of
+development projects focused on concurrency in low-level software.
+These projects culminate in the six-week development of a ``Pebbles'' kernel, a fully preemptible UNIX-like kernel\shortversion{.}{which includes process lifecycle management, virtual memory, and some device drivers}.
 % Dave: You could add here a brief blurb about what students accomplish, e.g. LOC, boot on real hardware, whatever. Or it would be fine without.
-In order to keep up with emerging trends in hardware architecture, especially the increasing focus on massively multi-core processing, we seek to include more hardware concurrency and the resulting complexity in the course's curriculum.
+In response to emerging trends in hardware architecture, especially the increasing focus on massively multi-core processing, we seek to include more hardware concurrency (and the resulting complexity) in the course's curriculum.
 
 % With the radical changes in computer architecture induced by the switch from speed through faster cycle time to speed through more cores, and more complex memory system semantics, operating systems kernels are experiencing rapid change and effective education of kernel programmers becomes much more labor intensive, especially in terms of concurrency error debugging, or much less detailed and hardware accurate.
 
 % Carnegie Mellon University's undergraduate operating systems course has a tradition of requiring students to tackle highly hardware accurate kernel design and development.
 % Rather than compromise the low level detail that our students overcome in a semester, as we include more hardware concurrency and the resulting complexity, we are experimenting with tools that simplify some of the most time consuming changes challenges our students face.
 
-Rather than making room for more material by reducing the projects' design complexity, which we feel would compromise the learning experience, we are experimenting with concurrency debugging tools to let students spend less time searching for errors in their code.
+Rather than making room for more material by reducing the projects' design complexity, which we feel would compromise the learning experience, we are experimenting with concurrency debugging tools
+\shortversion
+{which help students find errors faster.}
+{to let students spend less time searching for errors in their code.}
 We have presented Landslide, a tool that integrates with the Simics simulator students already use and provides a more principled approach to bug-finding than conventional stress testing.
 
-Due to the open-ended design problems students solve in their kernels, Landslide imposes a moderate annotation burden in order to instrument a kernel for systematic testing.
-However, by the very nature of having enough spare time to volunteer, the selection of students we worked with to use Landslide was necessarily biased towards the ``top of the class''.
-Though our experiments with these students show promising results, we need to reduce Landslide's annotation burden as much as possible to make it useful for struggling students as well.
-
-We believe some annotations can be automatically detected;
-for example, rather than requiring students to indicate if their kernel has a mechanism for disabling preemption apart from disabling interrupts, Landslide could detect when a timer interrupt is received but doesn't induce a context switch.
-Other annotations, such as \x{tell_landslide_thread_runnable()}, could be replaced by mandating that the kernel's code paths in such cases include a function with a predetermined name.
-Landslide already automatically instruments the memory allocator by detecting function names in the starter code; similar could be done for thread lifecycle and context switch events if their APIs were specified.
-However, prescribing such templates has the downside of constraining the project's design space.
-As open-ended decisions of interface design are important to the course philosophy, we foresee a tradeoff: in some cases, fundamental design challenges may be the cost for increasing Landslide's usability to enable teaching more advanced concepts such as SMP.
+% Due to the open-ended design problems students solve in their kernels,
+% Landslide imposes a moderate annotation burden in order to instrument a kernel for systematic testing.
+% However, by the very nature of having enough spare time to volunteer, the selection of students we worked with to use Landslide was necessarily biased towards the ``top of the class''.
+In our experience,
+the annotation burden imposed on ``top of the class'' students by Landslide is modest.
+Though our experiments with these students show promising results, we seek to reduce Landslide's annotation burden to make it useful for struggling students as well.
+%
+We believe some annotations could be automatically detected;
+for example, rather than requiring students to declare if their kernel has a preemption disabling mechanism more elaborate than disabling interrupts, Landslide could detect when a timer interrupt doesn't induce a context switch.
+Other annotations, such as \x{tell_landslide_thread_runnable()},
+might be automated by requiring students to structure code in
+certain ways with pre-determined function names and parameters
+(Landslide already automatically instruments the memory allocator we provide).
+However, \shortversion{}{prescribing} such templates
+\shortversion{would constrain}{has the downside of constraining}
+the project's open-ended design space.
+We wish to better understand the tradeoffs between
+making Landslide more automatic and forcing particular design decisions on students.
+% As open-ended decisions of interface design are important to the course philosophy, we foresee a tradeoff: in some cases, fundamental design challenges may be the cost for increasing Landslide's usability to enable teaching more advanced concepts such as SMP.
 
 \shortversion{}{
 Additionally, various improvements in Landslide's interface could increase its accessibility. 
@@ -71,8 +86,8 @@ Landslide could also be extended with a mechanism for minimizing execution trace
 
 Many people have contributed to the development of
 15-410 over the past decade.
-Stephen Muckle, currently at Qualcomm, led
-the switch to x86 projects running in Simics.
+Stephen Muckle, currently at Qualcomm,
+led the switch to x86 projects running in Simics.
 Nathaniel Wesley Filardo,
 currently a Ph.D.\ candidate at Johns Hopkins,
 % increased the sanity of the build infrastructure,
