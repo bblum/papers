@@ -31,14 +31,6 @@ change you made there, but we do need to say *somewhere* what vanish
 means. We first mention it in section 2-A-4 and the current version
 will confuse people.
 
-Dave:
-I note that the hurdle section is still about as long. Hopefully it's
-slated for after dinner, but at the very least, turning the bulleted
-list into prose can save a bunch of horizontal space.
-
-Dave: "definitely" shrink "Simics" 50% (and fix citations)
-Dave: "probably" shrink "Limitations" "25%-50%"
-
 == Evaluation ==
 
 [???] Boot kernels on real hardware?
