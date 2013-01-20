@@ -79,7 +79,7 @@ int thread_fork() {
 
 Systematic exploration, Landslide's mechanism for testing many different concurrent scenarios, uses the idea of an {\em execution tree} to enumerate all possible thread interleavings of a specific test. These interleavings are defined around {\em decision points}, which intuitively indicate points during execution at which a preemption could cause different behaviour to arise.
 Searching with few decision points results in coarser-grained interleavings, faster test completion, and less likelihood of finding unexpected bugs; searching with more decision points results in the opposite.
-The advantage of systematic testing is the ability to force execution sequences that might be rare in simple testing.
+The primary advantage of systematic testing is the ability to force execution sequences that might be overlooked in simple stress testing.
 % Unlike simple testing, systematic execution reaches all execution states, so it does not overlook rare bugs.
 
 Landslide ``explores'' an execution tree by controlling the kernel's execution in two ways.
