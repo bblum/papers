@@ -57,10 +57,10 @@ choose their own module boundaries and inter-module conventions.
 %
 \shortversion{The}{Due to the foundational nature of kernel code, the}
 assignment design and grading encourage students to
-think about corner cases, including resource exhaustion,
+think about corner cases, including resource exhaustion\shortversion{.}{,
 instead of being satisfied by
-\shortversion{}{``the right basic idea''}
-implementations that handle only auspicious situations.
+``the right basic idea''
+implementations that handle only auspicious situations.}
 %
 Finally, most relevant to this work,
 students gain substantial experience in
@@ -109,16 +109,17 @@ and debugged as students see fit (generally
 
 \subsubsection{Device Drivers and Game}
 The second project is a simple game, such as Hangman,
-which runs standalone (without an underlying
-operating system).
+which runs without an underlying
+operating system.
 We provide students with selected C~library routines
 (e.g., \x{strcmp()}, \x{memmove()}, \x{printf()});
 they write a device-driver library consisting of
 console output (to a memory-mapped text-mode video display),
 keyboard input (interrupt driven),
 and a countdown timer.
-The game, which varies by semester, provides students
-with the ability to test their drivers.
+\shortversion{The game enables students to test their drivers.}
+{The game, which varies by semester, provides students
+with the ability to test their drivers.}
 %
 % and the need to write enough code to get into trouble
 %
@@ -127,18 +128,18 @@ C with a bit of x86-32 assembly code,
 compiled and linked into an ELF executable,
 stored into a 1.44-megabyte 3.5-inch floppy-disk image,
 and booted via GRUB.
-If the floppy-disk image is copied to a real floppy disk
+If the \shortversion{}{floppy-disk} image is copied to a real floppy
 or \shortversion{compact disc,}{embedded into an ``El Torito'' bootable compact disc image,}
 it can be booted on standard PC hardware.
-However, students most often boot the floppy image
-using the Simics system emulator (described below).
+However, students most often \shortversion{use}{boot the floppy image
+using} the Simics system emulator (described below).
 
 \subsubsection{User-space Thread Library}
 The third project is implementing a 1:1 thread library for
-user-space programs.
-The \shortversion{}{library} specification is essentially a stripped-down
+user-space programs,
+essentially a stripped-down
 version of POSIX Pthreads.
-The primary goal of the project is
+The primary goal is
 \shortversion{for students to experiment}{providing students with a laboratory for experimenting}
 with concurrency and atomicity.
 Students begin by designing mutexes using any
@@ -176,11 +177,11 @@ Student library code is linked against small
 test programs provided by the course staff\shortversion{.}{,
 producing one statically linked ELF executable
 per test program.}
-The test programs are bundled into a RAM-disk
-image and linked against a ``reference kernel'' written by
+The test programs \shortversion{run on}{are bundled into a RAM-disk
+image and linked against} a ``reference kernel'' written by
 the course staff
 and provided in binary form.
-
+%
 Pebbles kernel behavior is specified
 via a twelve-page document~\cite{kspec}.
 \shortversion{}{The handout for the thread library project itself
@@ -251,8 +252,8 @@ are prone to data races or deadlocks.
 
 \subsubsection{Pebbles Extension}
 Students who complete the kernel project on time
-then work on a smaller kernel-extension project
-with various content depending on the semester.
+then work on a kernel-extension project\shortversion{.}
+{with various content depending on the semester.}
 Past projects have included
 writing a sound card driver,
 a filesystem,
@@ -271,9 +272,9 @@ We provided base code for determining a system's CPU count, for booting the appl
 % and
 % to redesign their scheduler's locking primitives to account for the fact that disabling interrupts on a CPU no longer necessarily prevents concurrent accesses.
 Students must move threads between processors,
-synchronize the removal of memory mappints from multiple TLBs,
-and must account for the fact that disabling interrupts on a CPU doesn't prevent concurrent data accesses.
-To allow struggling groups to make progress on the project without solving every synchronization challenge, we allowed the use of a ``big kernel lock,'' and rewarded groups according to how little they needed to use it.
+synchronize the removal of memory mappings from multiple TLBs,
+and account for the fact that disabling interrupts on a CPU doesn't prevent concurrent data accesses.
+To allow struggling groups to make progress without solving every synchronization challenge, we allowed the use of a ``big kernel lock,'' and rewarded groups according to how little they needed to use it.
 Submissions were also graded according to
 correctness of the scheduler and spinlocks,
 stability on a suite of stress tests,
@@ -282,7 +283,7 @@ and the use of IPIs for efficient processor coordination.
 %=== Simics ===%
 \subsection{Simics}
 
-As mentioned above, the main execution and debugging
+\shortversion{The}{As mentioned above, the} main execution and debugging
 platform used in the class is
 Simics~\cite{simics},
 originally developed by the Swedish Institute of
@@ -294,7 +295,7 @@ Simics
 provides very faithful bit-level support
 not only for code that behaves correctly
 \shortversion
-{but also for student kernels that accidentally ``abuse'' hardware.}
+{but also for kernels that accidentally ``abuse'' hardware.}
 {but also for code that is ``incorrect within reason.''
 Occasionally student code manages to invoke an unsupported
 function of some hardware device or even to cause the
@@ -319,9 +320,9 @@ frameworks to evaluate proposed hardware
 %% TODO Fix citations. But also, maybe this mention isn't relevant and
 %% could be left out (if we're in space trouble?) -- bblum
 features~\shortversion{\cite{SIMFLEX}}{\cite{SIMFLEX,UW-GEMS,FeS2}}.
-Performance is very reasonable (Simics can simulate certain
+\shortversion{}{Performance is very reasonable (Simics can simulate certain
 cases, such as a CPU halted awaiting a clock interrupt,
-much faster than real time).
+much faster than real time).}
 %% TODO: One huge advantage of simics over QEMU that we should mention is
 %% that QEMU only issues timer interrupts at basic block boundaries. -- bblum
 
@@ -344,8 +345,8 @@ available from many manufacturers at many price points.
 This means that it is easy for students to obtain access
 to a machine (virtual or real) which will let them boot
 up their code, type commands, and observe the results.
-Also, unlike many System-on-a-Chip platforms,
-detailed hardware descriptions are readily available.
+\violence{}{Also, unlike many System-on-a-Chip platforms,
+detailed hardware descriptions are readily available.}
 % rather than being proprietary or "documented"
 % by labyrinthine Linux source code
 \shortversion{}{Finally, the platform is fairly stable---with only a
@@ -357,7 +358,7 @@ working condition.}
 \subsubsection{32-bit}
 
 The course still targets the 32-bit
-subset of the x86 platform, for three reasons.
+subset of the x86 platform, for multiple reasons.
 %% TODO I'm not sure I believe this is an advantage. Instead of having
 %% to verify if each register is correct, students now have to verify
 %% both registers and stack slots. Otherwise this paragraph is good. -- bblum
@@ -401,7 +402,7 @@ reinforce that material.
 One cost of programming to the complexities of
 real hardware is that
 within the scope of a single semester,
-students do not have the opportunity to
+students do not \violence{}{have the opportunity to}
 implement common features of many kernels,
 such as a file system, interprocess communication,
 a real-time scheduler,
