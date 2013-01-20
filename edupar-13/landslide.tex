@@ -79,8 +79,8 @@ int thread_fork() {
 
 Systematic exploration, Landslide's mechanism for testing many different concurrent scenarios, uses the idea of an {\em execution tree} to enumerate all possible thread interleavings of a specific test. These interleavings are defined around {\em decision points}, which intuitively indicate points during execution at which a preemption could cause different behaviour to arise.
 Searching with few decision points results in coarser-grained interleavings, faster test completion, and less likelihood of finding unexpected bugs; searching with more decision points results in the opposite.
-% The primary advantage of systematic testing is the ability to force execution sequences that might be very rare in simple repeated testing.
-Unlike simple testing, systematic execution reaches all execution states, so it does not overlook rare bugs.
+The advantage of systematic testing is the ability to force execution sequences that might be rare in simple testing.
+% Unlike simple testing, systematic execution reaches all execution states, so it does not overlook rare bugs.
 
 Landslide ``explores'' an execution tree by controlling the kernel's execution in two ways.
 First, at each decision point, it can force an arbitary thread to run in place of the current one by injecting timer interrupts to force the kernel to context switch.
@@ -92,15 +92,19 @@ Landslide also automatically identifies decision points at voluntary reschedules
 
 
 Of course, additional decision points are necessary to expose more-subtle race conditions.
-\shortversion
-{In Section~\ref{sec:instrument} we describe an interface for adding new
-decision points to expand the state space,
-and also an interface for restricting Landslide's attention to certain kernel components,
-which helps cope with the exponentially-growing nature of state spaces with many decision points.}
+% \shortversion
+% {In Section~\ref{sec:instrument} we describe an interface for adding new
+% decision points to expand the state space,
+% and also an interface for restricting Landslide's attention to certain kernel components,
+% which helps cope with the exponentially-growing nature of state spaces with many decision points.}
 {We provide an interface for adding new decision points to expand the state space, described in Section~\ref{sec:decision}.
 In order to cope with the exponentially-growing nature of state spaces with many decision points,
+\shortversion{
+we also provide an interface for making Landslide consider
+}{
 Landslide uses the Dynamic Partial Order Reduction algorithm~\cite{dpor} to identify and prune redundant thread interleavings, the specifics of which are beyond the scope of this educational work~\cite{landslide}.
 We also provide an interface for helping Landslide further reduce the state space by considering
+}
 decision points from only certain components of the kernel, which we discuss in Section~\ref{sec:focusing}.}
 
 \begin{figure}[t]
