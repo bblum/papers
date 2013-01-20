@@ -79,24 +79,29 @@ int thread_fork() {
 
 Systematic exploration, Landslide's mechanism for testing many different concurrent scenarios, uses the idea of an {\em execution tree} to enumerate all possible thread interleavings of a specific test. These interleavings are defined around {\em decision points}, which intuitively indicate points during execution at which a preemption could cause different behaviour to arise.
 Searching with few decision points results in coarser-grained interleavings, faster test completion, and less likelihood of finding unexpected bugs; searching with more decision points results in the opposite.
-The primary advantage of systematic testing is the ability to force execution sequences that might be very rare in simple repeated testing.
+% The primary advantage of systematic testing is the ability to force execution sequences that might be very rare in simple repeated testing.
+Unlike simple testing, systematic execution reaches all execution states, so it does not overlook rare bugs.
 
-Landslide ``explores'' decision trees by controlling the kernel's execution in two ways.
+Landslide ``explores'' an execution tree by controlling the kernel's execution in two ways.
 First, at each decision point, it can force an arbitary thread to run in place of the current one by injecting timer interrupts to force the kernel to context switch.
-Second, whenever the kernel finishes executing a particular interleaving of the test case, it reverts the system to an earlier state to explore additional interleavings using Simics's reverse execution.
+%Second, whenever the kernel finishes executing a particular interleaving of the test case, it reverts the system to an earlier state to explore additional interleavings using Simics's reverse execution.
+Second, when the kernel finishes executing a particular interleaving of the test case, it invokes Simics reverse execution to revert the system to an earlier state and explore the next interleaving.
 
-In Figure~\ref{fig:threadfork}, the necessary decision point for finding the bug is at line~\ref{line:hax}. With correct instrumentation (discussed in Section~\ref{sec:instrument} and shown in Figure~\ref{fig:annotation}), Landslide can automatically identify this decision point when the child thread becomes runnable.
-Landslide also automatically identifies decision points at voluntary reschedules between threads (e.g. \x{yield()}). Together these decision points define an execution tree which exposes the bug, depicted in Figure~\ref{fig:tree}.
+In Figure~\ref{fig:threadfork}, the necessary decision point for finding the bug is at line~\ref{line:hax}. With correct instrumentation (discussed in Section~\ref{sec:instrument} and shown in Figure~\ref{fig:annotation}), Landslide can automatically identify this decision point because a thread becomes runnable.
+Landslide also automatically identifies decision points at voluntary reschedules between threads (e.g. \x{yield()}). Together these decision points define an execution tree which exposes this bug, depicted in Figure~\ref{fig:tree}.
 
-Of course, additional decision points are necessary to expose more subtle race conditions. We provide an interface for adding new decision points to expand the state space, described in Section~\ref{sec:decision}.
+
+Of course, additional decision points are necessary to expose more-subtle race conditions.
+\shortversion
+{In Section~\ref{sec:instrument} we describe an interface for adding new
+decision points to expand the state space,
+and also an interface for restricting Landslide's attention to certain kernel components,
+which helps cope with the exponentially-growing nature of state spaces with many decision points.}
+{We provide an interface for adding new decision points to expand the state space, described in Section~\ref{sec:decision}.
 In order to cope with the exponentially-growing nature of state spaces with many decision points,
-\shortversion{
-we also provide an interface for making Landslide consider
-}{
 Landslide uses the Dynamic Partial Order Reduction algorithm~\cite{dpor} to identify and prune redundant thread interleavings, the specifics of which are beyond the scope of this educational work~\cite{landslide}.
 We also provide an interface for helping Landslide further reduce the state space by considering
-}
-decision points only from certain components of the kernel, which we discuss in Section~\ref{sec:focusing}.
+decision points from only certain components of the kernel, which we discuss in Section~\ref{sec:focusing}.}
 
 \begin{figure}[t]
 	\centering
@@ -121,9 +126,16 @@ Landslide can optionally also check heuristically for infinite loops and liveloc
 We have not found this technique to erroneously report false positives, although it may fail to trigger when it ought to if too few previous interleavings have been tested to make a reliable comparison.
 }
 
-When Landslide identifies a bug, it outputs a {\em decision trace}, an example of which is shown in Figure~\ref{fig:trace}.
-The trace reports what kind of bug was detected (for uses-after-free, it also prints stack traces to show when the block was allocated and freed), and also reports each decision point in the current interleaving: which thread was running, a trace of its stack when it was switched away from, and the thread that Landslide caused to preempt it.
-With this trace, the student can better understand the concurrent execution that led to the bug.
+When Landslide identifies a bug, it outputs a
+\shortversion
+{{\em decision trace} (Figure~\ref{fig:trace}).}
+{{\em decision trace}, an example of which is shown in Figure~\ref{fig:trace}.}
+The trace reports what kind of bug was detected
+\shortversion
+{}
+{(for uses-after-free, it also prints stack traces to show when the block was allocated and freed),}
+and also reports each decision point in the current interleaving: which thread was running, a trace of its stack when it was switched away from, and the thread that Landslide caused to preempt it.
+With this trace, the student can better understand the concurrent execution that exposed the bug.
 
 Note that our use of the term ``race condition'' throughout this paper refers to concurrency errors in general, a category that includes data races, atomicity violations, and nondeterministic deadlocks.
 In contrast with analyses that directly detect data races~\cite{tsan}, Landslide does not identify bugs at suspicious memory accesses, but rather detects failure conditions that can arise from many different types of errors.
@@ -168,10 +180,10 @@ Total decision points 24, total backtracks 5
 Landslide's interface is comprised of two types of instrumentation which students must provide: {\em required annotations} and {\em configuring decision points}.
 
 \subsubsection{Required annotations}
-Users annotate their kernels to inform Landslide of certain important concurrency events during execution. We provide a set of annotation functions, named with the prefix \x{tell_landslide}, for this purpose. The annotations denote when a thread runs \x{fork}, \x{sleep}, or \x{exit}, when a thread is added to or removed from the runqueue, and when threads become blocked on mutexes.
+Users annotate their kernels to inform Landslide of certain important concurrency events during execution. We provide a set of annotation functions, named with the prefix \x{tell_landslide}, for this purpose. The annotations denote when a thread runs \x{fork}, \x{sleep}, or \x{exit}, when a thread is added to or removed from the runqueue, and when a thread becomes blocked on a mutex.
 Figure~\ref{fig:annotation} shows annotated code corresponding to Figure~\ref{fig:threadfork}.
 
-There is also a configuration file, \x{config.landslide}, in which the student must specify constant information such as the function names of the timer handler and context switcher, which threads exist when the kernel boots, and which userspace test program Landslide should invoke.
+There is also a configuration file, \x{config.landslide}, in which the student must specify constant information such as the function names of the timer handler and context switcher, which threads exist when the kernel boots, and which user-space test program Landslide should invoke.
 Finally, there are two short (nominally two-line) functions used within Landslide itself that the user must implement. These are predicates on the kernel's scheduler state, and express potentially nontrivial conditions: whether the current thread is runnable but not on the runqueue, and whether preemption is disabled while interrupts are on.
 
 \newcommand\telllandslide[1]{\bfseries \color{violet}{#1}}
@@ -189,7 +201,7 @@ int thread_fork() {
 	return child->tid;
 }
 \end{lstlisting}
-\caption{Landslide requires the programmer to annotate important concurrency events in their kernel. \x{tell_landslide_thread_runnable()} indicates that a thread can henceforth be forced to run with timer interrupts, and \x{tell_landslide_forking()} announces a new thread's existence.}
+\caption{Landslide requires the programmer to annotate important concurrency events\shortversion{.}{in their kernel.} \x{tell_landslide_thread_runnable()} indicates that a thread can henceforth be forced to run with timer interrupts, and \x{tell_landslide_forking()} announces a new thread's existence.}
 \label{fig:annotation}
 \end{figure}
 
