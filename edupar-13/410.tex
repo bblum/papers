@@ -183,7 +183,7 @@ the course staff
 and provided in binary form.
 %
 Pebbles kernel behavior is specified
-via a twelve-page document~\cite{kspec}.
+in a twelve-page document~\cite{kspec}.
 \shortversion{}{The handout for the thread library project itself
 is nineteen pages and includes not only a specification
 of the thread-library primitives but also
@@ -201,12 +201,15 @@ students to manually select an interleaving policy.}
 
 \subsubsection{Pebbles Kernel}
 For the fourth project, two-student teams
-implement a kernel which implements the
+produce a kernel which implements the
 same specification as the reference kernel
 they previously relied on.
-They implement some approach to
+They design and implement some approach to
 synchronizing and blocking threads while
-they are in kernel space,
+they are in kernel space\shortversion{,}{\footnote{
+Student designs for their kernel's synchronization primitives vary widely.
+For example, ``top of the class'' students who went on to become teaching assistants have alternately used condition variables but not semaphores, and semaphores but not condition variables.
+},}
 a simple round-robin scheduler,
 basic virtual memory,
 a program loader,
@@ -488,7 +491,7 @@ and threads,
 each of which executes within a single task.
 This partitioning is a different approach from that of
 Plan~9's \x{rfork()}~\cite{plan9} or Linux's \x{clone()},
-which allow a continuum of sharing between
+both of which allow a continuum of sharing between
 identical threads and independent processes,
 at the cost of implementation complexity which we wish to avoid.
 A task's address space can be edited through two system
