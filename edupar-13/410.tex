@@ -29,7 +29,7 @@ objectives,
 outline the programming projects,
 discuss our use of Wind River Simics~\cite{simics} as
 the simulation/debugging environment,
-discuss our grading approach,
+% discuss our grading approach,
 and close by mentioning current limitations in the scope
 of the course material.
 
@@ -87,8 +87,8 @@ symbolically,
 as function names and printing function parameters
 in accordance with their types.}
 This project
-\shortversion{}{meets a variety of goals: it}
-enables students to review key process-model and
+\shortversion{enables}{meets a variety of goals: it enables}
+students to review key process-model and
 language-runtime concepts from the
 prerequisite course;
 it introduces students to our expectations about
@@ -99,23 +99,19 @@ to consider robustness.
 %
 % and we READ THEIR CODE
 This project is built using a standard C tool chain
-and debugged as students see fit (generally
-\shortversion{}{using a combination of}
-\x{printf()} and \x{gdb}).
-%% TODO I've been using "\x{printf()}" for code, an alias for \lstinline I
-%% adopted from the Rust paper template. We should be consistent because
-%% the font sizes are different (and maybe make \x{}'s font bigger too,
-%% what do you think?). -- bblum
+and debugged as students see fit (\shortversion{generally}
+{generally using a combination of}
+\x{printf()} and GDB).
 
 \subsubsection{Device Drivers and Game}
 The second project is a simple game, such as Hangman,
 which runs without an underlying
 operating system.
 We provide students with selected C~library routines
-(e.g., \x{strcmp()}, \x{memmove()}, \x{printf()});
-they write a device-driver library consisting of
+(e.g., \x{strcmp()}, \x{memmove()}, \x{printf()}),
+who then write a device-driver library consisting of
 console output (to a memory-mapped text-mode video display),
-keyboard input (interrupt driven),
+keyboard input (interrupt-driven),
 and a countdown timer.
 \shortversion{The game enables students to test their drivers.}
 {The game, which varies by semester, provides students
@@ -125,10 +121,11 @@ with the ability to test their drivers.}
 %
 This project and the remaining ones are written in
 C with a bit of x86-32 assembly code,
+which is then
 compiled and linked into an ELF executable,
 stored into a 1.44-megabyte 3.5-inch floppy-disk image,
 and booted via GRUB.
-If the \shortversion{}{floppy-disk} image is copied to a real floppy
+If the \shortversion{image}{floppy-disk image} is copied to a real floppy
 or \shortversion{compact disc,}{embedded into an ``El Torito'' bootable compact disc image,}
 it can be booted on standard PC hardware.
 However, students most often \shortversion{use}{boot the floppy image
@@ -182,17 +179,17 @@ image and linked against} a ``reference kernel'' written by
 the course staff
 and provided in binary form.
 %
-Pebbles kernel behavior is specified
+The kernel's behavior is specified
 in a twelve-page document~\cite{kspec}.
-\shortversion{}{The handout for the thread library project itself
+\shortversion{In}{The handout for the thread library project itself
 is nineteen pages and includes not only a specification
 of the thread-library primitives but also
 a suggested implementation plan, grading guidelines,
-optional design challenges, etc.}
-In addition to providing a reliable execution
+optional design challenges, etc. In}
+addition to providing a reliable execution
 substrate,
-the reference kernel schedules
-\shortversion{}{the execution of} user-space threads created by
+the reference kernel
+\shortversion{schedules}{schedules the execution of} user-space threads created by
 student code according to a variety of
 interleaving policies.
 \shortversion{}{In order to aid debugging of concurrency problems,
@@ -236,7 +233,7 @@ Because the students are responsible for ensuring
 the run-time invariants underlying all compiler-generated
 code in the system (kernel and user-space),
 they gain experience with debugging at both the
-``algorithm level'' and the register/bit-field level.
+algorithm level and the register/bit-field level.
 
 Widely regarded as the most difficult concurrency problem in the project
 is that of coordinating a parent and a child task that ``simultaneously''
@@ -320,12 +317,13 @@ Unlike some symbolic debuggers,
 Simics is scriptable in Python,
 and it is possible to interpose user-written measurement
 frameworks to evaluate proposed hardware
-%% TODO Fix citations. But also, maybe this mention isn't relevant and
-%% could be left out (if we're in space trouble?) -- bblum
 features~\shortversion{\cite{SIMFLEX}}{\cite{SIMFLEX,UW-GEMS,FeS2}}.
 \shortversion{}{Performance is very reasonable (Simics can simulate certain
 cases, such as a CPU halted awaiting a clock interrupt,
 much faster than real time).}
+\shortversion{}{A major advantage of using Simics over the QEMU emulator in particular
+is that QEMU only issues timer interrupts at basic-block boundaries,
+which dramatically undermines our goal of teaching students that threads can interleave with each other at any time.}
 %% TODO: One huge advantage of simics over QEMU that we should mention is
 %% that QEMU only issues timer interrupts at basic block boundaries. -- bblum
 
@@ -367,16 +365,16 @@ subset of the x86 platform, for multiple reasons.
 %% both registers and stack slots. Otherwise this paragraph is good. -- bblum
 First, while the small number of registers is
 frustrating for compiler writers,
-\shortversion{}{from the point of view of OS students,}
-the existence of fewer registers means less work
+\shortversion{the}{from the point of view of OS students, the}
+existence of fewer registers means less work
 when it is necessary to verify that each register's
 value is correct.
 Likewise, the calling convention's old-fashioned focus on the stack
 makes it easier to track function parameter values.
 Second, implementing virtual memory on x86-64 as
 opposed to x86-32 requires more code and more
-debugging time without imparting greater insight.
-\shortversion{}{Finally, since it is impossible for an x86 processor
+debugging time without imparting greater
+\shortversion{insight.}{insight. Finally, since it is impossible for an x86 processor
 to be in 64-bit mode with virtual memory off,
 students would need to be coached through the
 32-bit--to--64-bit transition or would need
@@ -405,7 +403,7 @@ reinforce that material.
 One cost of programming to the complexities of
 real hardware is that
 within the scope of a single semester,
-students do not \violence{}{have the opportunity to}
+students do \violence{not}{not have the opportunity to}
 implement common features of many kernels,
 such as a file system, interprocess communication,
 a real-time scheduler,
@@ -440,12 +438,12 @@ or a network protocol stack.
 		\x{make_runnable} & Wakes up another \x{deschedule}d thread. \\
 		\x{get_ticks} & Gets the number of timer ticks since bootup. \\
 		\x{sleep} & Blocks a thread for a given number of ticks. \\
-		\x{swexn} & Registers a user-space software exception handler.\\
+		\x{swexn} & Registers a user-space function as a software exception handler.\\
 		\hline
 		\multicolumn{2}{c}{\em Memory management} \\
 		\hline
 		\x{new_pages} & Allocates a specified region of memory. \\
-		\x{remove_pages} & Deallocates a memory region. \\
+		\x{remove_pages} & Deallocates same. \\
 		\hline
 		\multicolumn{2}{c}{\em Console I/O} \\
 		\hline
@@ -547,7 +545,7 @@ regions.
 Removing the auto-stack policy and mechanism from
 its traditional position in Unix-like kernels
 simplfies the kernel and
-``front-loads'' policy questions to an earlier
+front-loads policy questions to an earlier
 part of the course,
 before students are facing the substantial pressure
 of the kernel project.
@@ -588,19 +586,19 @@ rather than verifying it with certainty.
 (This hit-or-miss nature motivated our work on Landslide.)
 Nevertheless, performance on these tests constitutes 30\% of the kernel project's grade.
 
-\subsubsection{``Hurdle'' completion criteria}
+\subsubsection{Hurdle completion criteria}
 
 Because of the ambitious learning objectives,
-we employ a very detailed notion of ``completeness''
+we employ a very detailed notion of completeness
 for the kernel project.
-The ``hurdle model'' is based on the following observations:
+The ``hurdle'' model is based on the following observations:
 
 \begin{itemize}
 
 \item \shortversion{Students}{We believe that students} learn more from bugs
 that are harder to find.
 In extreme cases, a software component may do
-``almost everything right,'' but ``the last bug'' may
+almost everything right, but the last bug may
 demonstrate a deep misunderstanding which requires a re-design.
 
 \item Because concurrency bugs are triggered rarely,
@@ -619,13 +617,13 @@ is unable to do so if kernel memory has been exhausted.
 
 \end{itemize}
 
-For these reasons, \shortversion{}{we believe} much of the learning
+For these reasons, \shortversion{much}{we believe much} of the learning
 associated with the kernel project necessarily occurs
 at the end of the experience,
 so it is important for students to finish the process.
 % [suppressed: bad to build P4 on a shaky P3]
 \shortversion{It}{We believe it} would be particularly detrimental to
-assign ``partial credit'' to a large body of non-working
+assign partial credit to a large body of non-working
 code.
 Instead, we require student kernels to pass a
 specified percentage of each segment of the test
@@ -640,7 +638,7 @@ their code possesses certain properties.
 
 A ``complete'' kernel can boot up and run the shell,
 can pass 80\% of the basic system-call sanity test,
-can pass 70\% of the ``solidity'' tests (which
+can pass 70\% of the solidity tests (which
 invoke system calls in illegal or non-trivial ways),
 and can pass two of the three long-running multi-feature tests.
 In addition,
@@ -652,7 +650,7 @@ and to avoid certain distasteful x86-specific code structures.
 % The hurdle is a set of criteria that Pebbles implementations must meet to be considered sastisfactory
 % (TODO: what are they?).
 %Towards the end of the kernel project, students fill out the ``hurdle form'', a checklist of these criteria.
-Students who pass the completeness ``hurdle'' submit their kernels
+Students who pass the completeness hurdle submit their kernels
 and can move on to the kernel-extension project.
 \shortversion{Students}{Meanwhile, students} who were unable to meet the
 hurdle criteria on time receive additional time
