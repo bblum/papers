@@ -28,16 +28,16 @@ the annotation burden imposed on ``top of the class'' students by Landslide is m
 Though our experiments with these students show promising results, we seek to reduce Landslide's annotation burden to make it useful for struggling students as well.
 %
 We believe some annotations could be automatically detected;
-for example, rather than requiring students to declare if their kernel has a preemption disabling mechanism more elaborate than disabling interrupts, Landslide could detect when a timer interrupt doesn't induce a context switch.
+for example, rather than requiring students to declare if their kernel has a preemption-disabling mechanism more elaborate than disabling interrupts, Landslide could detect when a timer interrupt doesn't induce a context switch.
 Other annotations, such as \x{tell_landslide_thread_runnable()},
 might be automated by requiring students to structure code in
 certain ways with pre-determined function names and parameters
 (Landslide already automatically instruments the memory allocator we provide).
-However, \shortversion{}{prescribing} such templates
+However, prescribing such templates
 \shortversion{would constrain}{has the downside of constraining}
 the project's open-ended design space.
 We wish to better understand the tradeoffs between
-making Landslide more automatic and forcing particular design decisions on students.
+making Landslide more automatic and preserving the open-endedness of important design decisions.
 % As open-ended decisions of interface design are important to the course philosophy, we foresee a tradeoff: in some cases, fundamental design challenges may be the cost for increasing Landslide's usability to enable teaching more advanced concepts such as SMP.
 
 \shortversion{}{
