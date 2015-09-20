@@ -1,0 +1,136 @@
+%
+% LaTeX template for prepartion of submissions to PLDI'15
+%
+% Requires temporary version of sigplanconf style file provided on
+% PLDI'15 web site.
+% 
+\documentclass[pldi]{sigplanconf-pldi15}
+
+%
+% the following standard packages may be helpful, but are not required
+%
+\usepackage{SIunits}            % typset units correctly
+\usepackage{courier}            % standard fixed width font
+\usepackage[scaled]{helvet} % see www.ctan.org/get/macros/latex/required/psnfss/psnfss2e.pdf
+\usepackage{url}                  % format URLs
+\usepackage{listings}          % format code
+\usepackage{enumitem}      % adjust spacing in enums
+\usepackage[colorlinks=true,allcolors=blue,breaklinks,draft=false]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
+% known bug: http://tex.stackexchange.com/questions/1522/pdfendlink-ended-up-in-different-nesting-level-than-pdfstartlink
+\newcommand{\doi}[1]{doi:~\href{http://dx.doi.org/#1}{\Hurl{#1}}}   % print a hyperlinked DOI
+
+
+
+\begin{document}
+
+%
+% any author declaration will be ignored  when using 'plid' option (for double blind review)
+%
+
+\title{Systematic Testing with Data-Race Preemption Points}
+\authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
+\authorinfo{Garth Gibson}{Carnegie Mellon University}{garth@cs.cmu.edu}
+
+\maketitle
+\begin{abstract}
+Stateless model checking is a promising technique for testing concurrent programs,
+but is vulnerable to exponential explosion of the state space when the test input parameters are too large.
+Several partial-order reduction techniques exist for mitigating this explosion,
+but even after pruning equivalent interleavings, the state space size for a fixed set of preemption points is unpredictable and often intractable.
+%
+Data race detection, another concurrency testing approach, focuses on identifying suspicious memory access pairs during a single test execution.
+It avoids concerns of intractable state space size, but suffers from a high rate of false positives.
+
+We present an {\em Iterative Deepening} framework for stateless model checking,
+which manages the exploration of many state spaces using different subsets of preemption points.
+It uses state space estimation to prioritize jobs most likely to complete in a fixed CPU budget,
+and it incorporates a data-race analysis to dynamically add new preemption points to verify each data race as buggy or benign.
+%
+Our evaluation shows this technique is
+more effective than single-state-space model checking, both at finding more bugs and at completing more state spaces when no bug exists.
+
+\end{abstract}
+
+\section{Introduction}
+
+% blah blah trite opening sentence
+%As parallelism becomes ever more important for achieving high performance in modern-day programs,
+%so too do advanced concurrency testing techniques become important for verifying the correctness of those programs.
+Concurrency bugs are notoriously hard to find and reproduce because they only appear in specific thread interleavings, which arise at random during normal program execution.
+{\em Stateless model checking} \cite{verisoft} offers a method for finding such bugs,
+or verifying their absence,
+%by systematically executing a program along as many distinct interleavings as possible,
+by forcing a program to execute each distinct interleaving,
+capturing and controlling this nondeterminism in a finite state space.
+Unfortunately, these state spaces explode exponentially in the size of the input program.
+Reduction techniques such as Dynamic Partial Order Reduction (DPOR) \cite{dpor} and Maximal Causality Reduction (MCR) \cite{mcr} expand the limits of feasible test completion,
+and search ordering strategies such as Iterative Context Bounding (ICB) \cite{chess} allow bugs to be found sooner in a given exploration should the exist.
+
+% Can I even make a claim this broad to begin with?
+However, all stateless model checkers to date are bound by a fixed set of {\em preemption points} (PPs): code locations that define the granularity at which threads interleave.
+For example, CHESS \cite{chess} preemptions only on synchronization operations and library calls, which can miss lock-free shared memory races.
+It provides an additional data-race analysis to report any violations of this model;
+% TODO: Make sure that there are enough citations for this claim.
+however, data-race analyses are prone to report false positives and benign races which require annotations or imprecise heuristics to reduce \cite{racerx,tsan,datacollider}.
+%
+On the other hand,
+% TODO: Find a systematic tester that does this!
+SKI \cite{ski}
+is able to preempt threads around any shared resource access. Such fine granularity would automatically check if each data race is a real bug, but makes state space completion intractable for all but the most rudimentary test inputs.
+%
+This work shows how to avoid making this tradeoff decision in advance.
+
+\newcommand\landslideid{\textsc{Landslide-ID}}
+We present \landslideid...
+
+\section{Implementation}
+
+Landslide provides estimated completion time using the Recursive Estimator algorithm in \cite{estimation}.
+
+% TODO
+TODO
+
+% TODO: make sure to talk about avoiding thrashing
+
+\section{Evaluation}
+
+Evaluation questions:
+\begin{enumerate}
+	\item Is ID more effective than 
+\end{enumerate}
+
+
+We tested 87 pintos kernels and found races in 45-47 of them, among which 34-47 of those bugs required data-race preemption points to expose. That means we rock.
+
+% TODO: Future work.
+% Future work: Add a way to configure even smaller subsets (eg "only mutex_locks called from site X") for cases where mx_lock and mx_unlock alone are still too big. Count the number of kernels for which this was the case.
+
+\section{Related Work}
+
+None. We are the first ever to explore this area, and of course expect the Turing Award for our groundbreaking insights.
+
+% dbug-like systematic testers: dbug, chess, modist
+
+% SKI-like systematic testers: SKI
+
+% other: macemc(???), ETA (message passing only)
+
+% TODO: Mention dbug+PARROT as a motivating argument for our work. The number of tests with INF state space, EVEN WITH ONLY PTHREAD API PPs, shows that fixed-in-advance-pp-set needs our work to improve.
+
+\section{Conclusion}
+
+We are
+%overwhelmingly
+great. Accept our paper.
+
+% TODO: Publish source of ID wrapper alone, if can't publish landslide itself.
+% TODO: Publish log files.
+
+\section{Acknowledgements}
+
+Thanks.
+
+\bibliographystyle{abbrvnat}
+\bibliography{citations}{}
+
+\end{document}
