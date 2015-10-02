@@ -1,0 +1,52 @@
+\section{Evaluation}
+
+% TODO: Don't forget to add to quicksand
+
+Evaluation questions:
+\begin{enumerate}
+	\item Easy question: Is it good to incorporate DR analysis for new PPs? (Do we find DR-PP-only bugs?)
+	\item How does this compare to static DR detection (how many DRs does ID verify as benign?)
+	\item DRs aside, is ID more effective than the maximal state space? (Do we find bugs in subset spaces, when the max state space would time out?)
+		% Make sure to argue how this shows ID is applicable to e.g. message-passing SMC tools. "Even when DR PPs aren't on the table, you should do our thing."
+	\item Is ID useful for managing new DR PPs? (Are there some DRs where the PP alone finds the bug, and others where the old PP plus the new DR PP is needed?)
+		% How many DR bugs were found from DR-alone state space, and how many from sema_foo + DR state space? What we want is a *variety*, which proves that iterative deepening is better than either individual strategy.
+	\item How effective is the free-re-malloc technique at eliminating false positives? (Just turn the optimization off, and measure how many more SSes are generated.)
+
+% Figure out concretely what the data race tricks are that we do, so we can claim them as contributions in the paper. Then ACTUALLY EVALUATE THEM.
+%         - Speculative DR PPs.
+%                 Not a heuristic, rather how to make it work at all to begin with.
+%                 (Cite MS thesis, claim on backwards explorating finding bugs faster)
+%         - Free/re-malloc to eliminate some false positives. See #193.
+%                 Measure how many false positives are eliminated.
+%                 Check, ofc, to make ABSOLUTE SURE, that no bugs missed w/ this trick.
+%                         If there are, it could be because of the implementation
+%                         bug described in #193.
+%         - Using tid/last_call filtering because whole stack traces are too expensive.
+%                 Turn on/off and measure how resulting DR bug #s change.
+%         - Optional: Reprioritizing DRs based on "confirmed" / "suspected"
+%                 Shouldn't be hard just make ID wrapper print "s" or "c"!
+%                 Is it helpful for ID to put priorities on DR PPs?
+%                         Test by inverting the priority and see if fewer buges are found.
+%         // Super optional to talk about. Probably not worth the time.
+%         // - "Too suspicious" (during init/destroy)
+%         //      (Cite eraser, section 2.2)
+
+
+%% Notes from jiri meeting. Some overlap with stuff above.
+% Evaluation in 2 major questions
+%         Data races (Sequence this first) vs no-DR-systesting
+%                 Sub questions: Compare to single-pass DRs
+%                         What false positive rate are we avoiding by comparison?
+%                         How often would the DR not even be caught on the 1st execution, requiring backtracks to expose?
+%                                 (don't forget set EXPLORE_BACKWARDS=0 here)
+%         "Control experiment vs ID" (PLDI cares less asbout "finding bugs faster")
+
+
+
+\end{enumerate}
+
+
+We tested 87 pintos kernels and found races in 45-47 of them, among which 34-47 of those bugs required data-race preemption points to expose. That means we rock.
+
+% TODO: Future work.
+% Future work: Add a way to configure even smaller subsets (eg "only mutex_locks called from site X") for cases where mx_lock and mx_unlock alone are still too big. Count the number of kernels for which this was the case.

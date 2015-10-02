@@ -1,0 +1,41 @@
+\section{Related Work}
+
+%None. We are the first ever to explore this area, and of course expect the Turing Award for our groundbreaking insights.
+
+\quicksand~is built upon many established concurrency testing techniques, dating back of course to Verisoft, the original C model checker \cite{verisoft}.
+We use \landslide~as our model checker \cite{landslide},
+% TODO: is DPOR abbreviated earlier in the paper
+which itself implements DPOR \cite{dpor},
+state space estimation \cite{estimation},
+and data race detection \cite{eraser}. Related model checkers can largely be classified based on their treatment of shared-memory thread communication.
+
+{\bf Synchronization events only.} CHESS \cite{chess} and \textsc{dBug} \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
+Hence they will miss any crashes resulting from interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data race candidates as PPs in future tests.
+
+{\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, \textsc{MaceMC} \cite{macemc}, \textsc{MoDist}, and ETA \cite{parallel-dpor}, require thread communication to be restricted to a message-passing API to more effectively test distributed systems.
+This eliminates the need for data race analysis, but restricts the class of programs that can be tested.
+Nevertheless, Iterative Deepening is still applicable to these tools.
+
+{\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs. However, every such prior tool we know of has serious drawbacks.
+Ski \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
+which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
+% TODO: Make sure you talk about your mutex experiment, or rephrase this.
+SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our mutex-testing experiment.
+However, it does not employ Iterative Deepening, and requires programs to be written in the PROMELA DSL, so cannot check implementations directly.
+
+{\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
+These are all orthogonal to our technique.
+\textsc{Parrot} \cite{parrot} combines model checking with a partially-determinizing runtime environment, but still, fewer than half the non-trivial state spaces in their evaluation could be completed, providing a strong argument for \quicksand.
+Finally, Iterative Context Bounding \cite{chess} is most similar to Iterative Deepening, as both approaches provide a concrete partial verification on some subset of interleavings when full completion is intractable.
+However, ICB still limits itself to a fixed set of PPs, and so far no algorithm has been proposed to dynamically add data race PPs during a test with ICB.
+
+
+% TODO: talk about data race detectors???
+
+% Note that BPOR paper claims that ICB(3+) repeats LOADS of work, and that makes it ok for landslide-ID to repeat work.
+
+% IDK if i should mention it, but OOPSLA 2015, protocol based verification of MPI concurrency paper. Different verification approach entirely; doesn't suffer exponential explosion but limited to programs with no shared state and MPI communication only
+
+% Probably NOT worth a mention: OOPSLA 2015, stateless model checking of event driven applications. Turning timer-driven model on its head and checking single-threaded, but asynch-event-driven programs (i.e. device-like signal handlers)
+
+% TODO: Read OOPSLA 2015 "SATcheck, sat-directed SMC for SC/TSO"

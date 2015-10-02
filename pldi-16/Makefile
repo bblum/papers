@@ -1,6 +1,6 @@
 .PHONY: clean
 
-paper.pdf: paper.tex citations.bib
+paper.pdf: paper.tex intro.tex related.tex evaluation.tex di.tex citations.bib
 	pdflatex $< ; bibtex $(<:%.tex=%) ; pdflatex $< ; pdflatex $<
 
 clean:
