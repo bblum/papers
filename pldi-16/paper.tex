@@ -27,8 +27,11 @@
 % any author declaration will be ignored  when using 'plid' option (for double blind review)
 %
 
-% FIXME: decide whether "stateless model checking" or "sys testing"
-\title{Systematic Testing with Data-Race Preemption Points}
+% TODO: Don't forget to run e.g. s/\\quicksand /\\quicksand~/
+\newcommand\landslide{\textsc{Landslide}}
+\newcommand\quicksand{\textsc{Quicksand}}
+
+\title{Stateless Model Checking with Data-Race Preemption Points}
 \authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
 \authorinfo{Garth Gibson}{Carnegie Mellon University}{garth@cs.cmu.edu}
 
@@ -65,10 +68,10 @@ by forcing a program to execute each distinct interleaving,
 capturing and controlling this nondeterminism in a finite state space.
 Unfortunately, these state spaces explode exponentially in the size of the input program.
 Reduction techniques such as Dynamic Partial Order Reduction (DPOR) \cite{dpor} and Maximal Causality Reduction (MCR) \cite{mcr} expand the limits of feasible test completion,
-and search ordering strategies such as Iterative Context Bounding (ICB) \cite{chess} allow bugs to be found sooner in a given exploration should the exist.
+and search ordering strategies such as Iterative Context Bounding (ICB) \cite{chess} allow bugs to be found sooner in a given exploration should they exist.
 
 % Can I even make a claim this broad to begin with?
-However, all stateless model checkers to date are bound by a fixed set of {\em preemption points} (PPs): code locations that define the granularity at which threads interleave.
+However, all stateless model checkers to date are bound by a fixed set of {\em preemption points}: code locations that define the granularity at which threads interleave.
 For example, \textsc{CHESS} \cite{chess} preempts only on synchronization operations and library calls, which can miss lock-free shared memory races.
 It provides an additional data-race analysis to report any violations of this model;
 % TODO: Make sure that there are enough citations for this claim.
@@ -77,15 +80,42 @@ however, data-race analyses are prone to report false positives and benign races
 On the other hand,
 % TODO: Find a systematic tester that does this!
 \textsc{Ski} \cite{ski}
-is able to preempt threads around any shared resource access. Such fine granularity would automatically check if each data race is a real bug, but makes state space completion intractable for all but the most rudimentary test inputs.
+is able to preempt threads around any shared resource access. Such fine granularity would automatically check if each data race is a real bug, but makes full state space completion intractable for all but the most rudimentary test inputs.
 %
-This paper shows how to avoid making that tradeoff decision in advance.
+This work shows how to avoid making that tradeoff decision in advance.
 
-\newcommand\landslideid{\textsc{Landslide-ID}}
-We present \landslideid, a framework for {\em iterative deepening} (ID) of preemption points during stateless model checking.
-Named after the analogous technique in chess AI \cite{iterative-deepening-chess},
+We present \quicksand, a framework for {\em Iterative Deepening} of preemption points during stateless model checking.
+Named after the analogous technique in chess AI \cite{iterative-deepening-chess}, our approach likewise makes progressively deeper searches of the state space until a given CPU budget is exhausted.
+Rather than attempting to search a single state space with every preemption point among a fixed set enabled (e.g., preempting on every pthread API call),
+\quicksand~tests many different state spaces corresponding to subsets of those points, managing a model checker instance to explore each one.
+It estimates the size of each state space to decide when long-running instances should be suspended, and dynamically generates new state spaces based on data race analysis.
 
-This paper makes ELEVENTYBILLION contributions:
+We evaluated \quicksand~by testing
+% TODO: What's the real number
+{\Large \em 31337}
+student thread libraries and kernels from the undergraduate OS classes at Carnegie Mellon, Berkeley, and the University of Chicago.
+We show that \quicksand~finds more bugs than the conventional stateless model checking approach given the same CPU budget,
+and furthermore that adding data-race preemption points quickly exposes bugs missed by even the ``maximal'' state space of the conventional approach.
+
+% TODO fix dis when rest of paper is done
+This paper makes {\Large \em ELEVENTYBILLION} contributions:
+\begin{enumerate}
+	\item Iterative deepening wrapper
+	\item Data race tricks, including a false-positive reduction optimization that only works in the context of stateless model checking
+	\item Techniques for detecting and flattening cyclic state spaces resulting from ad-hoc while-loop synchronization % TODO: is there actually room for this in the paper?
+		% don't forget the maybe_unblock cleverness
+	\item Evaluation (elaborate obv)
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Design}
+
+TODO
+
+Unlike in chess AI, however, adding more preemption points to a completed state space is not necessarily a linear process, as  % blah blah multiple combinations
+
+% define minimal state space and maximal state space
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -96,20 +126,25 @@ Landslide provides estimated completion time using the Recursive Estimator algor
 % TODO: Talk about the multiple ways DR PPs are added (alone / in addition)
 
 % TODO: make sure to talk about avoiding thrashing
+\subsection{Avoiding thrashing in \quicksand}
+
+(Here the reviewers will wonder if the whole point of the paper was just to build up to that one joke.)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Evaluation}
+
+% TODO: Don't forget to add to quicksand
 
 Evaluation questions:
 \begin{enumerate}
 	\item Easy question: Is it good to incorporate DR analysis for new PPs? (Do we find DR-PP-only bugs?)
 	\item How does this compare to static DR detection (how many DRs does ID verify as benign?)
 	\item DRs aside, is ID more effective than the maximal state space? (Do we find bugs in subset spaces, when the max state space would time out?)
+		% Make sure to argue how this shows ID is applicable to e.g. message-passing SMC tools. "Even when DR PPs aren't on the table, you should do our thing."
 	\item Is ID useful for managing new DR PPs? (Are there some DRs where the PP alone finds the bug, and others where the old PP plus the new DR PP is needed?)
 		% How many DR bugs were found from DR-alone state space, and how many from sema_foo + DR state space? What we want is a *variety*, which proves that iterative deepening is better than either individual strategy.
 	\item How effective is the free-re-malloc technique at eliminating false positives? (Just turn the optimization off, and measure how many more SSes are generated.)
-
 
 % Figure out concretely what the data race tricks are that we do, so we can claim them as contributions in the paper. Then ACTUALLY EVALUATE THEM.
 %         - Speculative DR PPs.
@@ -130,6 +165,18 @@ Evaluation questions:
 %         // - "Too suspicious" (during init/destroy)
 %         //      (Cite eraser, section 2.2)
 
+
+%% Notes from jiri meeting. Some overlap with stuff above.
+% Evaluation in 2 major questions
+%         Data races (Sequence this first) vs no-DR-systesting
+%                 Sub questions: Compare to single-pass DRs
+%                         What false positive rate are we avoiding by comparison?
+%                         How often would the DR not even be caught on the 1st execution, requiring backtracks to expose?
+%                                 (don't forget set EXPLORE_BACKWARDS=0 here)
+%         "Control experiment vs ID" (PLDI cares less asbout "finding bugs faster")
+
+
+
 \end{enumerate}
 
 
@@ -142,18 +189,48 @@ We tested 87 pintos kernels and found races in 45-47 of them, among which 34-47 
 
 \section{Related Work}
 
-None. We are the first ever to explore this area, and of course expect the Turing Award for our groundbreaking insights.
+%None. We are the first ever to explore this area, and of course expect the Turing Award for our groundbreaking insights.
 
-% dbug-like systematic testers: dbug, chess, modist
+\quicksand~is built upon many established concurrency testing techniques, dating back of course to Verisoft, the original C model checker \cite{verisoft}.
+We use \landslide~as our model checker \cite{landslide},
+% TODO: is DPOR abbreviated earlier in the paper
+which itself implements DPOR \cite{dpor},
+state space estimation \cite{estimation},
+and data race detection \cite{eraser}. Related model checkers can largely be classified based on their treatment of shared-memory thread communication.
 
-% SKI-like systematic testers: SKI
+{\bf Synchronization events only.} CHESS \cite{chess} and \textsc{dBug} \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
+Hence they will miss any crashes resulting from interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data race candidates as PPs in future tests.
 
-% other: macemc(???), ETA (message passing only)
+{\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, \textsc{MaceMC} \cite{macemc}, \textsc{MoDist}, and ETA \cite{parallel-dpor}, require thread communication to be restricted to a message-passing API to more effectively test distributed systems.
+This eliminates the need for data race analysis, but restricts the class of programs that can be tested.
+Nevertheless, Iterative Deepening is still applicable to these tools.
+
+{\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs. However, every such prior tool we know of has serious drawbacks.
+SKI \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
+which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
+% TODO: Make sure you talk about your mutex experiment, or rephrase this.
+SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our mutex-testing experiment.
+However, it does not employ Iterative Deepening, and requires programs to be written in the PROMELA DSL, so cannot check implementations directly.
+
+{\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
+These are all orthogonal to our technique.
+\textsc{Parrot} \cite{parrot} combines model checking with a partially-determinizing runtime environment, but still, fewer than half the non-trivial state spaces in their evaluation could be completed, providing a strong argument for \quicksand.
+Finally, Iterative Context Bounding \cite{chess} is most similar to Iterative Deepening, as both approaches provide a concrete partial verification on some subset of interleavings when full completion is intractable.
+However, ICB still limits itself to a fixed set of PPs, and so far no algorithm has been proposed to dynamically add data race PPs during a test with ICB.
+
+
+% TODO: talk about data race detectors???
 
 % TODO: Mention dbug+PARROT as a motivating argument for our work. The number of tests with INF state space, EVEN WITH ONLY PTHREAD API PPs, shows that fixed-in-advance-pp-set needs our work to improve.
 %Indeed, the low state space completion rate in dBug+Parrot's evaluation \cite{parrot} shows that for some tests even the set of all pthread API calls is too many PPs.
 
 % TODO: Address ICB. Note that BPOR paper claims that ICB(3+) repeats LOADS of work, and that makes it ok for landslide-ID to repeat work.
+
+% IDK if i should mention it, but OOPSLA 2015, protocol based verification of MPI concurrency paper. Different verification approach entirely; doesn't suffer exponential explosion but limited to programs with no shared state and MPI communication only
+
+% Probably NOT worth a mention: OOPSLA 2015, stateless model checking of event driven applications. Turning timer-driven model on its head and checking single-threaded, but asynch-event-driven programs (i.e. device-like signal handlers)
+
+% TODO: Read OOPSLA 2015 "SATcheck, sat-directed SMC for SC/TSO"
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
