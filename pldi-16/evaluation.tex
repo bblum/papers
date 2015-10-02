@@ -37,6 +37,21 @@ Our evaluation answers the following questions:
 				% What we want is a *variety*, which proves that iterative deepening is better than either individual strategy.
 		\end{enumerate}
 \end{enumerate}
+\subsection{Test Suite}
+% TODO: Maybe say how many lines of code total? How many lines on average per P2/pintos? (careful with pintos; lots of basecode)
+Our test suite consists of \numthrlibs~``P2'' student thread libraries, from CMU's 15-410 OS class,
+%across the Spring and Fall 2014 and Spring 2015 semesters;
+and \numpintoses~``Pintos'' student kernels, from Berkeley's CS162 and U. Chicago's CS230 OS classes.
+%
+The P2 thread library comprises \texttt{thr\_create()}, \texttt{thr\_exit()}, \texttt{thr\_join()}, mutexes, condvars, semaphores, and r/w locks;
+all implemented from scratch in userspace with a UNIX-like system call interface \cite{kspec,thrlib}.
+%
+The Pintos kernel project
+involves implementing priority scheduling, \texttt{sleep()}, and user-space process management (\texttt{wait()} and \texttt{exit()})
+using provided bare-bones mutex, context-switch, and virtal memory implementations
+\cite{pintos}.
+
+% TODO: List test programs that were run.
 
 \subsection{Evaluating Data-Race PPs}
 

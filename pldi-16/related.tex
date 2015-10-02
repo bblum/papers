@@ -2,18 +2,21 @@
 
 %None. We are the first ever to explore this area, and of course expect the Turing Award for our groundbreaking insights.
 
-\quicksand~is built upon many established concurrency testing techniques, dating back of course to Verisoft, the original C model checker \cite{verisoft}.
-We use \landslide~as our model checker \cite{landslide},
+\quicksand~is built upon many established concurrency testing techniques, dating back
+% of course
+to Verisoft, the original C model checker \cite{verisoft}.
+Our model checker \landslide~\cite{landslide}
 % TODO: is DPOR abbreviated earlier in the paper
-which itself implements DPOR \cite{dpor},
+itself implements DPOR \cite{dpor},
 state space estimation \cite{estimation},
-and data race detection \cite{eraser}. Related model checkers can largely be classified based on their treatment of shared-memory thread communication.
+and data-race detection \cite{eraser}.
+We classify related model checkers largely based on their treatment of shared-memory thread communication.
 
 {\bf Synchronization events only.} CHESS \cite{chess} and \textsc{dBug} \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
-Hence they will miss any crashes resulting from interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data race candidates as PPs in future tests.
+Hence they will miss any crashes that require interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
 
 {\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, \textsc{MaceMC} \cite{macemc}, \textsc{MoDist}, and ETA \cite{parallel-dpor}, require thread communication to be restricted to a message-passing API to more effectively test distributed systems.
-This eliminates the need for data race analysis, but restricts the class of programs that can be tested.
+This eliminates the need for data-race analysis, but restricts the class of programs that can be tested.
 Nevertheless, Iterative Deepening is still applicable to these tools.
 
 {\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs. However, every such prior tool we know of has serious drawbacks.
@@ -27,7 +30,7 @@ However, it does not employ Iterative Deepening, and requires programs to be wri
 These are all orthogonal to our technique.
 \textsc{Parrot} \cite{parrot} combines model checking with a partially-determinizing runtime environment, but still, fewer than half the non-trivial state spaces in their evaluation could be completed, providing a strong argument for \quicksand.
 Finally, Iterative Context Bounding \cite{chess} is most similar to Iterative Deepening, as both approaches provide a concrete partial verification on some subset of interleavings when full completion is intractable.
-However, ICB still limits itself to a fixed set of PPs, and so far no algorithm has been proposed to dynamically add data race PPs during a test with ICB.
+However, ICB still limits itself to a fixed set of PPs, and so far no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
 
 
 % TODO: talk about data race detectors???

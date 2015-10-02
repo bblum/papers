@@ -31,10 +31,7 @@ Rather than attempting to search a single state space with every available preem
 \quicksand~tests many different state spaces corresponding to subsets of those points, managing a model checker instance to explore each one.
 It estimates the size of each state space to decide when long-running instances should be suspended, and dynamically generates new state spaces based on data race analysis.
 
-We evaluated \quicksand~by testing
-% TODO: What's the real number
-{\Large \em 31337}
-student thread libraries and kernels from the undergraduate OS classes at Carnegie Mellon, Berkeley, and the University of Chicago.
+We evaluated \quicksand~by testing \numstudence~student thread libraries and kernels from the undergraduate OS classes at Carnegie Mellon, Berkeley, and the University of Chicago.
 We show that \quicksand~finds more bugs than the conventional stateless model checking approach given the same CPU budget,
 and furthermore that adding data-race preemption points quickly exposes bugs missed by even the ``maximal'' state space of the conventional approach.
 
