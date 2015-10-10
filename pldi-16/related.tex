@@ -15,12 +15,12 @@ We classify related model checkers largely based on their treatment of shared-me
 {\bf Synchronization events only.} CHESS \cite{chess} and \textsc{dBug} \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
 Hence they will miss any crashes that require interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
 
-{\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, \textsc{MaceMC} \cite{macemc}, \textsc{MoDist}, and ETA \cite{parallel-dpor}, require thread communication to be restricted to a message-passing API to more effectively test distributed systems.
+{\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, \textsc{MaceMC} \cite{macemc}, \textsc{MoDist} \cite{modist}, and ETA \cite{dbug-retreat}, limits thread communication to a message-passing API to more effectively test distributed systems.
 This eliminates the need for data-race analysis, but restricts the class of programs that can be tested.
 Nevertheless, Iterative Deepening is still applicable to these tools.
 
 {\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs. However, every such prior tool we know of has serious drawbacks.
-Ski \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
+{\textsc SKI} \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
 which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
 % TODO: Make sure you talk about your mutex experiment, or rephrase this.
 SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our mutex-testing experiment.
@@ -34,6 +34,7 @@ However, ICB still limits itself to a fixed set of PPs, and so far no algorithm 
 
 
 % TODO: talk about data race detectors???
+% eg Scalable Race Detection for Android Applications -- uses domain specific heuristics to filter out false positives
 
 % Note that BPOR paper claims that ICB(3+) repeats LOADS of work, and that makes it ok for landslide-ID to repeat work.
 

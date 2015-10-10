@@ -25,7 +25,11 @@ Our evaluation answers the following questions:
 			% TODO: This one's optional. You can give up on it.
 			\item Do we avoid false negatives compared to single-pass?
 				% Explain later as: How many data-race bugs required backtracking to be identified as candidates in the first place
-				%(don't forget set EXPLORE_BACKWARDS=0 here)
+				%TODO: for this experiment, set EXPLORE_BACKWARDS=0
+				% TODO: And disable false-neg malloc-free technique
+				% TODO: And also disable the confirmed/suspected thing
+				% (where mem.c waits for reorder observed before
+				% messaging the latter half of the DR to QS)
 		\end{enumerate}
 	\item Is Iterative Deepening better than the single-state-space model?
 		\begin{enumerate}
@@ -54,6 +58,29 @@ using provided bare-bones mutex, context-switch, and virtal memory implementatio
 % TODO: List test programs that were run.
 
 \subsection{Evaluating Data-Race PPs}
+
+In this section we show that using data-race PPs with \landslide~is more effective than either SSS-MC or single-pass data-race detection alone.
+
+{\bf Finding bugs missed by SSS-MC.}
+% TODO describe
+
+{\bf Avoiding false positive data-race candidates.}
+% TODO describe
+
+{\bf Avoiding false negative data-race bugs.}
+Some pairs of unprotected shared-memory accesses may be hidden in some control flow path that requires a nondeterministic preemption to be executed.
+In such cases, a single-pass data-race detector
+%could not achieve the coverage necessary
+would fail
+to identify the access pair as a data-race candidate to begin with.
+%
+We counted how many such data-races, used as PPs, would lead to \landslide~finding new bugs,
+thereby making them {\em false negatives} of the single-pass approach.
+% TODO: Put a figure here giving an example of where e.g. a data race only shows up during the contention path of a mutex.
+We classified each data-race candidate according to whether \landslide~had reported them during the first interleaving, before any backtracking or preempting: if so, they were {\em deterministic data races} (hence could be found by single-pass).
+%
+To ensure a fair comparison, we disabled \landslide's {\em false-positive}-avoidance techniques during this experiment.
+For example, we reported free-re-malloc data races during the first interleaving as {\em deterministic}, as a single-pass analysis must, rather than waiting until future interleavings to confirm them (see Section \ref{sec:free-re-malloc}).
 
 \subsection{Evaluating Iterative Deepening}
 
