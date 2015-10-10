@@ -6,6 +6,11 @@ Unlike in chess AI, however, adding more preemption points to a completed state 
 
 % define minimal state space and maximal state space
 
+\subsection{Filtering false positive data races}
+
+% TODO: proof goes here
+% TODO: example codez with malloc re free go here
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Implementation}
@@ -13,6 +18,12 @@ Unlike in chess AI, however, adding more preemption points to a completed state 
 % TODO: Overview
 
 \subsection{Managing multiple state spaces}
+
+\quicksand~uses a workqueue model
+...
+priorities... data race priorities...
+
+
 
 Landslide provides estimated completion time using the Recursive Estimator algorithm in \cite{estimation}.
 
@@ -24,21 +35,22 @@ Landslide provides estimated completion time using the Recursive Estimator algor
 
 Intuitively, % TODO describe what we're trying to achieve
 
-When \landslide~detects a data race, it produces a report for each of the two memory accesses involved in the race.
+When \landslide~detects a data race, it reports each of the two memory accesses involved in the race.
 Each report indicates the program counter value (PC) associated with the access, as well as some further conditions to help filter away unrelated executions of the same instruction on different data.
 (For example, {\tt list\_insert()} might be called from many parts of a codebase, but produce data-race candidates from only one callsite.)
-Ideally, the PC would be qualified by a full backtrace, but tracing the stack is too expensive to do as often as each shared memory access.
+Ideally, the PC would be qualified by a full backtrace, but tracing the stack is too expensive to do for each shared memory access.
 Instead, \landslide~qualifies the PC with
 (a) the current thread ID and
 (b) the most recent {\tt call} instruction.
 % (a crude approximation of a stack trace)
 % which are much cheaper, as we carry them around all the time already
-Note that we do {\em not} qualify data races by {\em memory addresses},
-which change across thread interleavings.
+Note that we do {\em not} qualify data races by the shared memory address,
+which can change based on different interleavings of previous code
+(for example, depending on the result of {\tt malloc()}).
 % especially when malloc is involved.
-Figure~\ref{fig:dont-filter-dr-by-address} shows example code where qualifying by memory address will miss the bug.
+% TODO: decide whether to make dont-filter-dr-by-address example.
+%Figure~\ref{fig:dont-filter-dr-by-address} shows example code where qualifying by memory address will miss the bug.
 
-% TODO: make dont-filter-dr-by-address example.
 
 When \quicksand~receives a data race report, it adds two new jobs to its workqueue:
 a ``small'' job to preempt on the racing instruction only,
@@ -48,8 +60,10 @@ Hence each {\em pair} of racing accesses will spawn four new jobs, as shown in F
 Rather than adding a maximal job with both new PPs at once, we prefer to add smaller jobs which have a higher chance of completing in time.
 If those state spaces are bug-free, they will in turn add the maximal job later.
 %
-The rationale of spawning multiple jobs is that which will be more fruitful cannot be known in advance: while the big job may not complete in time, the small job might miss the data race entirely if the original PPs were required to expose it.
-In practice, we have observed some bugs found quickly by the small job, and other bugs missed by the small job found eventually by the big job.
+The rationale of spawning multiple jobs is that which will be more fruitful cannot be known in advance:
+while the big job risks not completing in time,
+the small job risks missing the data race entirely if the original PPs were required to expose it.
+In practice, we observed some bugs found quickly by these small jobs, and other bugs missed by the small jobs found eventually by the big jobs.
 % which justifies this design
 
 

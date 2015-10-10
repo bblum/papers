@@ -75,12 +75,26 @@ We are
 %overwhelmingly
 great. Accept our paper.
 
-% TODO: Publish source of ID wrapper alone, if can't publish landslide itself.
-% TODO: Publish log files.
+We have presented Iterative Deepening, a new technique for automating the choice of preemption points (PPs) during stateless model checking, and \quicksand, a tool which implements this technique tailored to the \landslide~model checker.
+\quicksand~incorporates \landslide's data-race analysis to create new PPs tailored specifically to the program under test,
+and manages multiple \landslide~instances to test many different PP subsets in a given CPU budget, even when the full state space of all PPs would be computationally intractable.
+
+Our evaluation shows that \quicksand~achieves better bug-finding results than either single-pass data-race detection or single-state-space model checking (SSS-MC) alone.
+We avoid all false-positive data race reports by verifying the absence of bugs in their associated state spaces, and find crashes caused by nondeterministic data-races in alternate thread interleavings missed entirely by single-pass analysis.
+Compared to SSS-MC, we find bugs faster in subset state spaces when the maximal state space is too large to explore, and find new bugs with data-race PPs that the maximal state space would not expose at all.
+
+Although \landslide~itself is not publicly available due to its dependency on the non-free simulator {\sc Simics}, \quicksand~is open-source and its interface can be adapted to fit any similar tool.
+We have also posted the log files from all our experiments.
+They can be found here:
+
+\url{https://github.com/bblum/landslide} % TODO: put QS in its own repository
+
+\url{https://github.com/bblum/landslide} % TODO: put final logs somewhere
 
 \section{Acknowledgements}
 
 Many thanks to David A. Eckhardt, Vaishaal Shankar, and Haryadi Gunawi for generously providing student implementations from CMU's, Berkeley's, and U. of Chicago's OS classes respectively.
+Thanks to Wind River Simics for %TODO
 Thanks to Ji\v{r}\'{i} \v{S}im\v{s}a and the anonymous PLDI reviewers for their helpful comments.
 This work was supported in part by % TODO: funding sources
 
