@@ -54,6 +54,20 @@ The Pintos kernel project
 involves implementing priority scheduling, \texttt{sleep()}, and user-space process management (\texttt{wait()} and \texttt{exit()})
 using provided bare-bones mutex, context-switch, and virtal memory implementations
 \cite{pintos}.
+% P2 SLOC stats: 1807 avg; 1723 median; range 1181-4114.
+% All numbers, obtained with:
+% cd p2s; for i in */*; do wc -l $i/user/libthread/*.{c,h,S} $i/user/libthread/*/*.{c,h,S} ; done | grep total
+% 1181 1192 1221 1230 1238 1240 1243 1261 1275 1307 1310 1318 1325 1334 1336 1345 1366
+% 1388 1388 1403 1415 1416 1430 1451 1478 1498 1527 1589 1618 1635 1638 1654 1675 1676
+% 1716 1719 1720 1723 1723 1727 1737 1743 1744 1751 1769 1777 1782 1789 1789 1812 1918
+% 1926 1946 1994 2022 2043 2066 2077 2088 2099 2131 2164 2172 2190 2215 2227 2277 2282
+% 2384 2387 2483 2486 2503 2514 2551 2597 2610 2665 4114
+Though not ``real world'' programs, both projects are quite large: % maybe "complex"?
+the P2s average 1807 lines of C and x86 assembly (stddev 489.5),
+% Pintos SLOC stats: TODO
+and the Pintoses average {\bf 9999999} % TODO
+
+
 
 % TODO: List test programs that were run.
 
