@@ -12,6 +12,8 @@ state space estimation \cite{estimation},
 and data-race detection \cite{eraser}.
 We classify related model checkers largely based on their treatment of shared-memory thread communication.
 
+\subsection{Stateless Model Checking}
+
 {\bf Synchronization events only.} CHESS \cite{chess} and \textsc{dBug} \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
 Hence they will miss any crashes that require interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
 
@@ -23,7 +25,7 @@ Nevertheless, Iterative Deepening is still applicable to these tools.
 {\textsc SKI} \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
 which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
 % TODO: Make sure you talk about your mutex experiment, or rephrase this.
-SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our mutex-testing experiment.
+SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our \mxtest~experiment.
 However, it does not employ Iterative Deepening, and requires programs to be written in the PROMELA DSL, so cannot check implementations directly.
 
 {\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
@@ -32,6 +34,15 @@ These are all orthogonal to our technique.
 Finally, Iterative Context Bounding \cite{chess} is most similar to Iterative Deepening, as both approaches provide a concrete partial verification on some subset of interleavings when full completion is intractable.
 However, ICB still limits itself to a fixed set of PPs, and so far no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
 
+\subsection{Data Race Detection}
+
+blah blah blah eraser
+
+blah blah blah threadsanitizer, racePRO, etc
+
+\subsection{Other Concurrency Testing Approaches} % TODO: Well?
+
+blah blah pldi'15 symbiosis DSP
 
 % TODO: talk about data race detectors???
 % eg Scalable Race Detection for Android Applications -- uses domain specific heuristics to filter out false positives
