@@ -35,12 +35,10 @@ We evaluated \quicksand~by testing \numstudence~student thread libraries and ker
 We show that \quicksand~finds more bugs than the conventional stateless model checking approach given the same CPU budget,
 and furthermore that adding data-race preemption points quickly exposes bugs missed by even the ``maximal'' state space of the conventional approach.
 
-% TODO fix dis when rest of paper is done
-This paper makes {\Large \em ELEVENTYBILLION} contributions:
+This paper's contributions are as follows:
 \begin{enumerate}
-	\item Iterative deepening wrapper
-	\item Data race tricks, including a false-positive reduction optimization that only works in the context of stateless model checking
-	\item Techniques for detecting and flattening cyclic state spaces resulting from ad-hoc while-loop synchronization % TODO: is there actually room for this in the paper?
-		% don't forget the maybe_unblock cleverness
-	\item Evaluation (elaborate obv)
+	\item Iterative Deepening, a new technique for combining data-race analysis with stateless model checking, and \quicksand, an open source implementation;
+	\item A new tactic for eliminating false-positive data race reports, unsound in single-pass analysis but which we prove sound when used with Iterative Deepening;
+	%\item Techniques for detecting and flattening cyclic state spaces resulting from ad-hoc while-loop synchronization % TODO: is there actually room for this in the paper?
+	\item A large evaluation in which \quicksand~compares favorably to stand-alone data-race detection and stateless model checking approaches.
 \end{enumerate}

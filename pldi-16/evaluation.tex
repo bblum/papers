@@ -2,9 +2,6 @@
 
 \section{Evaluation}
 
-% TODO: Don't forget to add to quicksand a feature to print time-when-job-started (ie, tell total time from test start to bug found in a DR state space == job-start time + job-elapsed time)
-% TODO ******BEFORE****** you begin running experimence en masse!
-
 Although \quicksand~presents Iterative Deepening and data-race PPs as interconnected techniques, they each could theoretically be employed alone in other model checkers.
 For example, a single-state-space tool could use data-race candidates during immediately subsequent interleavings, essentially changing the state space on the fly.
 Likewise, a message-passing-only tool could employ Iterative Deepening despite data races being absent from its concurrency model.
@@ -20,6 +17,7 @@ Our evaluation answers the following questions:
 			\item Do we avoid false positives compared to single-pass?
 				% Explain later as:
 				% How many data-race candidates were verified as benign
+				% But to be fair, you have to count how many DRs are reported as "couldn't test these, check yourself" at the end.
 				% Also Include:
 				% How many false positives does the free-re-malloc technique suppress?
 			% TODO: This one's optional. You can give up on it.
@@ -67,19 +65,75 @@ the P2s average 1807 lines of C and x86 assembly (stddev 489.5),
 % Pintos SLOC stats: TODO
 and the Pintoses average {\bf 9999999} % TODO
 
+\newcommand\mxtest{\texttt{mx\_test}}
+\newcommand\tej{\texttt{thr\_exit\_join}}
+\newcommand\bct{\texttt{broadcast}}
+\newcommand\paraguay{\texttt{paraguay}}
+\newcommand\paradise{\texttt{paradise\_lost}}
+\newcommand\rwl{\texttt{rwl\_test}}
+We tested P2s with 6 multithreaded programs:
+% from the 410 test suite % XXX: I would like to say this but this is a lie; figure out what else i can say instead
+% each tailored to exercise a different part of the P2 project
+\mxtest, for locking algorithm correctness, \tej, a test of thread lifecycle, \bct~and \paraguay, for condvars, \paradise~for semaphores, and \rwl~for r/w locks.
+For \mxtest~we enabled \landslide's special lock-testing option, which changes the lock-set tracking to consider accesses within {\tt mutex\_lock} and {\tt mutex\_unlock} as data-race candidates.
+(Normally, they are considered protected by the very lock they implement: assuming the locks are already correct to enable productive data-race analysis on the rest of the codebase.)
+\newcommand\prisema{\texttt{priority\_sema}}
+\newcommand\waitsimple{\texttt{wait\_simple}}
+% TODO: Add more test cases
+We tested the Pintoses with 2 programs from the class test suite: \prisema, a test of the kernel scheduling algorithm, and \waitsimple, a test of process lifecycle. % TODO talk more about these.
+In total, this test suite comprises {\large \bf 99999} % TODO
+unique state spaces.
 
+All tests were run on 12-core 3.2 GHz Xeon machines with 12GB of RAM.
+\quicksand~tests were given 10 CPUs for 1 hour each.
+To compare to SSS-MC, we ran a control experiment for each test, running \landslide~on a single state space with all PPs enabled in advance (and no data-race PPs).
+% TODO figure out somewhere to mention what landslide's pps are: mx lock/unlock (aka sema up/down)
+Though \landslide~does not implement parallel DPOR \cite{parallel-dpor}, we leveled the playing field by giving each control 1 CPU for 10 hours and dividing all associated times by 10 (simulating perfect parallelism).
 
-% TODO: List test programs that were run.
 
 \subsection{Evaluating Data-Race PPs}
 
 In this section we show that using data-race PPs with \landslide~is more effective than either SSS-MC or single-pass data-race detection alone.
 
+\begin{table}[t]
+	\begin{tabular}{l|l|l}
+			& QS bugs & SSS-MC bugs \\
+		\hline
+		\mxtest & eg 1000 & eg 0 \\
+		\bct & & \\
+		etc... & & \\
+		\hline
+		Total & & \\
+	\end{tabular}
+	\caption{Comparison of all bugs found, broken down by test case, among all P2s (top 6) and Pintoses (bottom {\bf \large 9999999})}
+	\label{tab:allbugs}
+\end{table}
+
+\begin{table}[t]
+	\small
+	\begin{tabular}{l|l|l||l|l}
+	& QS bug & \begin{tabular}{c} SSS-MC \\ completed\end{tabular}
+	& QS bug & \begin{tabular}{c}SSS-MC \\ timeout \end{tabular} \\
+		\hline
+		\mxtest & e.g. 5 & 10 & 0 & 0 \\
+		\bct & & & & \\
+		etc... & & & & \\
+		\hline
+		Total & & & & \\
+	\end{tabular}
+	\caption{Bugs requiring data-race PPs to expose, found by \quicksand but missed by the single-state-space approach.}
+	\label{tab:drbugs}
+\end{table}
+
 {\bf Finding bugs missed by SSS-MC.}
-% TODO describe
+Though state-of-the-art MCs preempt only on synchronization events, many serious concurrency bugs are caused by data races leading to corrupted shared state.
+In Table~\ref{tab:drbugs} we count ...... % TODO
+
+In Table~\ref{tab:allbugs} .... %TODO
 
 {\bf Avoiding false positive data-race candidates.}
-% TODO describe
+% Though we mechanically verify whether each data race candidate leads to a bug, each new PP can increase combinatorially..... obviously wish to avoid...
+
 
 {\bf Avoiding false negative data-race bugs.}
 Some pairs of unprotected shared-memory accesses may be hidden in some control flow path that requires a nondeterministic preemption to be executed.
@@ -123,3 +177,7 @@ We tested 87 pintos kernels and found races in 45-47 of them, among which 34-47 
 
 % TODO: Future work.
 % Future work: Add a way to configure even smaller subsets (eg "only mutex_locks called from site X") for cases where mx_lock and mx_unlock alone are still too big. Count the number of kernels for which this was the case.
+
+\subsection{Discussion} % and future work?
+
+% TODO: Mention that SSSMC control never FAB in mutex_test whatsoever, while DR PPs enabled FABs.
