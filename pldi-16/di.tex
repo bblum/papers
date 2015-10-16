@@ -10,6 +10,15 @@ Unlike in chess AI, however, adding more preemption points to a completed state 
 
 \subsection{Filtering false positive data races}
 
+{\bf Terminology.}
+Importantly, we distinguish data-race {\em candidates} and data-race {\em bugs}.
+Because data-race analysis is false-positive-prone, Landslide reports unprotected access pairs separately from the problems listed above, calling the pair a {\em data race candidate}.
+Should a future interleaving, preempting during those accesses, cause a failure (e.g. assertion or deadlock), then we report a {\em data-race bug}.
+Otherwise, if the access pair can be reordered, but does not produce a failure under any interleaving, it is a {\em benign data race}.
+If they cannot be reordered at all, it is a {\em false positive}.
+For brevity, we classify benign data races as a subset of false positives.
+
+
 % TODO: proof goes here
 % TODO: example codez with malloc re free go here
 
@@ -28,11 +37,6 @@ It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield()} or 
 It can test both user- and kernel-level code, though the latter requires user annotations and is limited to timer-driven nondeterminism.
 Its bug-detection metrics include assertion failures, deadlock, segfaults, heap checking (like Valgrind~\cite{valgrind}), and a heuristic infinite loop/livelock checker.
 
-{\bf Terminology.}
-Importantly, we distinguish data-race {\em candidates} and data-race {\em bugs}.
-Because data-race analysis is false-positive-prone, Landslide reports unprotected access pairs separately from the problems listed above, calling the pair a {\em data race candidate}.
-Should a future interleaving, preempting threads during those accesses, expose e.g. a crash or deadlock, then we report a {\em data-race bug}.
-
 {\bf Data races in lock implementations.}
 Prior work data race tools recognize the implementations of sync primitives to avoid spuriously flagging memory accesses resulting from the lock implementation itself \cite{tsan}.
 Assuming the locks are already correct enables productive data-race analysis on the rest of the codebase.
@@ -48,6 +52,7 @@ Hence, we extended \landslide~with a custom option to change the lock-set tracki
 priorities... data race priorities...
 
 
+% If there's room, mention the cant_swap mechanism for killing the top half of deferred jobs.
 
 {\bf Avoiding thrashing in \quicksand.} % TODO
 

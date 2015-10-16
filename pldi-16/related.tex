@@ -1,18 +1,19 @@
 \section{Related Work}
 
-%None. We are the first ever to explore this area, and of course expect the Turing Award for our groundbreaking insights.
+% TODO: ", and related data race analyses based on ????"
 
-\quicksand~is built upon many established concurrency testing techniques, dating back
+\subsection{Stateless Model Checking}
+
+We build upon many established model-checking techniques, dating back
 % of course
 to Verisoft, the original C model checker \cite{verisoft}.
+%, and Eraser, the original data race detector \cite{eraser}.
 %Our model checker
-\landslide~\cite{landslide} itself implements many techniques from prior work (\sect{\ref{sec:landslide}}).
+%\landslide~\cite{landslide} itself implements many techniques from prior work (\sect{\ref{sec:landslide}}).
 %itself implements DPOR \cite{dpor},
 %state space estimation \cite{estimation},
 %and data-race detection \cite{eraser}.
-We compare related model checkers largely based on their treatment of shared-memory thread communication.
-
-\subsection{Stateless Model Checking}
+We compare related model checkers by their treatment of shared-memory thread communication.
 
 {\bf Synchronization events only.} CHESS \cite{chess} and \textsc{dBug} \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
 Hence they will miss any crashes that require interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
@@ -22,6 +23,7 @@ This eliminates the need for data-race analysis, but restricts the class of prog
 Nevertheless, Iterative Deepening is still applicable to these tools.
 
 {\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs. However, every such prior tool we know of has serious drawbacks.
+% TODO: Be proud of them instead of being dismissive.
 {\textsc SKI} \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
 which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
 % TODO: Make sure you talk about your mutex experiment, or rephrase this.
@@ -37,9 +39,19 @@ However, ICB still limits itself to a fixed set of PPs, and so far no algorithm 
 
 \subsection{Data Race Detection}
 
-blah blah blah eraser
-
 blah blah blah threadsanitizer, racePRO, etc
+
+\newcommand\portend{\textsc{Portend}}
+\portend~\cite{portend} is the most closely related work we have found.
+It performs a single-pass analysis as normal, then explores a limited state space to classify candidates in a taxonomy of likely severity.
+Compared to us, \portend~can detect non-failing races which nevertheless cause suspiciously different program output,
+while we depend on directly detecting failures.
+It also uses symbolic execution to test input nondeterminism along with schedule nondeterminism,
+while we explore the latter only.
+However, \portend~does not perform MC-like exploration in advance of knowing data-race locations,
+which we showed in \sect{\ref{sec:eval-falseneg}} can miss some bugs.
+It is also limited to the POSIX synchronization API, so cannot verify lock implementations such as we do with \mxtest.
+Future work could combine the two approaches, using \landslide~to produce new traces for \portend~to classify, or using \portend's analysis to inform \quicksand's state space priorities.
 
 \subsection{Other Concurrency Testing Approaches} % TODO: Well?
 

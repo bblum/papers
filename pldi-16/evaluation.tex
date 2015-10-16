@@ -10,12 +10,19 @@ we also sought to evaluate each technique individually.
 Our evaluation answers the following questions:
 \begin{enumerate}
 	\item Does Iterative Deepening find bugs faster than SSS-MC in subset state spaces, even without data-race PPs?
+			% Probably not... ICB is state of the art here.
+			% In large tests, can Iterative Deepening provide partial verification by completing smaller state spaces
 	\item Is combining data-race analysis with MC productive?
 		\begin{enumerate}
 			\item Do data-race PPs expose new bugs that couldn't be found with SSS-MC's fixed-PP-set approach?
 				% Elaborate later:
 				% Among those, how many were missed in a {\em completed} execution of the otherwise ``maximal'' state space?
 			\item Do we avoid false positives compared to a single-execution data race analysis?
+				% TODO: Argue:
+				% It is fair to compare multiple pass DR-analysis under Landslide against just a single execution because prior work DR detectors, being not integrated with a MC, are not intended to uncover different results under subsequent runs.
+				% Define a "stress tester" as a class of bug detectors where they are intended to [...]
+				% Maybe say: Do there exist any stress-tester DR detectors where they are intended to produce new results under reruns?
+
 				% Explain later as:
 				% How many data-race candidates were verified as benign
 				% But to be fair, you have to count how many DRs are reported as "couldn't test these, check yourself" at the end.
@@ -23,7 +30,7 @@ Our evaluation answers the following questions:
 				% How many false positives does the free-re-malloc technique suppress?
 				% TODO: If you have time, re-run all of the dr-only bug tests, with DR_FALSE_NEG enabled, and see how much fewer bugs get found (how many bugs get pushed past the time limit?)
 			% TODO: This one's optional. You can give up on it.
-			\item Do we avoid false negatives compared to single-pass?
+			\item Do we find data-race bugs that would be false-negatives during a single-execution analysis?%Do we avoid false negatives compared to single-pass?
 				%TODO: for this experiment, set EXPLORE_BACKWARDS=0
 				% TODO: And disable false-neg malloc-free technique
 				% TODO: And also disable the confirmed/suspected thing
@@ -133,6 +140,7 @@ In Table~\ref{tab:allbugs} .... %TODO
 
 
 {\bf Avoiding false negative data-race bugs.}
+\label{sec:eval-falseneg}
 Some pairs of unprotected shared-memory accesses may be hidden in some control flow path that requires a nondeterministic preemption to be executed.
 In such cases, a single-pass data-race detector
 %could not achieve the coverage necessary
