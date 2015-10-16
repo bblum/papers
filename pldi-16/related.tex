@@ -5,19 +5,19 @@
 \quicksand~is built upon many established concurrency testing techniques, dating back
 % of course
 to Verisoft, the original C model checker \cite{verisoft}.
-Our model checker \landslide~\cite{landslide}
-% TODO: is DPOR abbreviated earlier in the paper
-itself implements DPOR \cite{dpor},
-state space estimation \cite{estimation},
-and data-race detection \cite{eraser}.
-We classify related model checkers largely based on their treatment of shared-memory thread communication.
+%Our model checker
+\landslide~\cite{landslide} itself implements many techniques from prior work (\sect{\ref{sec:landslide}}).
+%itself implements DPOR \cite{dpor},
+%state space estimation \cite{estimation},
+%and data-race detection \cite{eraser}.
+We compare related model checkers largely based on their treatment of shared-memory thread communication.
 
 \subsection{Stateless Model Checking}
 
 {\bf Synchronization events only.} CHESS \cite{chess} and \textsc{dBug} \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
 Hence they will miss any crashes that require interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
 
-{\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, \textsc{MaceMC} \cite{macemc}, \textsc{MoDist} \cite{modist}, and ETA \cite{dbug-retreat}, limits thread communication to a message-passing API to more effectively test distributed systems.
+{\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, \textsc{MaceMC} \cite{macemc}, \textsc{MoDist} \cite{modist}, and ETA \cite{dbug-retreat}, limit thread communication to a message-passing API to more effectively test distributed systems.
 This eliminates the need for data-race analysis, but restricts the class of programs that can be tested.
 Nevertheless, Iterative Deepening is still applicable to these tools.
 
@@ -26,7 +26,8 @@ Nevertheless, Iterative Deepening is still applicable to these tools.
 which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
 % TODO: Make sure you talk about your mutex experiment, or rephrase this.
 SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our \mxtest~experiment.
-However, it does not employ Iterative Deepening, and requires programs to be written in the PROMELA DSL, so cannot check implementations directly.
+However, it does not employ Iterative Deepening, and requires programs to be written in the PROMELA DSL.
+%so cannot check implementations directly.
 
 {\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
 These are all orthogonal to our technique.

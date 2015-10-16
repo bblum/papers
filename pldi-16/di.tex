@@ -6,8 +6,6 @@ Unlike in chess AI, however, adding more preemption points to a completed state 
 
 % TODO: Introduce abbreviation for SSS-MC here
 
-% TODO: Define diff b/w "BUG", "data race CANDIDATE", and "data race BUG"
-
 % define minimal state space and maximal state space
 
 \subsection{Filtering false positive data races}
@@ -19,7 +17,29 @@ Unlike in chess AI, however, adding more preemption points to a completed state 
 
 \section{Implementation}
 
-% TODO: Overview
+\subsection{Landslide}
+\label{sec:landslide}
+
+We chose \landslide~\cite{landslide} as our stateless model checker due to its ability to trace program execution at the granularity of individual instructions and memory accesses, which is mandatory for data-race analysis~\cite{eraser}.
+% optional: cite tsan above
+\landslide~features Dynamic Partial Order Reduction (DPOR) \cite{dpor}, state space estimation \cite{estimation}, and data-race detection.
+It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield()} or even {\tt xchg} loops) similarly to Fair-Bounded Search \cite{bpor}.
+% this line can be cut if space is needed
+It can test both user- and kernel-level code, though the latter requires user annotations and is limited to timer-driven nondeterminism.
+Its bug-detection metrics include assertion failures, deadlock, segfaults, heap checking (like Valgrind~\cite{valgrind}), and a heuristic infinite loop/livelock checker.
+
+{\bf Terminology.}
+Importantly, we distinguish data-race {\em candidates} and data-race {\em bugs}.
+Because data-race analysis is false-positive-prone, Landslide reports unprotected access pairs separately from the problems listed above, calling the pair a {\em data race candidate}.
+Should a future interleaving, preempting threads during those accesses, expose e.g. a crash or deadlock, then we report a {\em data-race bug}.
+
+{\bf Data races in lock implementations.}
+Prior work data race tools recognize the implementations of sync primitives to avoid spuriously flagging memory accesses resulting from the lock implementation itself \cite{tsan}.
+Assuming the locks are already correct enables productive data-race analysis on the rest of the codebase.
+With testing limited to one execution, even if you wished to test for lock bugs, data-race analysis would still uselessly flag every single access pair in the lock implementation, requiring human attention to verify.
+However, Iterative Deepening can automatically verify a large quantity of data-race candidates as benign.
+Hence, we extended \landslide~with a custom option to change the lock-set tracking to include accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()} in the analysis. (Accesses from other sync functions, such as {\tt cond\_wait()}, would be either included already, or protected by an internal mutex.)
+% TODO: Add a code sample showing how the lockset boundaries change? If there's room?
 
 \subsection{Managing multiple state spaces}
 
@@ -29,15 +49,13 @@ priorities... data race priorities...
 
 
 
-Landslide provides estimated completion time using the Recursive Estimator algorithm in \cite{estimation}.
-
 {\bf Avoiding thrashing in \quicksand.} % TODO
 
 % TODO: decide which subsection should come first for better flow
 
 \subsection{Data-race preemption points}
 
-Intuitively, % TODO describe what we're trying to achieve
+% Intuitively, % TODO describe what we're trying to achieve % do this in design section
 
 When \landslide~detects a data race, it reports each of the two memory accesses involved in the race.
 Each report indicates the program counter value (PC) associated with the access, as well as some further conditions to help filter away unrelated executions of the same instruction on different data.
@@ -88,3 +106,5 @@ In practice, we observed some bugs found quickly by these small jobs, and other 
 %                            | job8        |
 %                            '-------------'
 %                maybe show some internal structore of QS as well
+
+% TODO: Decide whether to discuss the fact that we don't add the 2nd of a "suspected" dr pair until it is confirmed.

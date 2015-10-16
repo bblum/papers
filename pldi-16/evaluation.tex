@@ -9,34 +9,26 @@ Hence, though many of our experiments compare \quicksand~to the state-of-the-art
 we also sought to evaluate each technique individually.
 Our evaluation answers the following questions:
 \begin{enumerate}
-	\item Is combining data-race analysis with stateless model checking productive?
+	\item Does Iterative Deepening find bugs faster than SSS-MC in subset state spaces, even without data-race PPs?
+	\item Is combining data-race analysis with MC productive?
 		\begin{enumerate}
-			\item Do data-race PPs expose new bugs that couldn't be found with single-state-space model checking?
+			\item Do data-race PPs expose new bugs that couldn't be found with SSS-MC's fixed-PP-set approach?
 				% Elaborate later:
 				% Among those, how many were missed in a {\em completed} execution of the otherwise ``maximal'' state space?
-			\item Do we avoid false positives compared to single-pass?
+			\item Do we avoid false positives compared to a single-execution data race analysis?
 				% Explain later as:
 				% How many data-race candidates were verified as benign
 				% But to be fair, you have to count how many DRs are reported as "couldn't test these, check yourself" at the end.
 				% Also Include:
 				% How many false positives does the free-re-malloc technique suppress?
+				% TODO: If you have time, re-run all of the dr-only bug tests, with DR_FALSE_NEG enabled, and see how much fewer bugs get found (how many bugs get pushed past the time limit?)
 			% TODO: This one's optional. You can give up on it.
 			\item Do we avoid false negatives compared to single-pass?
-				% Explain later as: How many data-race bugs required backtracking to be identified as candidates in the first place
 				%TODO: for this experiment, set EXPLORE_BACKWARDS=0
 				% TODO: And disable false-neg malloc-free technique
 				% TODO: And also disable the confirmed/suspected thing
 				% (where mem.c waits for reorder observed before
 				% messaging the latter half of the DR to QS)
-		\end{enumerate}
-	\item Is Iterative Deepening better than the single-state-space model?
-		\begin{enumerate}
-			\item Does Iterative Deepening find bugs
-				% in subset state spaces
-				faster than the single-state-space approach, even without data races?
-			\item Does Iterative Deepening help test data-race PPs?
-				% Are there some DRs where the PP alone finds the bug, while the superset SS cannot, and some vice versa?
-				% What we want is a *variety*, which proves that iterative deepening is better than either individual strategy.
 		\end{enumerate}
 \end{enumerate}
 \subsection{Test Suite}
@@ -75,8 +67,9 @@ We tested P2s with 6 multithreaded programs:
 % from the 410 test suite % XXX: I would like to say this but this is a lie; figure out what else i can say instead
 % each tailored to exercise a different part of the P2 project
 \mxtest, for locking algorithm correctness, \tej, a test of thread lifecycle, \bct~and \paraguay, for condvars, \paradise~for semaphores, and \rwl~for r/w locks.
-For \mxtest~we enabled \landslide's special lock-testing option, which changes the lock-set tracking to consider accesses within {\tt mutex\_lock} and {\tt mutex\_unlock} as data-race candidates.
-(Normally, they are considered protected by the very lock they implement: assuming the locks are already correct to enable productive data-race analysis on the rest of the codebase.)
+For \mxtest~we enabled \landslide's mutex-testing option described in \sect{\ref{sec:landslide}}.
+%, which changes the lock-set tracking to consider accesses within {\tt mutex\_lock} and {\tt mutex\_unlock} as data-race candidates.
+%(Normally, they are considered protected by the very lock they implement: assuming the locks are already correct to enable productive data-race analysis on the rest of the codebase.)
 \newcommand\prisema{\texttt{priority\_sema}}
 \newcommand\waitsimple{\texttt{wait\_simple}}
 % TODO: Add more test cases
@@ -89,11 +82,6 @@ All tests were run on 12-core 3.2 GHz Xeon machines with 12GB of RAM.
 To compare to SSS-MC, we ran a control experiment for each test, running \landslide~on a single state space with all PPs enabled in advance (and no data-race PPs).
 % TODO figure out somewhere to mention what landslide's pps are: mx lock/unlock (aka sema up/down)
 Though \landslide~does not implement parallel DPOR \cite{parallel-dpor}, we leveled the playing field by giving each control 1 CPU for 10 hours and dividing all associated times by 10 (simulating perfect parallelism).
-
-
-\subsection{Evaluating Data-Race PPs}
-
-In this section we show that using data-race PPs with \landslide~is more effective than either SSS-MC or single-pass data-race detection alone.
 
 \begin{table}[t]
 	\begin{tabular}{l|l|l}
@@ -121,9 +109,18 @@ In this section we show that using data-race PPs with \landslide~is more effecti
 		\hline
 		Total & & & & \\
 	\end{tabular}
-	\caption{Bugs requiring data-race PPs to expose, found by \quicksand but missed by the single-state-space approach.}
+	\caption{Bugs requiring data-race PPs to expose, found by \quicksand~but missed by the single-state-space approach.}
 	\label{tab:drbugs}
 \end{table}
+
+\subsection{Evaluating Iterative Deepening}
+
+asdfadsfasdf
+
+
+\subsection{Evaluating Data-Race PPs}
+
+In this section we show that using data-race PPs with \landslide~is more effective than either SSS-MC or single-pass data-race detection alone.
 
 {\bf Finding bugs missed by SSS-MC.}
 Though state-of-the-art MCs preempt only on synchronization events, many serious concurrency bugs are caused by data races leading to corrupted shared state.
@@ -148,12 +145,7 @@ thereby making them {\em false negatives} of the single-pass approach.
 We classified each data-race candidate according to whether \landslide~had reported them during the first interleaving, before any backtracking or preempting: if so, they were {\em deterministic data races} (hence could be found by single-pass).
 %
 To ensure a fair comparison, we disabled \landslide's {\em false-positive}-avoidance techniques during this experiment.
-For example, we reported free-re-malloc data races during the first interleaving as {\em deterministic}, as a single-pass analysis must, rather than waiting until future interleavings to confirm them (see Section \ref{sec:free-re-malloc}).
-
-\subsection{Evaluating Iterative Deepening}
-
-% TODO: You should probably move this section before the DRPP section, so that Table tab:allbugs can be introduced here first.
-
+For example, we reported free-re-malloc data races during the first interleaving as {\em deterministic}, as a single-pass analysis must, rather than waiting until future interleavings to confirm them (see \sect{\ref{sec:free-re-malloc}}).
 
 % Figure out concretely what the data race tricks are that we do, so we can claim them as contributions in the paper. Then ACTUALLY EVALUATE THEM.
 %         - Speculative DR PPs.
@@ -175,11 +167,13 @@ For example, we reported free-re-malloc data races during the first interleaving
 %         // - "Too suspicious" (during init/destroy)
 %         //      (Cite eraser, section 2.2)
 
-We tested 87 pintos kernels and found races in 45-47 of them, among which 34-47 of those bugs required data-race preemption points to expose. That means we rock.
+\subsection{Discussion} % and future work?
+
+% TODO: Mention that SSSMC control never FAB in mutex_test whatsoever, while DR PPs enabled FABs.
+
+%We tested 87 pintos kernels and found races in 45-47 of them, among which 34-47 of those bugs required data-race preemption points to expose. That means we rock.
 
 % TODO: Future work.
 % Future work: Add a way to configure even smaller subsets (eg "only mutex_locks called from site X") for cases where mx_lock and mx_unlock alone are still too big. Count the number of kernels for which this was the case.
 
-\subsection{Discussion} % and future work?
-
-% TODO: Mention that SSSMC control never FAB in mutex_test whatsoever, while DR PPs enabled FABs.
+% Future work: Add parallel DPOR so you can fill your spare CPUs when there are fewer than the max number of jobs.

@@ -31,6 +31,7 @@
 \newcommand\landslide{\textsc{Landslide}}
 \newcommand\quicksand{\textsc{Quicksand}}
 \newcommand\simics{\textsc{Simics}}
+\newcommand{\sect}[1]{\S #1}
 
 % TODO: Finalize these numbers.
 \newcommand\numthrlibs{79}
@@ -74,13 +75,18 @@ more effective than single-state-space model checking, both at finding more bugs
 
 %We are great. Accept our paper.
 
-We have presented Iterative Deepening, a new technique for automating the choice of preemption points (PPs) during stateless model checking, and \quicksand, a tool which implements this technique tailored to the \landslide~model checker.
+We have presented \quicksand, an implementation of Iterative Deepening, a new technique for automating the choice of PPs during stateless model checking.
+% , and \quicksand, a tool which implements this technique tailored to the \landslide~model checker.
 \quicksand~incorporates \landslide's data-race analysis to create new PPs tailored specifically to the program under test,
 and manages multiple \landslide~instances to test many different PP subsets in a given CPU budget, even when the full state space of all PPs would be computationally intractable.
 
 Our evaluation shows that \quicksand~achieves better bug-finding results than either single-pass data-race detection or single-state-space model checking (SSS-MC) alone.
-We avoid all false-positive data race reports by verifying the absence of bugs in their associated state spaces, and find crashes caused by nondeterministic data-races in alternate thread interleavings missed entirely by single-pass analysis.
-Compared to SSS-MC, we find bugs faster in subset state spaces when the maximal state space is too large to explore, and find new bugs with data-race PPs that the maximal state space would not expose at all.
+We dramatically reduce false-positive data race reports,
+%by verifying the absence of bugs in their associated state spaces
+and find crashes caused by nondeterministic data-races in alternate thread interleavings missed entirely by single-pass analysis.
+Compared to SSS-MC, we find bugs faster in smaller subset state spaces,
+%when the maximal state space is too large to explore
+and find new bugs with data-race PPs that the maximal state space would not expose at all.
 
 Although \landslide~itself is not publicly available due to its dependency on the non-free simulator \simics, \quicksand~is open-source and its interface can be adapted to fit any similar tool.
 We have also posted the log files from all our experiments.
