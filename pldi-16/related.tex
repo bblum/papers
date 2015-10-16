@@ -48,8 +48,8 @@ Compared to us, \portend~can detect non-failing races which nevertheless cause s
 while we depend on directly detecting failures.
 It also uses symbolic execution to test input nondeterminism along with schedule nondeterminism,
 while we explore the latter only.
-However, \portend~does not perform MC-like exploration in advance of knowing data-race locations,
-which we showed in \sect{\ref{sec:eval-falseneg}} can miss some bugs.
+However, \portend~does not explore alternate interleavings in advance of knowing data-race locations,
+which is necessary to expose some bugs (\sect{\ref{sec:eval-falseneg}}).
 It is also limited to the POSIX synchronization API, so cannot verify lock implementations such as we do with \mxtest.
 Future work could combine the two approaches, using \landslide~to produce new traces for \portend~to classify, or using \portend's analysis to inform \quicksand's state space priorities.
 
