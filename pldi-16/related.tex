@@ -4,7 +4,7 @@
 
 \subsection{Stateless Model Checking}
 
-We build upon many established model-checking techniques, dating back
+\landslide~uses many established model-checking techniques, dating back
 % of course
 to Verisoft, the original C model checker \cite{verisoft}.
 %, and Eraser, the original data race detector \cite{eraser}.
@@ -33,10 +33,10 @@ SPIN \cite{spin} specializes in verifying synchronization primitive implementati
 However, it cannot practicelly test full-size programs, and requires code to be written in the PROMELA DSL.
 %so cannot check implementations directly.
 
-{\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
+{\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, MCR \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
 These are all orthogonal to our technique.
-\textsc{Parrot} \cite{parrot} combines model checking with a partially-determinizing runtime environment, but still, fewer than half the non-trivial state spaces in their evaluation could be completed, providing a strong argument for \quicksand.
-Finally, Iterative Context Bounding \cite{chess} is most similar to Iterative Deepening, as both approaches provide a concrete partial verification on some subset of interleavings when full completion is intractable.
+\textsc{Parrot} \cite{parrot} combines MC with a partially-determinizing runtime environment, but still, fewer than half the non-trivial state spaces in their evaluation could be completed, providing a strong argument for \quicksand.
+Finally, ICB \cite{chess} is most similar to Iterative Deepening, as both approaches provide a concrete partial verification on some subset of interleavings when full completion is intractable (\sect{\ref{sec:future}}).
 However, ICB still limits itself to a fixed set of PPs, and so far no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
 
 \subsection{Data Race Detection}

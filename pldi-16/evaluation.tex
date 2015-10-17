@@ -33,6 +33,9 @@ Our evaluation answers the following questions:
 				% messaging the latter half of the DR to QS)
 		\end{enumerate}
 \end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \subsection{Test Suite}
 % TODO: Maybe say how many lines of code total? How many lines on average per P2/pintos? (careful with pintos; lots of basecode)
 Our test suite consists of \numthrlibs~``P2'' student thread libraries, from CMU's 15-410 OS class,
@@ -69,13 +72,14 @@ We tested P2s with 6 multithreaded programs:
 % from the 410 test suite % XXX: I would like to say this but this is a lie; figure out what else i can say instead
 % each tailored to exercise a different part of the P2 project
 \mxtest, for locking algorithm correctness, \tej, a test of thread lifecycle, \bct~and \paraguay, for condvars, \paradise~for semaphores, and \rwl~for r/w locks.
-For \mxtest~we enabled \landslide's mutex-testing option described in \sect{\ref{sec:landslide}}.
-%, which changes the lock-set tracking to consider accesses within {\tt mutex\_lock} and {\tt mutex\_unlock} as data-race candidates.
-%(Normally, they are considered protected by the very lock they implement: assuming the locks are already correct to enable productive data-race analysis on the rest of the codebase.)
+For \mxtest, \paradise, and \paraguay, we used {\tt without\_function} to blacklist {\tt thr\_create}, {\tt thr\_exit}, and {\tt thr\_join},
+and for \mxtest~we enabled \landslide's mutex-testing option
+(see \sect{\ref{sec:landslide}}).
 \newcommand\prisema{\texttt{priority\_sema}}
 \newcommand\waitsimple{\texttt{wait\_simple}}
 % TODO: Add more test cases
 We tested the Pintoses with 2 programs from the class test suite: \prisema, a test of the kernel scheduling algorithm, and \waitsimple, a test of process lifecycle system calls.
+For all tests, we used {\tt without\_function} to blacklist PPs on the {\tt malloc} mutex.
 In total, this test suite comprises 632 unique state spaces.
 
 All tests were run on 12-core 3.2 GHz Xeon machines with 12GB of RAM.
@@ -114,7 +118,10 @@ Though \landslide~does not implement parallel DPOR \cite{parallel-dpor}, we comp
 	\label{tab:drbugs}
 \end{table}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \subsection{Evaluating Iterative Deepening}
+\label{sec:eval-id}
 
 % TODO: If you have time, rerun all the quicksand experiments JUST running the 4 base state spaces. Give it 10/4 hours of cpu budget on 4 cores.
 
@@ -123,8 +130,10 @@ First we compare \quicksand~to SSS-MC
 
 % mention partial verification in terms of state space completion, when SSSMC times out.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Finding data-race bugs missed by SSS-MC}
+\label{sec:eval-drbugs}
 
 %In this section we show that using data-race PPs with \landslide~is more effective than either SSS-MC or single-pass data-race detection alone.
 
@@ -134,10 +143,15 @@ while
 
 In Table~\ref{tab:allbugs} .... %TODO
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \subsection{Avoiding false positive data-race candidates}
+\label{sec:eval-falsepos}
 % Though we mechanically verify whether each data race candidate leads to a bug, each new PP can increase combinatorially..... obviously wish to avoid...
 
 We also counted the number of free-re-malloc false positives that \landslide~suppressed.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Finding nondeterministic data-race candidates}
 \label{sec:eval-falseneg}
@@ -161,6 +175,7 @@ rather than waiting until future interleavings to confirm them (as explained in 
 				% Define a "stress tester" as a class of bug detectors where they are intended to [...]
 				% Maybe say: Do there exist any stress-tester DR detectors where they are intended to produce new results under reruns?
 
+% TODO: restructure this paragraph to account for RaceFuzzer/Portend. Be like, "Yes they explore multiple schedules, but only AFTER finding a race." And/or make this argument in prior work
 One might also wonder: Why is it fair to compare the data race bugs \quicksand~finds (10 CPU-hours)
 against the candidates found by a prior work's single execution (less than a minute)?
 We argue this comparison is meaningful because prior work data-race tools, being not integrated with a MC,
@@ -189,16 +204,44 @@ One could run a data-race tool repeatedly for 10 CPU-hours, but the advantage of
 %         // - "Too suspicious" (during init/destroy)
 %         //      (Cite eraser, section 2.2)
 
-\subsection{Discussion} % and future work?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% TODO: Mention that SSSMC control never FAB in mutex_test whatsoever, while DR PPs enabled FABs.
+\subsection{Discussion and future work}
+\label{sec:future}
 
-%We tested 87 pintos kernels and found races in 45-47 of them, among which 34-47 of those bugs required data-race preemption points to expose. That means we rock.
+{\bf Testing lock implementations.}
+In \sect{\ref{sec:eval-drbugs}}, using data-race PPs compares favourably across the board to SSS-MC.
+Observe in particular that in \mxtest, the control experiment found dramatically fewer bugs (just 1),
+even compared to the other test cases\footnote{
+% FIXME: "Aren't all lock impls assembly?" "Yes, but this one was ALL assembly."
+	The one bug SSS-MC found was in a fully-assembly lock implementation. {\tt yield()}'s return value clobbered a value stored in {\tt \%eax}, which could lead to a failure after two repeated contentions. Preempting only on {\tt yield()} (in the contention loop) was sufficient.}.
+%Intuitively, this is due to our control experiment being able to preempt only on the boundaries of the API which
+Though for many applications of MC, assuming a correct lock implementation is sufficient,
+we consider this strong evidence that any verification of low-level synchronization code must incorporate data-race PPs.
+
+{\bf Partial verification.}
+We are not the first to provide a partial verification guarantee when timing out on too-large state spaces (\sect{\ref{sec:eval-id}}).
+While we guarantee safety when preempted on certain combinations of PPs,
+ICB ~\cite{chess} guarantees safety under no more than a certain number of preemptions.
+%according to the maximum bound reached in the time limit.
+We imagine these two guarantees could be each be useful to developers in different scenarios,
+and are presently working to combine the two approaches to provide both at once.
+One benefit of our technique is that {\tt within\_function}-based Iterative Deepening (discussed above)
+would enable expert developers to configure custom subsets of PPs they are most interested in verifying,
+according to which modules of a codebase they wish to test.
 
 % TODO: Future work.
 % Future work: Add a way to configure even smaller subsets (eg "only mutex_locks called from site X") for cases where mx_lock and mx_unlock alone are still too big. Count the number of kernels for which this was the case.
-However, larger state spaces often result from finer-grained synchronization,
-which can indicate a more complicated concurrent algorithm that would require more rigorous verification than a program with a single global lock.
-(analogous to a developer % changing an implementation to be finer graind and then re running the same unit test)
+{\bf Finer-grained PP subsets.}
+\quicksand~was able to partially guarantee safety in {\large \bf 99999\%} of tests with large maximal state spaces.
+However, in {\large \bf 1337} tests, no more than the minimal state space could be verified,
+and in {\large \bf 42} tests, not even that much.
+Larger state spaces often result from finer-grained locking,
+which can indicate a more complicated concurrent algorithm requiring more rigorous verification than a program with a single global lock.
+Hence these corner cases are important to consider for future work.
+While this work used {\tt within\_function} (\sect{\ref{sec:landslide}}) {\em statically} to restrict where PPs could arise in advance of the test,
+we envision future Iterative Deepening implementations could incorporate this method to {\em dynamically} subset PPs further,
+making partial verification of such large tests possible.
+%enabling partial verification of such large tests. % if need space
 
 % Future work: Add parallel DPOR so you can fill your spare CPUs when there are fewer than the max number of jobs.

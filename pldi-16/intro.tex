@@ -10,8 +10,8 @@ or verifying their absence,
 by forcing a program to execute each distinct interleaving,
 capturing and controlling this nondeterminism in a finite state space.
 Unfortunately, these state spaces explode exponentially in the size of the input program.
-Reduction techniques such as Dynamic Partial Order Reduction \cite{dpor} and Maximal Causality Reduction \cite{mcr} expand the limits of feasible test completion,
-and search ordering strategies such as Iterative Context Bounding \cite{chess} allow bugs to be found sooner in a given exploration should they exist.
+Reduction techniques such as Dynamic Partial Order Reduction (DPOR) \cite{dpor} and Maximal Causality Reduction (MCR) \cite{mcr} expand the limits of feasible test completion,
+and search ordering strategies such as Iterative Context Bounding (ICB) \cite{chess} allow bugs to be found sooner in a given exploration should they exist.
 
 % Can I even make a claim this broad to begin with?
 However, all stateless model checkers to date are bound by a fixed set of {\em preemption points}: code locations that define the granularity at which threads interleave.

@@ -32,7 +32,7 @@ For brevity, we count benign data races as a subset of false positives.
 
 \subsection{Verifying data races as buggy or benign}
 
-\subsection{Suppressing malloc-related false positives}
+\subsection{Suppressing ``malloc-recycle'' false positives}
 
 % TODO: Understand what prior work means by 'happens before'. It's different from our MUST happen before relation.
 % TODO: Understand how it relates to this. Would it scoop us? Or are we outside their model?
@@ -118,6 +118,16 @@ It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield()} or 
 % this line can be cut if space is needed
 It can test both user- and kernel-level code, though the latter requires user annotations and is limited to timer-driven nondeterminism.
 Its bug-detection metrics include assertion failures, deadlock, segfaults, heap checking (like Valgrind~\cite{valgrind}), and a heuristic infinite loop/livelock checker.
+
+{\bf Restricting PPs with stack trace predicates.}
+Most MCs preempt indiscriminately on any sync API call, regardless of the call-site.
+However, when testing a particular module in a large codebase,
+the user is likely uninterested in PPs arising from other modules.
+\landslide~provides the {\tt within\_function} configuration command for a user to identify which call-sites matter most.
+Before inserting a PP, \landslide~requires at least one argument to {\tt within\_function} to appear in the current thread's stack trace.
+The {\tt without\_function} directive works similarly, but as a blacklist.
+Multiple invocations can be used; later ones take precedence.
+%\cite{landslide} provides further detail on this feature.
 
 {\bf Data races in lock implementations.}
 Prior work data race tools recognize the implementations of sync primitives to avoid spuriously flagging memory accesses resulting from the lock implementation itself \cite{tsan}.
