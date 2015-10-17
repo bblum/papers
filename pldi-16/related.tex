@@ -22,13 +22,15 @@ Hence they will miss any crashes that require interleaving threads at instructio
 This eliminates the need for data-race analysis, but restricts the class of programs that can be tested.
 Nevertheless, Iterative Deepening is still applicable to these tools.
 
-{\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs. However, every such prior tool we know of has serious drawbacks.
-% TODO: Be proud of them instead of being dismissive.
+{\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs.
+However, the resulting state space explosion demands that any such tool either
+choose a small subset of instructions to consider as PPs.
+or be limited to very small test inputs.
+%However, every such prior tool we know of has serious drawbacks.
 {\textsc SKI} \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
 which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
-% TODO: Make sure you talk about your mutex experiment, or rephrase this.
 SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our \mxtest~experiment.
-However, it does not employ Iterative Deepening, and requires programs to be written in the PROMELA DSL.
+However, it cannot practicelly test full-size programs, and requires code to be written in the PROMELA DSL.
 %so cannot check implementations directly.
 
 {\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
@@ -44,13 +46,13 @@ blah blah blah threadsanitizer, racePRO, etc
 \newcommand\portend{\textsc{Portend}}
 \portend~\cite{portend} is the most closely related work we have found.
 It performs a single-pass analysis as normal, then explores a limited state space to classify candidates in a taxonomy of likely severity.
-Compared to us, \portend~can detect non-failing races which nevertheless cause suspiciously different program output,
+Compared to us, \portend~can also detect non-failing races which nevertheless cause suspiciously different program output,
 while we depend on directly detecting failures.
-It also uses symbolic execution to test input nondeterminism along with schedule nondeterminism,
+It uses symbolic execution to test input nondeterminism as well as schedule nondeterminism,
 while we explore the latter only.
 However, \portend~does not explore alternate interleavings in advance of knowing data-race locations,
 which is necessary to expose some bugs (\sect{\ref{sec:eval-falseneg}}).
-It is also limited to the POSIX synchronization API, so cannot verify lock implementations such as we do with \mxtest.
+It also assumes the POSIX synchronization API, so cannot verify lock implementations such as we do with \mxtest.
 Future work could combine the two approaches, using \landslide~to produce new traces for \portend~to classify, or using \portend's analysis to inform \quicksand's state space priorities.
 
 \subsection{Other Concurrency Testing Approaches} % TODO: Well?

@@ -1,3 +1,18 @@
+% TODO: get latex to put this on page 2 somehow
+\begin{figure*}[t]
+	\includegraphics[width=0.15\textwidth]{tree0.pdf}
+	\includegraphics[width=0.225\textwidth]{tree1.pdf}
+	\includegraphics[width=0.25\textwidth]{tree2.pdf}
+	\includegraphics[width=0.35\textwidth]{tree3.pdf}
+	\caption{Iterative Deepening visualization.
+		The minimal state space includes only mandatory thread switches, such as {\tt yield()} or {\tt cond\_wait()}~\cite{landslide}.
+Multiple further tests can be run: preempting on calls to {\tt mutex\_lock} alone, {\tt mutex\_unlock} alone, or both together.
+Each option increases the state space size by an unpredictable factor, so multiple state spaces should be tested in parallel.
+Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
+}
+	% TODO: reference this label in first few paragraphs of design
+	\label{fig:id}
+\end{figure*}
 \section{Design}
 
 TODO
@@ -7,9 +22,6 @@ Unlike in chess AI, however, adding more preemption points to a completed state 
 % TODO: Introduce abbreviation for SSS-MC here
 
 % define minimal state space and maximal state space
-
-\subsection{Filtering false positive data races}
-
 {\bf Terminology.}
 Importantly, we distinguish data-race {\em candidates} and data-race {\em bugs}.
 Because data-race analysis is false-positive-prone, Landslide reports unprotected access pairs separately from the problems listed above, calling the pair a {\em data race candidate}.
@@ -18,6 +30,75 @@ Otherwise, if the access pair can be reordered, but does not produce a failure u
 If they cannot be reordered at all, it is a {\em false positive}.
 For brevity, we classify benign data races as a subset of false positives.
 
+\subsection{Verifying data races as buggy or benign}
+
+\subsection{Suppressing malloc-related false positives}
+
+% TODO: Understand what prior work means by 'happens before'. It's different from our MUST happen before relation.
+% TODO: Understand how it relates to this. Would it scoop us? Or are we outside their model?
+
+We identify a particular class of false positive data-race candidate in which the associated memory is recycled by {\tt malloc} between the two accesses.
+Figure~\ref{fig:free-re-malloc} shows a common code pattern and interleaving which can expose such behavior.
+If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 6 will be flagged as a data race.
+To the human eye, this is obviously a false positive: reordering lines 4-6 before lines 1-2 will change {\tt malloc}'s return value, causing {\tt x} and {\tt y} to no longer collide.
+Here, Thread 2's logic usually corresponds to the initialization pattern \cite{eraser}, but for generality we have added a {\tt publish} action on line 4.
+
+\begin{figure}[t]
+\begin{tabular}{rll}
+	& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \};}} \\
+	& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \};~~~~~~~~~~}} \\
+	\\
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
+	2 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	3 & & \texttt{// x's memory recycled} \\
+	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(...);} \\
+	5 & & \texttt{publish(y);} \\
+	6 & & \texttt{\hilight{brickred}{y->bar = ...;}} \\
+\end{tabular}
+\caption{A common pattern with {\tt malloc()} that produces false positive data race candidates.}
+\label{fig:free-re-malloc}
+\end{figure}
+
+% This class of false positive is unique to heap-allocated memory, among all ways threads could communicate. By contrast, global memory has unlimited lifetime, and message-passing primitives enforce a must-happens-before relationship which precludes the race.
+
+It is quite simple to mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address.
+\landslide~implements this check by adding a generation counter to its heap state tracking:
+each allocation is given a unique ID, and when evaluating whether two heap accesses can race, their generation counters must match.
+
+However, when limited to a single execution, suppressing any data race matching this pattern is unsound.
+Consider the more unusual program in Figure~\ref{fig:frm-bug}:
+Now, the memory is recycled the same way, but the racing access's address is not tied to {\tt malloc}'s return value.
+Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to race.
+
+\begin{figure}[t]
+\begin{tabular}{rll}
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{publish(x);} & \\
+	2 & & \texttt{x2 = get\_published\_x();} \\
+	3 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
+	4 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	5 & & \texttt{// x's memory recycled} \\
+	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(...);} \\
+	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+\end{tabular}
+\caption{blah blah}
+\label{fig:frm-bug}
+\end{figure}
+
+
+
+% TODO: Figure out why they claim "Happens before produces NO false positives, only benign races".
+% It seems impossible.
+% But if true, it means either (a) they can somehow identify FRM DRs on the 1st pass, not needing to replay,
+% or (b) reuse of memory by malloc is somehow outside their concurrency model.
+Note that while replay-oriented data race tools can already classify free-re-malloc candidates as false positives % benign? (not benign. they are ghosts. not even real.)
+\cite{recordreplaydrs},
+they require replaying the threads in a new interleaving.
+Moreover, \cite{portend} argues that accurate classification may require re-executing many times,
+according to many pre- and post-race sequences,
+which is tantamount to adding a new state space in \quicksand.
+Our goal here is to eliminate free-re-malloc false positives immediately upon detecting them, with no replay required.
 
 % TODO: proof goes here
 % TODO: example codez with malloc re free go here
@@ -32,7 +113,7 @@ For brevity, we classify benign data races as a subset of false positives.
 We chose \landslide~\cite{landslide} as our stateless model checker due to its ability to trace program execution at the granularity of individual instructions and memory accesses, which is mandatory for data-race analysis~\cite{eraser}.
 % optional: cite tsan above
 \landslide~features Dynamic Partial Order Reduction (DPOR) \cite{dpor}, state space estimation \cite{estimation}, and data-race detection.
-It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield()} or even {\tt xchg} loops) similarly to Fair-Bounded Search \cite{bpor}.
+It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield()} or even {\tt xchg} loops) similarly to Fair-Bounded Search \cite{bpor}. % TODO: devote a paragraph to this, after talking about drs in locks
 % this line can be cut if space is needed
 It can test both user- and kernel-level code, though the latter requires user annotations and is limited to timer-driven nondeterminism.
 Its bug-detection metrics include assertion failures, deadlock, segfaults, heap checking (like Valgrind~\cite{valgrind}), and a heuristic infinite loop/livelock checker.
@@ -90,7 +171,9 @@ If those state spaces are bug-free, they will in turn add the maximal job later.
 The rationale of spawning multiple jobs is that which will be more fruitful cannot be known in advance:
 while the big job risks not completing in time,
 the small job risks missing the data race entirely if the original PPs were required to expose it.
-In practice, we observed some bugs found quickly by these small jobs, and other bugs missed by the small jobs found eventually by the big jobs.
+In practice, we observed some bugs found quickly by these small jobs, and other bugs missed by the small jobs found eventually by the big jobs,
+which motivates the need for Iterative Deepening to decide at runtime which to prioritize.
+% TODO: Put numbers here.
 % which justifies this design
 
 

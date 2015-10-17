@@ -10,15 +10,17 @@ or verifying their absence,
 by forcing a program to execute each distinct interleaving,
 capturing and controlling this nondeterminism in a finite state space.
 Unfortunately, these state spaces explode exponentially in the size of the input program.
-Reduction techniques such as Dynamic Partial Order Reduction (DPOR) \cite{dpor} and Maximal Causality Reduction (MCR) \cite{mcr} expand the limits of feasible test completion,
-and search ordering strategies such as Iterative Context Bounding (ICB) \cite{chess} allow bugs to be found sooner in a given exploration should they exist.
+Reduction techniques such as Dynamic Partial Order Reduction \cite{dpor} and Maximal Causality Reduction \cite{mcr} expand the limits of feasible test completion,
+and search ordering strategies such as Iterative Context Bounding \cite{chess} allow bugs to be found sooner in a given exploration should they exist.
 
 % Can I even make a claim this broad to begin with?
 However, all stateless model checkers to date are bound by a fixed set of {\em preemption points}: code locations that define the granularity at which threads interleave.
 % TODO: You repeat the following 1.5 sentence in the related work section; maybe you can eliminate this redundancy to save space?
 For example, \textsc{CHESS} \cite{chess} preempts only on synchronization operations and library calls, which can miss lock-free shared memory races.
 It provides an additional data-race analysis to report any violations of this model;
-however, data-race analyses are prone to report false positives and benign races which require annotations or imprecise heuristics to reduce \cite{racerx,tsan,datacollider}.
+however, data-race analyses are prone to report false positives
+%and benign races
+which require annotations or imprecise heuristics to reduce \cite{racerx,tsan,datacollider}.
 %
 On the other hand, SPIN \cite{spin}
 is able to preempt threads around any shared memory access. Such fine granularity would automatically check if each data race is a real bug, but makes full state space completion intractable for all but the most rudimentary test inputs.

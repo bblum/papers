@@ -15,6 +15,7 @@
 \usepackage{url}                  % format URLs
 \usepackage{listings}          % format code
 \usepackage{enumitem}      % adjust spacing in enums
+\usepackage{graphicx}
 \usepackage[colorlinks=true,allcolors=blue,breaklinks,draft=false]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
 % known bug: http://tex.stackexchange.com/questions/1522/pdfendlink-ended-up-in-different-nesting-level-than-pdfstartlink
 \newcommand{\doi}[1]{doi:~\href{http://dx.doi.org/#1}{\Hurl{#1}}}   % print a hyperlinked DOI
@@ -32,11 +33,14 @@
 \newcommand\quicksand{\textsc{Quicksand}}
 \newcommand\simics{\textsc{Simics}}
 \newcommand{\sect}[1]{\S #1}
+\newcommand\hilight[2]{\color{#1}#2\color{black}}
+\definecolor{olivegreen}{RGB}{0,127,0}
+\definecolor{brickred}{RGB}{192,0,0}
 
 % TODO: Finalize these numbers.
 \newcommand\numthrlibs{79}
-\newcommand\numpintoses{{\Large \bf NUMPINTOSES}}
-\newcommand\numstudence{{\Large \bf NUMSTUDENCE}} % total pintoses plus p2s
+\newcommand\numpintoses{79}
+\newcommand\numstudence{158} % total pintoses plus p2s
 
 \title{Stateless Model Checking with Data-Race Preemption Points}
 \authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
