@@ -28,7 +28,7 @@ Because data-race analysis is false-positive-prone, Landslide reports unprotecte
 Should a future interleaving, preempting during those accesses, cause a failure (e.g. assertion or deadlock), then we report a {\em data-race bug}.
 Otherwise, if the access pair can be reordered, but does not produce a failure under any interleaving, it is a {\em benign data race}.
 If they cannot be reordered at all, it is a {\em false positive}.
-For brevity, we classify benign data races as a subset of false positives.
+For brevity, we count benign data races as a subset of false positives.
 
 \subsection{Verifying data races as buggy or benign}
 
@@ -38,8 +38,9 @@ For brevity, we classify benign data races as a subset of false positives.
 % TODO: Understand how it relates to this. Would it scoop us? Or are we outside their model?
 
 We identify a particular class of false positive data-race candidate in which the associated memory is recycled by {\tt malloc} between the two accesses.
-Figure~\ref{fig:free-re-malloc} shows a common code pattern and interleaving which can expose such behavior.
+Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can expose such behavior.
 If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 6 will be flagged as a data race.
+We term this a {\em malloc-recycle data race}.
 To the human eye, this is obviously a false positive: reordering lines 4-6 before lines 1-2 will change {\tt malloc}'s return value, causing {\tt x} and {\tt y} to no longer collide.
 Here, Thread 2's logic usually corresponds to the initialization pattern \cite{eraser}, but for generality we have added a {\tt publish} action on line 4.
 
@@ -56,8 +57,8 @@ Here, Thread 2's logic usually corresponds to the initialization pattern \cite{e
 	5 & & \texttt{publish(y);} \\
 	6 & & \texttt{\hilight{brickred}{y->bar = ...;}} \\
 \end{tabular}
-\caption{A common pattern with {\tt malloc()} that produces false positive data race candidates.}
-\label{fig:free-re-malloc}
+\caption{A common execution pattern with {\tt malloc()} that produces false positive data race candidates.}
+\label{fig:recycle}
 \end{figure}
 
 % This class of false positive is unique to heap-allocated memory, among all ways threads could communicate. By contrast, global memory has unlimited lifetime, and message-passing primitives enforce a must-happens-before relationship which precludes the race.
@@ -65,9 +66,8 @@ Here, Thread 2's logic usually corresponds to the initialization pattern \cite{e
 It is quite simple to mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address.
 \landslide~implements this check by adding a generation counter to its heap state tracking:
 each allocation is given a unique ID, and when evaluating whether two heap accesses can race, their generation counters must match.
-
 However, when limited to a single execution, suppressing any data race matching this pattern is unsound.
-Consider the more unusual program in Figure~\ref{fig:frm-bug}:
+Consider the more unusual program in Figure~\ref{fig:recycle-bug}:
 Now, the memory is recycled the same way, but the racing access's address is not tied to {\tt malloc}'s return value.
 Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to race.
 
@@ -82,8 +82,9 @@ Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to rac
 	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(...);} \\
 	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
 \end{tabular}
-\caption{blah blah}
-\label{fig:frm-bug}
+\caption{If a single-pass data race detector discarded candidates matching the malloc-recycle pattern,
+it would miss the bug in this adversarial program.}
+\label{fig:recycle-bug}
 \end{figure}
 
 
@@ -92,13 +93,13 @@ Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to rac
 % It seems impossible.
 % But if true, it means either (a) they can somehow identify FRM DRs on the 1st pass, not needing to replay,
 % or (b) reuse of memory by malloc is somehow outside their concurrency model.
-Note that while replay-oriented data race tools can already classify free-re-malloc candidates as false positives % benign? (not benign. they are ghosts. not even real.)
+Note that while replay-oriented data race tools can already classify malloc-recycle candidates as false positives % benign? (not benign. they are ghosts. not even real.)
 \cite{recordreplaydrs},
 they require replaying the threads in a new interleaving.
 Moreover, \cite{portend} argues that accurate classification may require re-executing many times,
 according to many pre- and post-race sequences,
 which is tantamount to adding a new state space in \quicksand.
-Our goal here is to eliminate free-re-malloc false positives immediately upon detecting them, with no replay required.
+Our goal here is to eliminate malloc-recycle false positives immediately upon detecting them, with no replay required.
 
 % TODO: proof goes here
 % TODO: example codez with malloc re free go here
