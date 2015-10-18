@@ -1,18 +1,19 @@
 % TODO: get latex to put this on page 2 somehow
-\begin{figure*}[t]
-	\includegraphics[width=0.15\textwidth]{tree0.pdf}
-	\includegraphics[width=0.225\textwidth]{tree1.pdf}
-	\includegraphics[width=0.25\textwidth]{tree2.pdf}
-	\includegraphics[width=0.35\textwidth]{tree3.pdf}
-	\caption{Iterative Deepening visualization.
-		The minimal state space includes only mandatory thread switches, such as {\tt yield()} or {\tt cond\_wait()}~\cite{landslide}.
-Multiple further tests can be run: preempting on calls to {\tt mutex\_lock} alone, {\tt mutex\_unlock} alone, or both together.
+\begin{figure}[t]
+	\includegraphics[width=0.48\textwidth]{trees.pdf}
+	%\includegraphics[width=0.15\textwidth]{tree0.pdf}
+	%\includegraphics[width=0.225\textwidth]{tree1.pdf}
+	%\includegraphics[width=0.25\textwidth]{tree2.pdf}
+	%\includegraphics[width=0.35\textwidth]{tree3.pdf}
+	\caption{Iterative Deepening example.
+		The minimal state space (top) includes only mandatory thread switches, such as {\tt yield()} or {\tt cond\_wait()}~\cite{landslide}.
+		Multiple further tests can be run: preempting on calls to {\tt mutex\_lock} alone (left), {\tt mutex\_unlock} alone (right), or both together (bottom).
 Each option increases the state space size by an unpredictable factor, so multiple state spaces should be tested in parallel.
 Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
 }
 	% TODO: reference this label in first few paragraphs of design
 	\label{fig:id}
-\end{figure*}
+\end{figure}
 \section{Design}
 
 TODO
@@ -39,23 +40,25 @@ For brevity, we count benign data races as a subset of false positives.
 
 We identify a particular class of false positive data-race candidate in which the associated memory is recycled by {\tt malloc} between the two accesses.
 Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can expose such behavior.
-If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 6 will be flagged as a data race.
+If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 7 will be flagged as a data race.
 We term this a {\em malloc-recycle data race}.
-To the human eye, this is obviously a false positive: reordering lines 4-6 before lines 1-2 will change {\tt malloc}'s return value, causing {\tt x} and {\tt y} to no longer collide.
-Here, Thread 2's logic usually corresponds to the initialization pattern \cite{eraser}, but for generality we have added a {\tt publish} action on line 4.
+To the human eye, this is obviously a false positive: reordering lines 4-7 before lines 1-2 will change {\tt malloc}'s return value, causing {\tt x} and {\tt y} to no longer collide.
+Here, Thread 2's logic usually corresponds to the initialization pattern \cite{eraser}, but for generality we have added a {\tt publish} action on line 6.
 
 \begin{figure}[t]
+	\small
 \begin{tabular}{rll}
-	& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \};}} \\
-	& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \};~~~~~~~~~~}} \\
+	& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \} *x;}} \\
+	& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \} *y;~~~~~~~~~~}} \\
 	\\
 	& Thread 1 & Thread 2 \\
 	1 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
 	2 & \texttt{\hilight{olivegreen}{free}(x);} \\
 	3 & & \texttt{// x's memory recycled} \\
-	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(...);} \\
-	5 & & \texttt{publish(y);} \\
-	6 & & \texttt{\hilight{brickred}{y->bar = ...;}} \\
+	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	5 & & \texttt{// ...initialize...}\\
+	6 & & \texttt{publish(y);} \\
+	7 & & \texttt{\hilight{brickred}{y->bar = ...;}} \\
 \end{tabular}
 \caption{A common execution pattern with {\tt malloc()} that produces false positive data race candidates.}
 \label{fig:recycle}
@@ -65,13 +68,16 @@ Here, Thread 2's logic usually corresponds to the initialization pattern \cite{e
 
 It is quite simple to mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address.
 \landslide~implements this check by adding a generation counter to its heap state tracking:
-each allocation is given a unique ID, and when evaluating whether two heap accesses can race, their generation counters must match.
+each allocation is given a unique ID,
+and when evaluating whether two heap accesses can race,
+the IDs of their containing blocks must match.
 However, when limited to a single execution, suppressing any data race matching this pattern is unsound.
 Consider the more unusual program in Figure~\ref{fig:recycle-bug}:
 Now, the memory is recycled the same way, but the racing access's address is not tied to {\tt malloc}'s return value.
 Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to race.
 
 \begin{figure}[t]
+	\small
 \begin{tabular}{rll}
 	& Thread 1 & Thread 2 \\
 	1 & \texttt{publish(x);} & \\
@@ -79,7 +85,7 @@ Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to rac
 	3 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
 	4 & \texttt{\hilight{olivegreen}{free}(x);} \\
 	5 & & \texttt{// x's memory recycled} \\
-	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(...);} \\
+	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
 \end{tabular}
 \caption{If a single-pass data race detector discarded candidates matching the malloc-recycle pattern,
