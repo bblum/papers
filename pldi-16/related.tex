@@ -13,7 +13,7 @@ to Verisoft, the original C model checker \cite{verisoft}.
 %itself implements DPOR \cite{dpor},
 %state space estimation \cite{estimation},
 %and data-race detection \cite{eraser}.
-We compare related model checkers by their treatment of shared-memory thread communication.
+We compare related tools by their treatment of shared-memory thread communication.
 
 {\bf Synchronization events only.} CHESS \cite{chess} and \textsc{dBug} \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
 Hence they will miss any crashes that require interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
@@ -30,9 +30,10 @@ or be limited to very small test inputs.
 {\textsc SKI} \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
 which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
 SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our \mxtest~experiment.
-However, it cannot practicelly test full-size programs, and requires code to be written in the PROMELA DSL.
+However, it cannot practically test full-size programs, and requires code to be written in the PROMELA DSL.
 %so cannot check implementations directly.
 
+% TODO is it ok to abbreviate ICB and MCR, given we defined the abbrs all the way back in the intro?
 {\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, MCR \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
 These are all orthogonal to our technique.
 \textsc{Parrot} \cite{parrot} combines MC with a partially-determinizing runtime environment, but still, fewer than half the non-trivial state spaces in their evaluation could be completed, providing a strong argument for \quicksand.

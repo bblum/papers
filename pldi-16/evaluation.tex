@@ -86,7 +86,12 @@ All tests were run on 12-core 3.2 GHz Xeon machines with 12GB of RAM.
 \quicksand~tests were given 10 CPUs for 1 hour each.
 To compare to SSS-MC, we ran a control experiment for each test, running \landslide~on a single state space with all PPs on sync primitives enabled in advance (and no data-race PPs).
 % TODO figure out somewhere to mention what landslide's pps are: mx lock/unlock (aka sema up/down)
-Though \landslide~does not implement parallel DPOR \cite{parallel-dpor}, we compensated by giving each control test 1 CPU for 10 hours, then dividing all associated times by 10 (simulating perfect parallelism).
+Though \landslide~does not implement parallel DPOR \cite{parallel-dpor}, we compensated by giving each control test 1 CPU for 10 hours,
+%then dividing all associated times by 10 (simulating perfect parallelism).
+and multiplying \quicksand's times by 10 to convert from wall-clock time to CPU-hours (even though it sometimes falls short of 100\% parallelism).
+% TODO: Can you make quicksand actually count the CPU hours. If so use the following instead:
+% and instrumenting \quicksand~to report total CPU-hours rather than wall-clock time.
+
 
 \begin{table}[t]
 	\begin{tabular}{l|l|l}
@@ -216,22 +221,11 @@ even compared to the other test cases\footnote{
 % FIXME: "Aren't all lock impls assembly?" "Yes, but this one was ALL assembly."
 	The one bug SSS-MC found was in a fully-assembly lock implementation. {\tt yield()}'s return value clobbered a value stored in {\tt \%eax}, which could lead to a failure after two repeated contentions. Preempting only on {\tt yield()} (in the contention loop) was sufficient.}.
 %Intuitively, this is due to our control experiment being able to preempt only on the boundaries of the API which
-Though for many applications of MC, assuming a correct lock implementation is sufficient,
+%Though for many applications of MC, assuming a correct lock implementation is sufficient,
+Though it suffices for many applications of MC to assume correctly-implemented locks,
 we consider this strong evidence that any verification of low-level synchronization code must incorporate data-race PPs.
 
-{\bf Partial verification.}
-We are not the first to provide a partial verification guarantee when timing out on too-large state spaces (\sect{\ref{sec:eval-id}}).
-While we guarantee safety when preempted on certain combinations of PPs,
-ICB ~\cite{chess} guarantees safety under no more than a certain number of preemptions.
-%according to the maximum bound reached in the time limit.
-We imagine these two guarantees could be each be useful to developers in different scenarios,
-and are presently working to combine the two approaches to provide both at once.
-One benefit of our technique is that {\tt within\_function}-based Iterative Deepening (discussed above)
-would enable expert developers to configure custom subsets of PPs they are most interested in verifying,
-according to which modules of a codebase they wish to test.
-
-% TODO: Future work.
-% Future work: Add a way to configure even smaller subsets (eg "only mutex_locks called from site X") for cases where mx_lock and mx_unlock alone are still too big. Count the number of kernels for which this was the case.
+% TODO: get these numbers
 {\bf Finer-grained PP subsets.}
 \quicksand~was able to partially guarantee safety in {\large \bf 99999\%} of tests with large maximal state spaces.
 However, in {\large \bf 1337} tests, no more than the minimal state space could be verified,
@@ -243,5 +237,16 @@ While this work used {\tt within\_function} (\sect{\ref{sec:landslide}}) {\em st
 we envision future Iterative Deepening implementations could incorporate this method to {\em dynamically} subset PPs further,
 making partial verification of such large tests possible.
 %enabling partial verification of such large tests. % if need space
+
+{\bf Partial verification.}
+We are not the first to provide a partial verification guarantee when timing out on too-large state spaces (\sect{\ref{sec:eval-id}}).
+While we guarantee safety when preempted on certain combinations of PPs,
+ICB ~\cite{chess} guarantees safety under no more than a certain number of preemptions.
+%according to the maximum bound reached in the time limit.
+We imagine these two guarantees could be each be useful to developers in different scenarios,
+and are presently working to combine the two approaches to provide both at once.
+One benefit of our technique is that {\tt within\_function}-based Iterative Deepening (discussed above)
+would enable expert developers to configure custom subsets of PPs they are most interested in verifying,
+according to which modules of a codebase they wish to test.
 
 % Future work: Add parallel DPOR so you can fill your spare CPUs when there are fewer than the max number of jobs.
