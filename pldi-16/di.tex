@@ -98,7 +98,9 @@ The {\em maximal state space} is simply the one explored by SSS-MC: all statical
 \end{algorithm}
 
 With a limited CPU budget, we must avoid running tests likely to time out.
-When a MC instance reports too high ETA (greater than some heuristic factor times the time remaining),
+When a MC instance reports an ETA too high,
+% TODO: find some way to point out that heuristic factor is needed because the estimates are imperfect
+%(greater than some heuristic factor times the time remaining),
 we compare other yet-untested PP sets to find another job more likely to complete in time.
 This algorithm is the heart of Iterative Deepening; we list it in Algorithm~\ref{alg:shouldworkblock}\footnote{
 Though its worst-case performance is $O(mn)$ in the number of pending and suspended jobs,
@@ -158,16 +160,23 @@ First, when starting each job, it writes a configuration file declaring which PP
 among other options such as mutex-testing mode,
 passed as an argument to \landslide.
 Then, a dedicated \quicksand~thread communicates with the \landslide~process via message-passing on a FIFO pipe.
-\landslide~sends a message after each new interleaving is tested, to report updated progress and ETA,
+\landslide~sends a message after each new interleaving is tested to report updated progress and ETA,
 whenever a new data-race candidate is found, and whenever a bug is found.
 \quicksand~in turn replies whether the test should suspend/resume due to too high ETA, or quit due to timeout.
 
 {\bf Heuristics.}
 
+%Note that Algorithm~\ref{alg:shouldworkblock} accounts for the bizarre possibility that given two jobs,
+%%$j_1,j_2$,
+%\GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$}
+%but
+%\GetETA{$j_1$} $>$ \GetETA{$j_2$}.
+%This can arise because the estimation gets more accurate over time \cite{estimation},
+%and one job perhaps ran much longer before suspending.
+%% In such scenarios,
+%We heuristically assume the smaller job's ETA is more accurate,
 
 % If there's room, mention the cant_swap mechanism for killing the top half of deferred jobs.
-
-{\bf Avoiding thrashing in \quicksand.} % TODO
 
 % TODO: decide which subsection should come first for better flow
 
@@ -177,10 +186,11 @@ whenever a new data-race candidate is found, and whenever a bug is found.
 
 When \landslide~detects a data race, it reports each of the two memory accesses involved in the race.
 Each report indicates the program counter value (PC) associated with the access, as well as some further conditions to help filter away unrelated executions of the same instruction on different data.
-(For example, {\tt list\_insert()} might be called from many parts of a codebase, but produce data-race candidates from only one callsite.)
+(For example, many parts of a codebase might call {\tt list\_insert()}, but only one callsite does so without adequate locking.)
 Ideally, the PC would be qualified by a full backtrace, but tracing the stack is too expensive to do for each shared memory access.
 Instead, \landslide~qualifies the PC with
 (a) the current thread ID and
+% FIXME: We don't actually do this.
 (b) the most recent {\tt call} instruction.
 % (a crude approximation of a stack trace)
 % which are much cheaper, as we carry them around all the time already
@@ -188,7 +198,6 @@ Note that we do {\em not} qualify data races by the shared memory address,
 which can change based on different interleavings of previous code
 (for example, depending on the result of {\tt malloc()}).
 % especially when malloc is involved.
-% TODO: decide whether to make dont-filter-dr-by-address example.
 %Figure~\ref{fig:dont-filter-dr-by-address} shows example code where qualifying by memory address will miss the bug.
 
 
@@ -289,6 +298,8 @@ Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to rac
 it would miss the bug in this adversarial program.}
 \label{fig:recycle-bug}
 \end{figure}
+
+TODO: Here will be a proof sketch that, during MC only, that mechanism is safe, because in the Figure~\ref{fig:recycle-bug} scenario, we are sure DPOR will reorder away the {\tt free} in a future interleaving.
 
 % TODO: Figure out why they claim "Happens before produces NO false positives, only benign races".
 % It seems impossible.

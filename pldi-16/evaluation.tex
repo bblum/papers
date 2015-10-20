@@ -237,7 +237,7 @@ However, in {\large \bf 1337} tests, no more than the minimal state space could 
 and in {\large \bf 42} tests, not even that much.
 Larger state spaces often result from finer-grained locking,
 which can indicate a more complicated concurrent algorithm requiring more rigorous verification than a program with a single global lock.
-Hence these corner cases are important to consider for future work.
+%Hence these corner cases are important to consider for future work.
 While this work used {\tt within\_function} (\sect{\ref{sec:landslide}}) {\em statically} to restrict where PPs could arise in advance of the test,
 we envision future Iterative Deepening implementations could incorporate this method to {\em dynamically} subset PPs further,
 making partial verification of such large tests possible.
