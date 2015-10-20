@@ -2,7 +2,7 @@
 
 % TODO: ", and related data race analyses based on ????"
 
-\subsection{Stateless Model Checking}
+\subsection{Model Checking}
 
 \landslide~uses many established model-checking techniques, dating back
 % of course
@@ -15,10 +15,10 @@ to Verisoft, the original C model checker \cite{verisoft}.
 %and data-race detection \cite{eraser}.
 We compare related tools by their treatment of shared-memory thread communication.
 
-{\bf Synchronization events only.} CHESS \cite{chess} and \textsc{dBug} \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
+{\bf Synchronization events only.} CHESS \cite{chess} and dBug \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
 Hence they will miss any crashes that require interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
 
-{\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, \textsc{MaceMC} \cite{macemc}, \textsc{MoDist} \cite{modist}, and ETA \cite{dbug-retreat}, limit thread communication to a message-passing API to more effectively test distributed systems.
+{\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, MaceMC \cite{macemc}, MoDist \cite{modist}, and ETA \cite{dbug-retreat}, limit thread communication to a message-passing API to more effectively test distributed systems.
 This eliminates the need for data-race analysis, but restricts the class of programs that can be tested.
 Nevertheless, Iterative Deepening is still applicable to these tools.
 
@@ -27,7 +27,7 @@ However, the resulting state space explosion demands that any such tool either
 choose a small subset of instructions to consider as PPs.
 or be limited to very small test inputs.
 %However, every such prior tool we know of has serious drawbacks.
-{\textsc SKI} \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
+SKI \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
 which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
 SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our \mxtest~experiment.
 However, SPIN explicitly stores visited program states rather than using DPOR, limiting the size of programs that can be practically tested,
@@ -36,29 +36,52 @@ and requires code to be written in the PROMELA DSL.
 
 {\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
 These are all orthogonal to our technique.
-\textsc{Parrot} \cite{parrot} combines MC with a partially-determinizing runtime environment, but still, fewer than half the non-trivial state spaces in their evaluation could be completed, providing a strong argument for \quicksand.
-Finally, Iterative Context Bounding (ICB) \cite{chess-icb} is most similar to Iterative Deepening, as both approaches provide a concrete partial verification on some subset of interleavings when full completion is intractable (\sect{\ref{sec:future}}).
-However, ICB still limits itself to a fixed set of PPs, and so far no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
+Parrot \cite{parrot} combines MC with a partially-determinizing runtime, but still, fewer than half the non-trivial state spaces in their evaluation could be completed.
+%providing a strong argument for \quicksand.
+Finally, Iterative Context Bounding (ICB) \cite{chess-icb} is most similar to Iterative Deepening,
+as both approaches provide a partial verification on some subset of interleavings when full completion is intractable (\sect{\ref{sec:future}}).
+However, ICB is limited to a fixed set of PPs, and so far no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
 
 \subsection{Data Race Detection}
 
-blah blah blah threadsanitizer, racePRO, etc
+Too many related projects to list have made contributions to the false-positive problem first introduced in \cite{eraser}.
+\cite{hybriddatarace} and \cite{tsan} combine the lockset and happens-before analyses into a hybrid technique, which we employ.
+% TODO: any more?
+DroidRacer \cite{droidracer} and CAFA \cite{cafa} extend the analysis to event-driven Android applications, using domain-specific heuristics (orthogonal to our method) to reduce false positives. % cut for space?
 
-\newcommand\portend{\textsc{Portend}}
-\portend~\cite{portend} is the most closely related work we have found.
-It performs a single-pass analysis as normal, then explores a limited state space to classify candidates in a taxonomy of likely severity.
-Compared to us, \portend~can also detect non-failing races which nevertheless cause suspiciously different program output,
-while we depend on directly detecting failures.
+% TODO: Figure out why they claim "Happens before produces NO false positives, only benign races".
+% It seems impossible.
+% But if true, it means either (a) they can somehow identify FRM DRs on the 1st pass, not needing to replay,
+% or (b) reuse of memory by malloc is somehow outside their concurrency model.
+Closer to our work, replay analysis \cite{recordreplaydrs} also suppresses false positives by testing multiple thread interleavings.
+%after finding data race candidates.
+This work compares the immediately resulting program states for differences,
+preferring instead still to err on the side of false positives.
+RaceFuzzer \cite{racefuzzer} avoids false positives by requiring an actual failure be exhibited,
+although it uses random schedule fuzzing rather than stateless model checking.
+Note while these techniques can also classify our malloc-recycle candidates as false positives (\sect{\ref{sec:recycle}}),
+they require replaying the threads in a new interleaving.
+Moreover, \cite{portend} argues that accurate classification may require many re-executions,
+%according to many pre- and post-race sequences,
+which is tantamount to adding a new state space in \quicksand.
+Our proof in \sect{\ref{sec:recycle}} allows eliminating this special case with no replay required.
+
+Portend \cite{portend} is the most closely related work we have found.
+% FIXME: "limited"?
+Based on single-pass data race reports, it explores a limited state space to classify candidates in a taxonomy of likely severity.
+Compared to us, Portend additionally finds non-failing races which nevertheless cause
+%suspiciously
+different program output, while we depend on directly detecting failures.
 It uses symbolic execution to test input nondeterminism as well as schedule nondeterminism,
 while we explore the latter only.
-However, \portend~does not explore alternate interleavings in advance of knowing data-race locations,
+However, Portend does not test alternate interleavings {\em in advance} of knowing data races,
 which is necessary to expose some bugs (\sect{\ref{sec:eval-falseneg}}).
 It also assumes the POSIX synchronization API, so cannot verify lock implementations such as we do with \mxtest.
-Future work could combine the two approaches, using \landslide~to produce new traces for \portend~to classify, or using \portend's analysis to inform \quicksand's state space priorities.
+Future work could combine the two approaches, using \landslide~to produce new traces for Portend to classify, or using Portend's analysis to inform \quicksand's state space priorities.
 
-\subsection{Other Concurrency Testing Approaches} % TODO: Well?
-
-blah blah pldi'15 symbiosis DSP
+% \subsection{Other Concurrency Testing Approaches} % TODO: Well?
+%
+% blah blah pldi'15 symbiosis DSP
 
 % TODO: talk about data race detectors???
 % eg Scalable Race Detection for Android Applications -- uses domain specific heuristics to filter out false positives

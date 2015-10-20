@@ -56,6 +56,13 @@ However, should new data-race PPs be added during a test, the new maximal state 
 
 \subsection{Choosing the best job}
 
+
+
+This algorithm is the heart of Iterative Deepening; we list it in Figure~\ref{fig:shouldworkblock}.
+The algorithm takes into account... TODO
+Though it has worst-case performance of $O(mn)$ in the number of pending and blocked jobs,
+in practice we find the non-constant portion runs very infrequently and is negligible compared to the exponentially-sized state spaces.
+
 % TODO: should work block / find work algorthm here
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -180,6 +187,7 @@ which motivates the need for Iterative Deepening to decide at runtime which to p
 % TODO: Decide whether to discuss the fact that we don't add the 2nd of a "suspected" dr pair until it is confirmed.
 
 \subsection{Suppressing ``malloc-recycle'' false positives}
+\label{sec:recycle}
 
 % TODO: Understand what prior work means by 'happens before'. It's different from our MUST happen before relation.
 % TODO: Understand how it relates to this. Would it scoop us? Or are we outside their model?
@@ -239,19 +247,10 @@ it would miss the bug in this adversarial program.}
 \label{fig:recycle-bug}
 \end{figure}
 
-
-
 % TODO: Figure out why they claim "Happens before produces NO false positives, only benign races".
 % It seems impossible.
 % But if true, it means either (a) they can somehow identify FRM DRs on the 1st pass, not needing to replay,
 % or (b) reuse of memory by malloc is somehow outside their concurrency model.
-Note that while replay-oriented data race tools can already classify malloc-recycle candidates as false positives % benign? (not benign. they are ghosts. not even real.)
-\cite{recordreplaydrs},
-they require replaying the threads in a new interleaving.
-Moreover, \cite{portend} argues that accurate classification may require re-executing many times,
-according to many pre- and post-race sequences,
-which is tantamount to adding a new state space in \quicksand.
-Our goal here is to eliminate malloc-recycle false positives immediately upon detecting them, with no replay required.
 
 % TODO: proof goes here
 % TODO: example codez with malloc re free go here
