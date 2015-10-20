@@ -99,16 +99,34 @@ The {\em maximal state space} is simply the one explored by SSS-MC: all statical
 
 With a limited CPU budget, we must avoid running tests likely to time out.
 When a MC instance reports an ETA too high,
-% TODO: find some way to point out that heuristic factor is needed because the estimates are imperfect
-%(greater than some heuristic factor times the time remaining),
 we compare other yet-untested PP sets to find another job more likely to complete in time.
 This algorithm is the heart of Iterative Deepening; we list it in Algorithm~\ref{alg:shouldworkblock}\footnote{
 Though its worst-case performance is $O(mn)$ in the number of pending and suspended jobs,
 in practice the non-constant portion runs very infrequently
 and is negligible compared to the exponentially-sized state spaces.}.
-The algorithm takes into account... TODO
+%
 
-% TODO: should work block / find work algorthm here
+Our method's main feature is that it understands that if \GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$},
+and $j_1$ is suspended, $j_2$'s state space is guaranteed to be strictly larger, so $j_2$ would take at least as long.
+Hence we should avoid testing $j_2$ unless further time spent on $j_1$ reveals that it might finish in time after all.
+%
+We also account for the inherent inaccuracy of ETA estimates.
+Line 1 heuristically scales up the time remaining to avoid suspending jobs too aggressively
+when their ETAs are actually overestimates.
+Lines 12-14 account for the
+%bizarre
+possibility that among two suspended jobs,
+%given two jobs,
+%%$j_1,j_2$,
+\GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$}
+but
+\GetETA{$j_1$} $>$ \GetETA{$j_2$}.
+This can arise because estimates tend to get more accurate over time,
+and $j_1$ perhaps ran much longer before suspending.
+% In such scenarios,
+We heuristically assume the smaller job's ETA is more accurate
+to avoid repeatedly resuming larger jobs very briefly while their ETAs only become worse
+(it lets us avoid thrashing in \quicksand),
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -166,15 +184,6 @@ whenever a new data-race candidate is found, and whenever a bug is found.
 
 {\bf Heuristics.}
 
-%Note that Algorithm~\ref{alg:shouldworkblock} accounts for the bizarre possibility that given two jobs,
-%%$j_1,j_2$,
-%\GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$}
-%but
-%\GetETA{$j_1$} $>$ \GetETA{$j_2$}.
-%This can arise because the estimation gets more accurate over time \cite{estimation},
-%and one job perhaps ran much longer before suspending.
-%% In such scenarios,
-%We heuristically assume the smaller job's ETA is more accurate,
 
 % If there's room, mention the cant_swap mechanism for killing the top half of deferred jobs.
 
