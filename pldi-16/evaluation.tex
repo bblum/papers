@@ -214,6 +214,11 @@ One could run a data-race tool repeatedly for 10 CPU-hours, but the advantage of
 \subsection{Discussion and future work}
 \label{sec:future}
 
+%TODO: Run a mutex expt where "all atomic instrs" are PPs. See how many bugs are missed anyway.
+% Wwe re-ran the \mxtest control experiment with \landslide~hard-coded to preempt on any atomic instruction
+% (as well as on the mutex API boundaries).
+% Still, this smarter configuration for SSS-MC found only 99999999999 bugs of \quicksand's 13.
+
 {\bf Testing lock implementations.}
 In \sect{\ref{sec:eval-drbugs}}, using data-race PPs compares favourably across the board to SSS-MC.
 Observe in particular that in \mxtest, the control experiment found dramatically fewer bugs (just 1),
@@ -241,7 +246,8 @@ making partial verification of such large tests possible.
 {\bf Partial verification.}
 We are not the first to provide a partial verification guarantee when timing out on too-large state spaces (\sect{\ref{sec:eval-id}}).
 While we guarantee safety when preempted on certain combinations of PPs,
-ICB ~\cite{chess} guarantees safety under no more than a certain number of preemptions.
+CHESS
+guarantees safety under no more than a certain number of preemptions \cite{chess-icb}.
 %according to the maximum bound reached in the time limit.
 We imagine these two guarantees could be each be useful to developers in different scenarios,
 and are presently working to combine the two approaches to provide both at once.

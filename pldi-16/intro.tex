@@ -10,8 +10,8 @@ or verifying their absence,
 by forcing a program to execute each distinct interleaving,
 capturing and controlling this nondeterminism in a finite state space.
 Unfortunately, these state spaces explode exponentially in the size of the input program.
-Reduction techniques such as Dynamic Partial Order Reduction (DPOR) \cite{dpor} and Maximal Causality Reduction (MCR) \cite{mcr} expand the limits of feasible test completion,
-and search ordering strategies such as Iterative Context Bounding (ICB) \cite{chess} allow bugs to be found sooner in a given exploration should they exist.
+Reduction techniques such as Dynamic Partial Order Reduction \cite{dpor} and Maximal Causality Reduction \cite{mcr} expand the limits of feasible test completion,
+and search ordering strategies such as Iterative Context Bounding \cite{chess-icb} allow bugs to be found sooner in a given exploration should they exist.
 
 % Can I even make a claim this broad to begin with?
 However, all stateless model checkers to date are bound by a fixed set of {\em preemption points}: code locations that define the granularity at which threads interleave.
@@ -23,14 +23,14 @@ however, data-race analyses are prone to report false positives
 which require annotations or imprecise heuristics to reduce \cite{racerx,tsan,datacollider}.
 %
 On the other hand, SPIN \cite{spin}
-is able to preempt threads around any shared memory access. Such fine granularity would automatically check if each data race is a real bug, but makes full state space completion intractable for all but the most rudimentary test inputs.
+is able to preempt threads around any shared memory access. Such fine granularity would automatically check if each data race is a real bug, but makes full state space completion intractable for even modestly-sized tests.
 %
 This work shows how to avoid making that tradeoff decision in advance.
 
 % TODO: ttuttle says this is too much of a jump -- that exactly what "subsets" means is not well defined (i.e, lock vs unlock, while NOT addressing the within/without_function problem)
 
 We present \quicksand, a framework for {\em Iterative Deepening} of preemption points during stateless model checking.
-Named after the analogous technique in chess AI \cite{iterative-deepening-chess}, our approach likewise makes progressively deeper searches of the state space until a given CPU budget is exhausted.
+Named after the analogous technique in chess AI \cite{iterative-deepening-chess-ai}, our approach likewise makes progressively deeper searches of the state space until a given CPU budget is exhausted.
 Rather than attempting to search a single state space with every available preemption point enabled (e.g., preempting on every pthread API call),
 \quicksand~tests many different state spaces corresponding to subsets of those points, managing a model checker instance to explore each one.
 It estimates the size of each state space to decide when long-running instances should be suspended, and dynamically generates new state spaces based on data race analysis.

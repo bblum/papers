@@ -30,14 +30,14 @@ or be limited to very small test inputs.
 {\textsc SKI} \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
 which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
 SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our \mxtest~experiment.
-However, it cannot practically test full-size programs, and requires code to be written in the PROMELA DSL.
+However, SPIN explicitly stores visited program states rather than using DPOR, limiting the size of programs that can be practically tested,
+and requires code to be written in the PROMELA DSL.
 %so cannot check implementations directly.
 
-% TODO is it ok to abbreviate ICB and MCR, given we defined the abbrs all the way back in the intro?
-{\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, MCR \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
+{\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
 These are all orthogonal to our technique.
 \textsc{Parrot} \cite{parrot} combines MC with a partially-determinizing runtime environment, but still, fewer than half the non-trivial state spaces in their evaluation could be completed, providing a strong argument for \quicksand.
-Finally, ICB \cite{chess} is most similar to Iterative Deepening, as both approaches provide a concrete partial verification on some subset of interleavings when full completion is intractable (\sect{\ref{sec:future}}).
+Finally, Iterative Context Bounding (ICB) \cite{chess-icb} is most similar to Iterative Deepening, as both approaches provide a concrete partial verification on some subset of interleavings when full completion is intractable (\sect{\ref{sec:future}}).
 However, ICB still limits itself to a fixed set of PPs, and so far no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
 
 \subsection{Data Race Detection}
