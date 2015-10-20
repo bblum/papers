@@ -23,8 +23,9 @@ We show a visualization in Figure~\ref{fig:id}.
 Iterative Deepening depends heavily on state-space estimation \cite{estimation}
 to understand which state spaces are likely to complete on time,
 in advance of actually testing each interleaving within.
-The algorithm's purpose is to make decisions automatically about when to defer exploration of a state space,
-so an inexpert user need only provide their total CPU budget as an argument.
+The purpose is to make decisions automatically about when to defer exploration of a state space,
+so an inexpert user need only provide their total CPU budget as an argument,
+and to enable completing appropriately-sized state spaces within that budget.
 
 Note that Iterative Deepening is a {\em wrapper} algorithm around stateless model checking.
 A model checking tool is still used to test each state space, and other reduction techniques are still applicable.
@@ -36,7 +37,8 @@ In this paper we focus on dynamic data-race detection~\cite{tsan} as the mechani
 
 For the remainder of the paper, we will abbreviate {\em preemption point} (PP),
 {\em model checking} (MC),
-and {\em single-state-space MC} (SSS-MC) (i.e., the approach of prior work).
+{\em single-state-space model checking} (SSS-MC) (i.e., the approach of prior work),
+and {\em state space estimate} (ETA).
 
 Please note the difference between data-race {\em candidates} and data-race {\em bugs}.
 Because data-race analysis is false-positive-prone,
@@ -50,18 +52,59 @@ For brevity, we count benign data races as a subset of false positives.
 We also identify the {\em minimal} and {\em maximal state space} for each test.
 The {\em minimal state space} includes only thread switches arising from normal execution (Figure~\ref{fig:id}).
 The {\em maximal state space} is simply the one explored by SSS-MC: all statically-available PPs are enabled.
-However, should new data-race PPs be added during a test, the new maximal state space will be the one including those as well.
+%However, should new data-race PPs be added during a test, the new maximal state space will be the one including those as well.
 
 \subsection{Verifying data races as buggy or benign} % FIXME: dont say 'benign'; also, do you have enough left to say that this can even still be a full subsection?
 
 \subsection{Choosing the best job}
 
+% TODO: put colour in this code
+\newcommand\PendingJobs{\ensuremath{\mathcal{P}}}
+\newcommand\SuspendedJobs{\ensuremath{\mathcal{S}}}
+\newcommand\GetETA[1]{ETA(#1)}
+\newcommand\GetPPSet[1]{PPSet(#1)}
+\begin{algorithm}[t]
+	\SetKwInOut{Input}{Input}
+	%\textbf{Function} GetBestJob($j_0$, PendingJobs, SuspendedJobs): \\
+	\Input{$j_0$, the currently-running job}
+	%\Input{$eta$, $j_0$'s predicted completion time}
+	\Input{\PendingJobs, the list of pending jobs, sorted decreasingly by heuristic priority}
+	\Input{\SuspendedJobs, the list of already-suspended jobs, sorted increasingly by ETA}
+	\If{\GetETA{$j_0$} $<$ HeuristicETAFactor $\times$ TimeLeft()}{
+		// common case: job will probably finish on time \\
+		return $j_0$
+	}
+	\ForEach{job $j_P \in$ \PendingJobs}{
+		// don't run a pending job if a subset of it is already suspended; it would find the same fate! \\
+		\If {$\forall j_S \in$ \SuspendedJobs, \GetPPSet{$j_S$} $\not\subset$ \GetPPSet{$j_P$}}{
+			return $j_P$
+		}
+	}
+	%// no pending jobs; maybe resume a suspended job \\
+	\ForEach{job $j_S \in$ \SuspendedJobs}{
+		\If{\GetPPSet{$j_0$} $\not\subset$ \GetPPSet{$j_S$}
+			$\land$
+			\GetETA{$j_0$} $>$ \GetETA{$j_S$}}{
+			// $j_S$ is tempting, but if a subset of it is also suspended, don't run the larger one first \\
+			\If{$\forall j_{S2} \in$ \SuspendedJobs, \GetPPSet{$j_{S2}$} $\not\subset$ \GetPPSet{$j_S$}}{
+				return $j_S$
+			}
+		}
+	}
+	// $j_0$'s ETA was bad, but nothing else was better \\
+	return $j_0$
+	\caption{Suspending exploration of a too-large state space in favour of a potentially smaller one.}
+	\label{alg:shouldworkblock}
+\end{algorithm}
 
-
-This algorithm is the heart of Iterative Deepening; we list it in Figure~\ref{fig:shouldworkblock}.
+With a limited CPU budget, we must avoid running tests likely to time out.
+When a MC instance reports too high ETA (greater than some heuristic factor times the time remaining),
+we compare other yet-untested PP sets to find another job more likely to complete in time.
+This algorithm is the heart of Iterative Deepening; we list it in Algorithm~\ref{alg:shouldworkblock}\footnote{
+Though its worst-case performance is $O(mn)$ in the number of pending and suspended jobs,
+in practice the non-constant portion runs very infrequently
+and is negligible compared to the exponentially-sized state spaces.}.
 The algorithm takes into account... TODO
-Though it has worst-case performance of $O(mn)$ in the number of pending and blocked jobs,
-in practice we find the non-constant portion runs very infrequently and is negligible compared to the exponentially-sized state spaces.
 
 % TODO: should work block / find work algorthm here
 
