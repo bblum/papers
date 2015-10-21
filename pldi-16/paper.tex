@@ -18,9 +18,11 @@
 \usepackage[linesnumbered,ruled]{algorithm2e}
 \usepackage{algpseudocode}
 \usepackage{graphicx}
+%\usepackage{setspace}
 \usepackage[colorlinks=true,allcolors=blue,breaklinks,draft=false]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
 % known bug: http://tex.stackexchange.com/questions/1522/pdfendlink-ended-up-in-different-nesting-level-than-pdfstartlink
 \newcommand{\doi}[1]{doi:~\href{http://dx.doi.org/#1}{\Hurl{#1}}}   % print a hyperlinked DOI
+%\doublespacing
 
 
 
@@ -95,7 +97,7 @@ Compared to SSS-MC, we find bugs faster in smaller subset state spaces,
 and find new bugs with data-race PPs that the maximal state space would not expose at all.
 
 Although \landslide~itself is not publicly available due to its dependency on the non-free simulator \simics, \quicksand~is open-source and its interface can be adapted to fit any similar tool.
-We have also posted the log files from all our experiments.
+We have also posted our evaluation's full data set and logs.
 They can be found here:
 
 \url{https://github.com/bblum/landslide} % TODO: put QS in its own repository

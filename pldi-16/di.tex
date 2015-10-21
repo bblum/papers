@@ -17,20 +17,20 @@ Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
 Motivated by state-of-the-art tools' inflexibility to change their preemption points,
 Iterative Deepening searches among different combinations of such points during a test,
 deciding on-the-fly whether to pursue each resulting state space or abandon it in favour of smaller ones.
-Different state spaces are generated based on {\em subsets} of the preemption points which prior work would use; for example, ``preempt on all calls to {\tt mutex\_lock} but not on {\tt mutex\_unlock}.
+Different state spaces are generated based on {\em subsets} of the preemption points which prior work would use; for example, ``preempt on all calls to {\tt mutex\_lock} but not on {\tt mutex\_unlock}''.
 We show a visualization in Figure~\ref{fig:id}.
 
 Iterative Deepening depends heavily on state-space estimation \cite{estimation}
 to understand which state spaces are likely to complete on time,
 in advance of actually testing each interleaving within.
 The purpose is to make decisions automatically about when to defer exploration of a state space,
-so an inexpert user need only provide their total CPU budget as an argument,
+so an inexpert user need only provide their total CPU budget as a test parameter,
 and to enable completing appropriately-sized state spaces within that budget.
 
 Note that Iterative Deepening is a {\em wrapper} algorithm around stateless model checking.
 A model checking tool is still used to test each state space, and other reduction techniques are still applicable.
 Moreover, because Iterative Deepening treats the set of preemption points as mutable,
-it grants the potential to add new ones reactively based on any runtime analysis.
+it can add new ones reactively based on any runtime analysis.
 In this paper we focus on dynamic data-race detection~\cite{tsan} as the mechanism for finding new preemption candidates.
 
 \subsection{Terminology}
@@ -44,7 +44,8 @@ Please note the difference between data-race {\em candidates} and data-race {\em
 Because data-race analysis is false-positive-prone,
 we classify unprotected access pairs separately from concrete observable failures, % "concrete"?
 calling such pairs {\em data race candidates}.
-Should a future interleaving, preempting during those accesses, cause a failure (e.g. assertion or deadlock), then we report a {\em data-race bug}.
+Should a future interleaving, preempting during those accesses,
+lead to a failure (e.g. assertion or deadlock), then we report a {\em data-race bug}.
 Otherwise, if the access pair can be reordered, but does not produce a failure under any interleaving, it is a {\em benign data race}.
 If they cannot be reordered at all, it is a {\em false positive}.
 For brevity, we count benign data races as a subset of false positives.
@@ -101,11 +102,13 @@ The {\em maximal state space} is simply the one explored by SSS-MC: all statical
 With a limited CPU budget, we must avoid running tests likely to time out.
 When a MC instance reports an ETA too high,
 we compare other yet-untested PP sets to find another job more likely to complete in time.
-This algorithm is the heart of Iterative Deepening; we list it in Algorithm~\ref{alg:shouldworkblock}\footnote{
-Though its worst-case performance is $O(mn)$ in the number of pending and suspended jobs,
-in practice the non-constant portion runs very infrequently
+Our method for doing so, listed in Algorithm~\ref{alg:shouldworkblock}, is the heart of Iterative Deepening\footnote{
+Though its worst-case performance is $O(mn)$ in the
+%number of pending and suspended jobs,
+sizes of $\mathcal{P}$ and $\mathcal{S}$,
+in practice the non-constant portion beyond line 4 runs very infrequently
 and is negligible compared to the exponentially-sized state spaces.}.
-Our method's main feature is understanding that if \GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$},
+Its main feature is understanding that if \GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$},
 and $j_1$ is suspended,
 then $j_2$'s state space is guaranteed to be strictly larger, so $j_2$ will take at least as long.
 Hence we should avoid testing $j_2$ unless $j_1$'s ETA improves after further time spent on it.
@@ -138,8 +141,8 @@ to avoid repeatedly resuming larger jobs briefly while their ETAs only become wo
 \subsection{Landslide}
 \label{sec:landslide}
 
-We chose \landslide~\cite{landslide} as our stateless model checker due to its ability to trace program execution at the granularity of individual instructions and memory accesses, which is mandatory for dynamic data-race analysis.
-\landslide~features Dynamic Partial Order Reduction (DPOR) \cite{dpor}, state space estimation, and hybrid lockset/happens-before data-race detection.
+We chose \landslide~\cite{landslide} as our stateless model checker due to its ability to trace program execution at the granularity of individual instructions and memory accesses, which dynamic data-race detection requires.
+\landslide~features Dynamic Partial Order Reduction (DPOR) \cite{dpor}, state space estimation, and a hybrid lockset/happens-before data-race analysis.
 It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield()} or even {\tt xchg} loops) with a heuristic similar to Fair-Bounded Search \cite{bpor}. % TODO: devote a paragraph to this, after talking about drs in locks
 % this line can be cut if space is needed
 It can test both user- and kernel-level code, although is limited to timer-driven nondeterminism.
@@ -160,7 +163,7 @@ Prior work data race tools recognize the implementations of sync primitives to a
 Assuming the locks are already correct enables productive data-race analysis on the rest of the codebase.
 With testing limited to one execution, even if you wished to test for lock bugs, data-race analysis would still uselessly flag every single access pair in the lock implementation, requiring human attention to verify.
 However, Iterative Deepening can automatically verify a large quantity of data-race candidates as benign.
-Hence, we extended \landslide~with a custom option to change the lock-set tracking to include accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()} in the analysis. (Accesses from other sync functions, such as {\tt cond\_wait()}, would be either included already, or protected by an internal mutex.)
+Hence, we extended \landslide~with a custom option to change the lock-set tracking to include accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()} in the analysis. (Accesses from other sync functions, such as {\tt cond\_wait()}, would either be included already, or be protected by an internal mutex.)
 % TODO: Add a code sample showing how the lockset boundaries change? If there's room?
 
 \subsection{Quicksand} %Managing multiple state spaces
@@ -253,8 +256,6 @@ which motivates the need for Iterative Deepening to decide at runtime which to p
 		When an access pair is reported as a data race, we generate a new PP for each access and add new jobs corresponding to different combinations of those with the existing PPs.}
 	\label{fig:new-dr-jobs}
 \end{figure}
-
-% TODO: Decide whether to discuss the fact that we don't add the 2nd of a "suspected" dr pair until it is confirmed.
 
 \subsection{Suppressing ``malloc-recycle'' false positives}
 \label{sec:recycle}
