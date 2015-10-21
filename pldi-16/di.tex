@@ -108,7 +108,8 @@ and is negligible compared to the exponentially-sized state spaces.}.
 Our method's main feature is understanding that if \GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$},
 and $j_1$ is suspended,
 then $j_2$'s state space is guaranteed to be strictly larger, so $j_2$ will take at least as long.
-Hence we should avoid testing $j_2$ unless further time spent on $j_1$ reveals that it might finish in time after all.
+Hence we should avoid testing $j_2$ unless $j_1$'s ETA improves after further time spent on it.
+%reveals that it might finish in time after all.
 Similarly, when some job finds a bug, we cancel all pending superset jobs, as they would find the same bug.
 
 %
@@ -166,14 +167,9 @@ Hence, we extended \landslide~with a custom option to change the lock-set tracki
 
 \quicksand~is an independent program that wraps the execution of several \landslide~instances.
 The implementation is roughly 3000 lines of C.
-%Figure~\ref{fig:quicksand} depicts the major components.
-%and a registry of PPs to keep track of data race candidates.
-
-
-
-\quicksand~uses a workqueue model
-...
-priorities... data race priorities...
+It uses a thread pool to schedule the available state spaces,
+sorting such jobs according to their status among a running queue, pending queue, and suspended queue.
+Jobs are further prioritized by number of PPs, ETA, and whether they include data-race PPs.
 
 {\bf Communication protocol.}
 The interface to \landslide~, which any similar MC could implement, is in two parts.
@@ -187,6 +183,30 @@ whenever a new data-race candidate is found, and whenever a bug is found.
 \quicksand~in turn replies whether the test should suspend/resume due to too high ETA, or quit due to timeout.
 
 {\bf Heuristics.}
+% List of all heuristix:
+% HOMESTRETCH - last 60sec of test, don't suspend
+% ETA_THRESH - "to let its ETA stabilize"
+% eta factor
+% shold_reproduce -- small dr jobs are not allowed to add further instances of themself (why not? don't remember)
+% priority change between suspected and confirmed dr
+Algorithm~\ref{alg:shouldworkblock} allows heuristically scaling a job's ETA when comparing to the time budget,
+to express how optimistic we are about the estimate's accuracy.
+We use 2 as this scaling factor based on the results in \cite{estimation},
+though we allow changing it via the command line.
+We also include a heuristic to
+%ignore ETAs entirely
+never suspend jobs before they pass a certain threshold of interleavings tested,
+for which we choose 32,
+so their ETAs have some time to stabilize.
+
+We classify data-race candidates as {\em single-order} or {\em both-order} \cite{portend}
+based on whether \landslide~observed the access pair ordered one or both ways while testing the original state space,
+Single-order candidates are much more likely to be false-positives
+(though we cannot say for sure before preempting during the access itself, hence the heuristic),
+so we prioritize jobs with both-order data-race PPs more highly.
+For single-order races, we do not add PPs for the later access at all;
+should they be needed, preempting on the first access will suffice to upgrade it to both-order.
+
 
 
 % If there's room, mention the cant_swap mechanism for killing the top half of deferred jobs.
@@ -226,7 +246,6 @@ the small job risks missing the data race entirely if the original PPs were requ
 In practice, we observed some bugs found quickly by these small jobs, and other bugs missed by the small jobs found eventually by the big jobs,
 which motivates the need for Iterative Deepening to decide at runtime which to prioritize.
 % TODO: Put numbers here.
-% which justifies this design
 
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{dr-jobs.pdf}
@@ -234,25 +253,6 @@ which motivates the need for Iterative Deepening to decide at runtime which to p
 		When an access pair is reported as a data race, we generate a new PP for each access and add new jobs corresponding to different combinations of those with the existing PPs.}
 	\label{fig:new-dr-jobs}
 \end{figure}
-
-
-% TODO: make new-dr-jobs diagram
-
-%                                  (2)          landslide         landslide
-%  landslide                   "Preempt when-->  o  PPs=[foo]      o  PPs=[mutex_lock,
-%    o  PPs=[mutex_lock]        PC = FOO"       / \               / \      foo]
-%   / \                              |         o   o             o   o
-%  o  /\                             |                          /|\  |\
-%    o  o                                                      o o o o o
-%                             __QUICKSAND__
-%    |       (1)             |             |           (3)
-%    \  "Hey, an access      |  job1       | ----"Preempt when -->
-%     '- at FOO raced w/ --> |        job2 |      PC = BAR"
-%        one at BAR!         |    job4     |
-%                            |        job70|      [ same pictures for s/foo/bar/]
-%                            | job8        |
-%                            '-------------'
-%                maybe show some internal structore of QS as well
 
 % TODO: Decide whether to discuss the fact that we don't add the 2nd of a "suspected" dr pair until it is confirmed.
 
