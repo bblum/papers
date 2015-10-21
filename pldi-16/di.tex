@@ -53,6 +53,7 @@ We also identify the {\em minimal} and {\em maximal state space} for each test.
 The {\em minimal state space} includes only thread switches arising from normal execution (Figure~\ref{fig:id}).
 The {\em maximal state space} is simply the one explored by SSS-MC: all statically-available PPs are enabled.
 %However, should new data-race PPs be added during a test, the new maximal state space will be the one including those as well.
+%% don't say this ^ -- because when you add dr pps, they add in pairs and there would be multiple maximals, at least until they each get explored and subseuqnetly add a pp of the other of the pair.
 
 \subsection{Verifying data races as buggy or benign} % FIXME: dont say 'benign'; also, do you have enough left to say that this can even still be a full subsection?
 
@@ -104,15 +105,16 @@ This algorithm is the heart of Iterative Deepening; we list it in Algorithm~\ref
 Though its worst-case performance is $O(mn)$ in the number of pending and suspended jobs,
 in practice the non-constant portion runs very infrequently
 and is negligible compared to the exponentially-sized state spaces.}.
-%
-
-Our method's main feature is that it understands that if \GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$},
-and $j_1$ is suspended, $j_2$'s state space is guaranteed to be strictly larger, so $j_2$ would take at least as long.
+Our method's main feature is understanding that if \GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$},
+and $j_1$ is suspended,
+then $j_2$'s state space is guaranteed to be strictly larger, so $j_2$ will take at least as long.
 Hence we should avoid testing $j_2$ unless further time spent on $j_1$ reveals that it might finish in time after all.
+Similarly, when some job finds a bug, we cancel all pending superset jobs, as they would find the same bug.
+
 %
 We also account for the inherent inaccuracy of ETA estimates.
 Line 1 heuristically scales up the time remaining to avoid suspending jobs too aggressively
-when their ETAs are actually overestimates.
+in case their ETAs are actually overestimates.
 Lines 12-14 account for the
 %bizarre
 possibility that among two suspended jobs,
@@ -125,7 +127,7 @@ This can arise because estimates tend to get more accurate over time,
 and $j_1$ perhaps ran much longer before suspending.
 % In such scenarios,
 We heuristically assume the smaller job's ETA is more accurate
-to avoid repeatedly resuming larger jobs very briefly while their ETAs only become worse
+to avoid repeatedly resuming larger jobs briefly while their ETAs only become worse
 (it lets us avoid thrashing in \quicksand),
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -163,7 +165,9 @@ Hence, we extended \landslide~with a custom option to change the lock-set tracki
 \subsection{Quicksand} %Managing multiple state spaces
 
 \quicksand~is an independent program that wraps the execution of several \landslide~instances.
-The implementation is roughly 3000 lines of C code.
+The implementation is roughly 3000 lines of C.
+%Figure~\ref{fig:quicksand} depicts the major components.
+%and a registry of PPs to keep track of data race candidates.
 
 
 
@@ -190,8 +194,6 @@ whenever a new data-race candidate is found, and whenever a bug is found.
 % TODO: decide which subsection should come first for better flow
 
 \subsection{Data-race preemption points}
-
-% Intuitively, % TODO describe what we're trying to achieve % do this in design section
 
 When \landslide~detects a data race, it reports each of the two memory accesses involved in the race.
 Each report indicates the program counter value (PC) associated with the access, as well as some further conditions to help filter away unrelated executions of the same instruction on different data.
@@ -225,6 +227,13 @@ In practice, we observed some bugs found quickly by these small jobs, and other 
 which motivates the need for Iterative Deepening to decide at runtime which to prioritize.
 % TODO: Put numbers here.
 % which justifies this design
+
+\begin{figure}[t]
+	\includegraphics[width=0.48\textwidth]{dr-jobs.pdf}
+	\caption{\quicksand~manages the exploration of multiple state spaces, communicating with each MC instance to receive ETAs, data race candidates, and bug reports.
+		When an access pair is reported as a data race, we generate a new PP for each access and add new jobs corresponding to different combinations of those with the existing PPs.}
+	\label{fig:new-dr-jobs}
+\end{figure}
 
 
 % TODO: make new-dr-jobs diagram
