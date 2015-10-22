@@ -26,6 +26,8 @@
 %\doublespacing
 
 
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
 \newtheorem{definition}{Definition}
 
 \begin{document}
@@ -64,10 +66,15 @@ We prove that for the special case of {\em malloc-recycle} false positives, it i
 This document is supplemental material to our main paper; we assume the reader is already familiar with our motivation and terminology.
 \end{abstract}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Definitions}
+
+\subsection{Stateless model checking terms}
 
 \begin{definition}[Transition]
 A sequence of instructions executed by the program between two preemption points (PPs).
+\label{def:transition}
 \end{definition}
 Our model checker provides the invariant that each transition's instructions are associated with exactly one thread. (That is, the set of PPs always includes all thread switches.)
 
@@ -81,22 +88,37 @@ Two transitions $A$ and $B$ of different threads MHB if some synchronization eve
 
 Note how our {\em must}-happen-before relation differs from the conventional definition of happens-before (``observed to happen before'') \cite{lamport-clocks}.
 Our use of MHB matches the ``limited happens-before'' used in \cite{hybriddatarace} and \cite{tsan};
-the advantage of this over pure-happens-before detectors in producing fewer false negatives is well argued in those prior works\footnote{
+the advantage of this over pure-happens-before detectors in producing fewer false negatives is well-argued in those prior works\footnote{
 Because pure-happens-before data race detectors avoid false positives altogether, they would have no trouble avoiding our malloc-recycle false positives.
 However, as prior work has shown, they miss many other bugs involving unprotected variables accessed alternately before and after mutex-protected critical sections.
 Indeed, because most concurrent malloc implementations are protected by a lock, our malloc-recycle false positives fit that same pattern.
 }.
 
+\begin{definition}[Shared memory conflict]
+A pair of memory accesses between two threads where at least one of them is a write.
+\end{definition}
+Intuitively, the behaviour of a program could change by reordering two transitions only if they contain a memory conflict.
+
+\begin{definition}[Dynamic Partial Order Reduction (DPOR)]
+	A state-space search algorithm for stateless model checkers,
+	guaranteed to reorder transitions of two threads
+	iff they have a shared memory conflict and are not related by MHB \cite{dpor}.
+	\label{def:dpor}
+\end{definition}
+
+\subsection{Data race and other memory terms}
+
 \begin{definition}[Data race]
-A pair of memory accesses between two threads such that:
+A shared memory conflict where furthermore:
 \begin{itemize}
-	\item At least one of them is a write,
 	\item The intersection of both threads' locksets is empty (i.e., the threads do not hold the same lock during each access), and
 	\item The threads' transitions are not related by MHB.
 \end{itemize}
 \end{definition}
 
 The same as in the paper, we distinguish between data-race {\em candidates} and data-race {\em bugs}.
+In this proof we are concerned solely with candidates, and judging whether they are true data races or false positives.
+It is up to \quicksand, outside the scope of this proof, to decide whether they are benign or buggy.
 
 \begin{definition}[False positive data race]
 	An apparent data race that cannot be observed in the opposite order from what was actually executed.
@@ -111,6 +133,12 @@ changes some variable values when the threads are reordered, such that the memor
 
 Figures~\ref{fig:recycle} and \ref{fig:recycle-bug} show an example.
 In the case of malloc-recycle false positives, the allocation heap is the ``other shared state'' mentioned in the previous definition, and malloc's return value is the variable value that changed.
+
+\begin{definition}[Use after free]
+	Any read or write to heap memory which was once allocated, but no longer is.
+\end{definition}
+%Most commonly this refers to accesses to a region already freed, but for brevity we also include
+% TODO: need heap block overrun?
 
 \begin{figure}[t]
 	\small
@@ -135,7 +163,7 @@ In the case of malloc-recycle false positives, the allocation heap is the ``othe
 In summary, we are proving that if a malloc-recycle-pattern data race is a true race, rather than a false positive,
 then DPOR is guaranteed to ``reorder away the free and re-malloc''.
 In other words, DPOR's exploration will eventually interleave threads in such a way that the malloc-recycle pattern will disappear,
-while the access pair remains for the data-race detector to find, as showin in Figure~\ref{fig:reycle-goal}.
+while the access pair remains for the data-race detector to find, as shown in Figure~\ref{fig:recycle-goal}.
 Hence, in the same state space where the malloc-recycle data race was found, if it's a true race, the same race will also appear without the recycle pattern.
 So if that race hides a failure bug (assertion, segfault, etc.), Iterative Deepening will still be led to the necessary preemption point to find that bug.
 
@@ -172,6 +200,9 @@ So if that race hides a failure bug (assertion, segfault, etc.), Iterative Deepe
 \caption{Goal interleaving, which reorders the adversarial program's threads away from the pattern, while the data race remains.}
 \label{fig:recycle-goal}
 \end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Assumptions}
 
 We assume the model checker has all static/hard-coded PPs enabled during this state space exploration, and that we are not limited by a pressing CPU budget.
@@ -183,16 +214,102 @@ Further, we assume that the static PPs include all lock/unlock/trylock operation
 
 We assume the model checker can identify malloc-recycle data races with little or no overhead beyond what's already associated with data race detection. \landslide~already tracks the heap state, so it can implement this check for free with a simple generation counter.
 
+We do not require any particular implementation details of malloc; in fact, we instruct \landslide to
+ignore all potential PPs which might be inserted on malloc's internal mutex accesses;
+in essence treating it as a ``magic primitive'', because we are not interested in verifying its implementation.
+
 We assume that the only way the program can obtain heap addresses is through the return value of malloc().
 Because we are testing C programs, any crazy violations of this assumption are technically possible,
 but should you wish to check for bugs like this,
 we would recommend a data-flow analysis which is much cheaper than model checking anyway.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Proof}
 
-Mario man is very very hunger from not having enough plumming jobs, so his Quest for Eat and Dollars.
+Though Figures~\ref{fig:recycle-bug} and \ref{fig:recycle-goal} show example programs, they do not capture all possible cases of how a true data race can fit the malloc-recycle pattern.
+We proceed by establishing what must be true of any such program, then casing on the ambiguous possibilities, and showing that PPs will exist where we need them to reorder the threads.
 
-This spells QED so we are done.
+For certain, there must be an access in one thread, followed by a free and malloc (we'll call them ``middle free'' and ``middle malloc''), each possibly from either thread, followed by an access from the other.
+If the data race is not a false positive, then the second access must not change locations based on the middle malloc's return value.
+WLOG, we say that thread 1 (T1) does the first access, called {\tt x1}, and thread 2 (T2) does the second, {\tt x2}.
+
+\begin{lemma}
+	If DPOR will reorder {\tt x2} to before {\tt x1}, then a non-malloc-recycle data race or a use-after-free bug will be identified.
+	\label{lem:reorder}
+\end{lemma}
+\begin{proof}
+By case on which threads the middle free and middle malloc came from.
+\begin{itemize}
+	\item T1 free, T2 malloc (as shown in the figure). The malloc will go with {\tt x2} to before the free, and because the allocation of concern has not been freed yet, will return a different value. Hence {\tt x1} and {\tt x2} will be in the same allocation; hence the race is not malloc-recycle anymore.
+	\item T1 free, T1 malloc. Same as above, but the malloc does not move. The middle malloc will still recycle the memory, but {\tt x2} now occurs before then, being in the same allocation.
+	\item T2 free, T2 malloc. Both the free and re-malloc will occur before either {\tt x1} or {\tt x2}. The memory will be recycled and both accesses will appear to be in the later allocation.
+	\item T2 free, T1 malloc. The free gets reordered earlier, the malloc stays put, and the accesses go in between. This will be a use-after-free bug.
+\end{itemize}
+If either the middle free or middle malloc came from a third thread, the case is the same as if it belonged to T1.
+\end{proof}
+
+By our last assumption, there must also be an ``original malloc'' which allocated the heap block to begin with.
+We must ask, which thread did the malloc which returned {\tt x1}'s address in the first place?
+Because of our last assumption, we know that the other thread must obtain that address through some communication mechanism (which we'll reason about later).
+
+\subsection{T2 originally malloced x}
+
+\begin{lemma}[Greedo]
+	If T2 originally malloced the block containing {\tt x}, DPOR will reorder the threads.
+	\label{lem:greedo}
+\end{lemma}
+\begin{proof}
+Because T1 had the first access, there was a thread switch between the original malloc and {\tt x1}, as well as between {\tt x1} and {\tt x2}. By Definition~\ref{def:transition}, each switch will be a PP.
+By Definition~\ref{def:dpor}, DPOR will reorder {\tt x2} to before {\tt x1}. Lemma~\ref{lem:reorder} finishes.
+\end{proof}
+
+This lemma also applies if there was a third thread, as there would still be a thread switch in the same spot.
+
+\subsection{T1 originally malloced x}
+
+This case is more tricky. We must prove there is a PP... TODO
+
+\begin{lemma}[Han]
+	TODO
+	\label{lem:han}
+\end{lemma}
+
+%We will also say that T1 does the initial malloc which first returns {\tt x1}'s address; although certainly T2 or even a third thread could have malloced it, that would involve a thread switch to thread 1, and hence a PP by Definition~\ref{def:transition}.
+%As we will see, the main challenge of the proof is showing that enough PPs will exist at appropriate points, so adding more PPs by considering other threads for the initial malloc can only make the proof easier.
+
+First we must case on how T2 obtains the heap pointer
+
+\subsection{Conclusion}
+
+\begin{theorem}[Soundness of eliminating malloc-recycle races]
+	If a malloc-recycle data race is not a false positive, DPOR will reorder threads such that either the same accesses will still race without fitting the malloc-recycle pattern, or a use-after-free bug will be reported immediately.
+\end{theorem}
+\begin{proof}
+	Between Lemmas \ref{lem:greedo} and \ref{lem:han}, all cases are covered.
+\end{proof}
+
+
+
+%\subsection{Malloc with internal mutexes}
+%
+%First we assume that the malloc implementation is guarded by
+%
+%
+%Mario man is very very hunger from not having enough plumming jobs, so his Quest for Eat and Dollars.
+%
+%
+%\subsection{Malloc as a magic primitive}
+%
+%Actually, regardless of malloc's internal synchronization details, in virtually all cases we wish to avoid unnecessary PPs on its boundaries during MC, because unlike other uses of mutexes, it doesn't indicate any concurrent behaviour is going on.
+%Much like the {\tt mx\_test} in our paper, the malloc implementation could itself be tested for concurrency bugs, but in all other cases,
+%we drastically reduce the state space size by assuming it is correct and avoiding PPs on it, treating it instead as a ``magic primitive''.
+%
+%Hence, we provide another proof that does not require
+%
+%%\cite{landslide} % uncomment post-double-blind review
+%
+%This spells QED so we are done.
 
 \bibliographystyle{abbrvnat}
 \bibliography{citations}{}
