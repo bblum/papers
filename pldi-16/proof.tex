@@ -1,0 +1,199 @@
+%
+% LaTeX template for prepartion of submissions to PLDI'15
+%
+% Requires temporary version of sigplanconf style file provided on
+% PLDI'15 web site.
+%
+\documentclass[pldi]{sigplanconf-pldi15}
+
+%
+% the following standard packages may be helpful, but are not required
+%
+\usepackage{SIunits}            % typset units correctly
+\usepackage{courier}            % standard fixed width font
+\usepackage[scaled]{helvet} % see www.ctan.org/get/macros/latex/required/psnfss/psnfss2e.pdf
+\usepackage{url}                  % format URLs
+\usepackage{listings}          % format code
+\usepackage{amsthm}          % format code
+\usepackage{enumitem}      % adjust spacing in enums
+\usepackage[linesnumbered,ruled]{algorithm2e}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+%\usepackage{setspace}
+\usepackage[colorlinks=true,allcolors=blue,breaklinks,draft=false]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
+% known bug: http://tex.stackexchange.com/questions/1522/pdfendlink-ended-up-in-different-nesting-level-than-pdfstartlink
+\newcommand{\doi}[1]{doi:~\href{http://dx.doi.org/#1}{\Hurl{#1}}}   % print a hyperlinked DOI
+%\doublespacing
+
+
+\newtheorem{definition}{Definition}
+
+\begin{document}
+
+%
+% any author declaration will be ignored  when using 'plid' option (for double blind review)
+%
+
+% TODO: Don't forget to run e.g. s/\\quicksand /\\quicksand~/
+\newcommand\landslide{\textsc{Landslide}}
+\newcommand\quicksand{\textsc{Quicksand}}
+\newcommand\simics{\textsc{Simics}}
+\newcommand{\sect}[1]{\S #1}
+\newcommand\hilight[2]{\color{#1}#2\color{black}}
+\definecolor{olivegreen}{RGB}{0,127,0}
+\definecolor{brickred}{RGB}{192,0,0}
+
+% TODO: Finalize these numbers.
+\newcommand\numthrlibs{79}
+\newcommand\numpintoses{79}
+\newcommand\numstudence{158} % total pintoses plus p2s
+
+\title{Soundness Proof for Eliminating Malloc-Recycle Data Races in Stateless Model Checking}
+\authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
+\authorinfo{Garth Gibson}{Carnegie Mellon University}{garth@cs.cmu.edu}
+
+\maketitle
+\begin{abstract}
+In our paper we show the effectiveness of combining dynamic data-race detection \cite{eraser,hybriddatarace} with stateless model checking \cite{verisoft,dpor}.
+Our approach involves adding new state spaces to explore each time a new data-race candidate is found.
+Despite many powerful reduction techniques, the state spaces are still exponentially sized,
+so any way to avoid exploring some in advance is obviously beneficial.
+We prove that for the special case of {\em malloc-recycle} false positives, it is safe to eliminate these immediately upon discovering them, without bothering to explore their associated state spaces.
+
+
+This document is supplemental material to our main paper; we assume the reader is already familiar with our motivation and terminology.
+\end{abstract}
+
+\section{Definitions}
+
+\begin{definition}[Transition]
+A sequence of instructions executed by the program between two preemption points (PPs).
+\end{definition}
+Our model checker provides the invariant that each transition's instructions are associated with exactly one thread. (That is, the set of PPs always includes all thread switches.)
+
+\begin{definition}[Must-happen-before (MHB)]
+	Given two transitions $A$ and $B$, we say $A$ MHB $B$ if $B$ cannot be reordered to occur before $A$.
+\end{definition}
+All transitions of the same thread are trivially MHB-related.
+Two transitions $A$ and $B$ of different threads MHB if some synchronization event in $A$ causes $B$ to become runnable while it was previously blocked. Such synchronization events include {\tt thread\_create}, {\tt cond\_signal}, {\tt sem\_post}, but {\em not} {\tt mutex\_lock} or {\tt mutex\_unlock}.
+% FIXME: Address concern about using blocking sync primitives, eg sem or rwlock, in a mutex like fashion.
+% FIXME: Even though MHB(T1_0, T1_1) and MHB(T1_1, T2_0), then still not necessarily MHB(T1_0, T2_0).
+
+Note how our {\em must}-happen-before relation differs from the conventional definition of happens-before (``observed to happen before'') \cite{lamport-clocks}.
+Our use of MHB matches the ``limited happens-before'' used in \cite{hybriddatarace} and \cite{tsan};
+the advantage of this over pure-happens-before detectors in producing fewer false negatives is well argued in those prior works\footnote{
+Because pure-happens-before data race detectors avoid false positives altogether, they would have no trouble avoiding our malloc-recycle false positives.
+However, as prior work has shown, they miss many other bugs involving unprotected variables accessed alternately before and after mutex-protected critical sections.
+Indeed, because most concurrent malloc implementations are protected by a lock, our malloc-recycle false positives fit that same pattern.
+}.
+
+\begin{definition}[Data race]
+A pair of memory accesses between two threads such that:
+\begin{itemize}
+	\item At least one of them is a write,
+	\item The intersection of both threads' locksets is empty (i.e., the threads do not hold the same lock during each access), and
+	\item The threads' transitions are not related by MHB.
+\end{itemize}
+\end{definition}
+
+The same as in the paper, we distinguish between data-race {\em candidates} and data-race {\em bugs}.
+
+\begin{definition}[False positive data race]
+	An apparent data race that cannot be observed in the opposite order from what was actually executed.
+\end{definition}
+
+False positives are caused when some data dependency based on some other shared state, invisible to the data-race analysis,
+changes some variable values when the threads are reordered, such that the memory addresses no longer collide.
+
+\begin{definition}[Malloc-recycle data race]
+	A data race where the address is contained in some heap-allocated memory, and between the two accesses, that memory was passed to free() and returned again by a subsequent malloc().
+\end{definition}
+
+Figures~\ref{fig:recycle} and \ref{fig:recycle-bug} show an example.
+In the case of malloc-recycle false positives, the allocation heap is the ``other shared state'' mentioned in the previous definition, and malloc's return value is the variable value that changed.
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \} *x;}} \\
+	& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \} *y;~~~~~~~~~~}} \\
+	\\
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
+	2 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	3 & & \texttt{// x's memory recycled} \\
+	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	5 & & \texttt{// ...initialize...}\\
+	6 & & \texttt{publish(y);} \\
+	7 & & \texttt{\hilight{brickred}{y->bar = ...;}} \\
+\end{tabular}
+\caption{False-positive malloc-recycle pattern. This is the common case for which we avoid creating new state spaces.}
+\label{fig:recycle}
+\end{figure}
+\section{Intuition}
+
+In summary, we are proving that if a malloc-recycle-pattern data race is a true race, rather than a false positive,
+then DPOR is guaranteed to ``reorder away the free and re-malloc''.
+In other words, DPOR's exploration will eventually interleave threads in such a way that the malloc-recycle pattern will disappear,
+while the access pair remains for the data-race detector to find, as showin in Figure~\ref{fig:reycle-goal}.
+Hence, in the same state space where the malloc-recycle data race was found, if it's a true race, the same race will also appear without the recycle pattern.
+So if that race hides a failure bug (assertion, segfault, etc.), Iterative Deepening will still be led to the necessary preemption point to find that bug.
+
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{publish(x);} & \\
+	2 & & \texttt{x2 = get\_published\_x();} \\
+	3 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
+	4 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	5 & & \texttt{// x's memory recycled} \\
+	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+\end{tabular}
+\caption{Adversarial program which fits the malloc-recycle pattern, but nevertheless contains a true race.}
+\label{fig:recycle-bug}
+\end{figure}
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{publish(x);} & \\
+	2 & & \texttt{x2 = get\_published\_x();} \\
+	3 & & \texttt{// x not free, so malloc's} \\
+	4 & & \texttt{// return value changes!} \\
+	5 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	6 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+	7 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
+	8 & \texttt{\hilight{olivegreen}{free}(x);} \\
+\end{tabular}
+\caption{Goal interleaving, which reorders the adversarial program's threads away from the pattern, while the data race remains.}
+\label{fig:recycle-goal}
+\end{figure}
+\section{Assumptions}
+
+We assume the model checker has all static/hard-coded PPs enabled during this state space exploration, and that we are not limited by a pressing CPU budget.
+Using only a subset of PPs or aborting early due to time-out could each ruin our ability to reach the goal interleaving.
+However, Iterative Deepening aims to test the most important interleavings with the time available,
+so in the case of not enough time, our point here is that continuing the current state space fits that goal best.
+
+Further, we assume that the static PPs include all lock/unlock/trylock operations on mutexes (or whatever other low-level locks are used) and also all higher-level sync primitives which can cause MHB (either directly, or because they are built on top of mutexes).
+
+We assume the model checker can identify malloc-recycle data races with little or no overhead beyond what's already associated with data race detection. \landslide~already tracks the heap state, so it can implement this check for free with a simple generation counter.
+
+We assume that the only way the program can obtain heap addresses is through the return value of malloc().
+Because we are testing C programs, any crazy violations of this assumption are technically possible,
+but should you wish to check for bugs like this,
+we would recommend a data-flow analysis which is much cheaper than model checking anyway.
+
+\section{Proof}
+
+Mario man is very very hunger from not having enough plumming jobs, so his Quest for Eat and Dollars.
+
+This spells QED so we are done.
+
+\bibliographystyle{abbrvnat}
+\bibliography{citations}{}
+\end{document}
