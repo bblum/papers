@@ -36,19 +36,13 @@
 % any author declaration will be ignored  when using 'plid' option (for double blind review)
 %
 
-% TODO: Don't forget to run e.g. s/\\quicksand /\\quicksand~/
-\newcommand\landslide{\textsc{Landslide}}
+%\newcommand\landslide{\textsc{Landslide}} % Don't mention landslide in the proof.
 \newcommand\quicksand{\textsc{Quicksand}}
 \newcommand\simics{\textsc{Simics}}
 \newcommand{\sect}[1]{\S #1}
 \newcommand\hilight[2]{\color{#1}#2\color{black}}
 \definecolor{olivegreen}{RGB}{0,127,0}
 \definecolor{brickred}{RGB}{192,0,0}
-
-% TODO: Finalize these numbers.
-\newcommand\numthrlibs{79}
-\newcommand\numpintoses{79}
-\newcommand\numstudence{158} % total pintoses plus p2s
 
 \title{Soundness Proof for Eliminating Malloc-Recycle Data Races in Stateless Model Checking}
 \authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
@@ -88,9 +82,10 @@ Two transitions $A$ and $B$ of different threads MHB if some synchronization eve
 Note how our {\em must}-happen-before relation differs from the conventional definition of happens-before (``observed to happen before'') \cite{lamport-clocks}.
 Our use of MHB matches the ``limited happens-before'' used in \cite{hybriddatarace} and \cite{tsan};
 the advantage of this over pure-happens-before detectors in producing fewer false negatives is well-argued in those prior works\footnote{
-Because pure-happens-before data race detectors avoid false positives altogether, they would have no trouble avoiding our malloc-recycle false positives.
+Because pure-HB data race detectors avoid false positives altogether, they would have no trouble avoiding our malloc-recycle false positives.
 However, as prior work has shown, they miss many other bugs involving unprotected variables accessed alternately before and after mutex-protected critical sections.
-Indeed, because most concurrent malloc implementations are protected by a lock, our malloc-recycle false positives are indistinguishable from such false negatives.
+Indeed, because most concurrent malloc implementations are protected by a lock,
+our malloc-recycle false positives are indistinguishable from such false negatives under pure-HB.
 }.
 
 \begin{definition}[Shared memory conflict]
@@ -117,7 +112,7 @@ A shared memory conflict where furthermore:
 
 The same as in the paper, we distinguish between data-race {\em candidates} and data-race {\em bugs}.
 In this proof we are concerned solely with candidates, and judging whether they are true data races or false positives.
-It is up to \quicksand, outside the scope of this proof, to decide whether they are benign or buggy.
+It is up to \quicksand, outside the scope of this proof, to decide whether true data races are benign or buggy.
 
 \begin{definition}[False positive data race]
 	An apparent data race that cannot be observed in the opposite order from what was actually executed.
@@ -149,7 +144,7 @@ These can immediately be identified as failures by a MC which tracks allocation 
 	\\
 	& Thread 1 & Thread 2 \\
 	1 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
-	2 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	2 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 	3 & & \texttt{// x's memory recycled} \\
 	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	5 & & \texttt{// ...initialize...}\\
@@ -176,7 +171,7 @@ So if that race hides a failure bug (assertion, segfault, etc.), Iterative Deepe
 	1 & \texttt{publish(x1);} & \\
 	2 & & \texttt{x2 = get\_published\_x();} \\
 	3 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
-	4 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	4 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 	5 & & \texttt{// x's memory recycled} \\
 	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
@@ -189,14 +184,14 @@ So if that race hides a failure bug (assertion, segfault, etc.), Iterative Deepe
 	\small
 \begin{tabular}{rll}
 	& Thread 1 & Thread 2 \\
-	1 & \texttt{publish(x);} & \\
+	1 & \texttt{publish(x1);} & \\
 	2 & & \texttt{x2 = get\_published\_x();} \\
 	3 & & \texttt{// x not free, so malloc's} \\
 	4 & & \texttt{// return value changes!} \\
 	5 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	6 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
 	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
-	8 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	8 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 \end{tabular}
 \caption{Goal interleaving, which reorders the adversarial program's threads away from the pattern, while the data race remains.}
 \label{fig:recycle-goal}
@@ -209,18 +204,18 @@ So if that race hides a failure bug (assertion, segfault, etc.), Iterative Deepe
 {\bf Maximal state space.}
 We assume the model checker has all static/hard-coded PPs enabled during this state space exploration,
 and that we are not limited by a pressing CPU budget.
-Further, we assume that the static PPs include all lock/unlock/trylock operations on mutexes (or whatever other low-level locks are used) and also all higher-level sync primitives which can cause MHB (either directly, or because they are built on top of mutexes).
+Further, we assume that the static PPs include all lock/unlock/trylock operations on mutexes (or whatever other low-level locks are used) and also all higher-level sync primitives which can cause HB (either directly, or because they are built on top of mutexes).
 
 Using only a subset of PPs or aborting early due to time-out could each ruin our ability to reach the goal interleaving.
 However, Iterative Deepening aims to test the most important interleavings with the time available,
 so in the case of not enough time, our point here is that continuing the current state space fits that goal best.
 
-{\bf Low overhead.}
-We assume the model checker can identify malloc-recycle data races with little or no overhead beyond what's already associated with data race detection.
-Our MC already tracks the heap state, so we implement this check for free with a simple generation counter.
+%{\bf Low overhead.}
+%We assume the model checker can identify malloc-recycle data races with little or no overhead beyond what's already associated with data race detection.
+%Our MC already tracks the heap state, so we implement this check for free with a simple generation counter.
 
 {\bf Malloc is a magic black box.}
-We assume the malloc implementation is correct (e.g., it won't double-allocate blocks), although we don't assume any implementation details such as any tendency to reuse blocks or allocate adjacent ones.
+We assume the malloc implementation is correct (e.g., it won't double-allocate blocks), although we don't assume any implementation details such as a tendency to reuse blocks or allocate adjacent ones.
 %particular allocation pattern regarding adjacency/coalescing/reuse.
 In fact, in our experiments we instruct our MC to ignore all potential PPs which might be inserted on malloc's internal mutex;
 in essence treating it as a ``magic primitive'', because we are not interested in verifying its implementation.
@@ -234,9 +229,10 @@ This is not without consequences; see section~\ref{sec:owned}.
 Finally, we assume that the only way the program can obtain heap addresses is through the return value of malloc().
 Because we are testing C programs, any bizarre violations of this assumption are technically possible,
 but should you wish to check for bugs like this,
-we would recommend a data-flow analysis which is much cheaper than model checking anyway.
+%we would recommend a data-flow analysis which is much cheaper than model checking anyway.
+symbolic execution \cite{klee} would be more appropriate.
 
-For Section \ref{sec:proof}, we further assume a malloced block's address cannot be obtained through arithmetic on the address of a different block; in Section \ref{sec:owned} we show how to account for this case by relaxing the ``black box'' assumption.
+For Section \ref{sec:proof}, we further assume a malloced block's address cannot be obtained through arithmetic on the address of a different block; in Section \ref{sec:owned} we show how to account for this case by relaxing the previous ``black box'' assumption.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -251,19 +247,27 @@ If the data race is not a false positive, then the second access must not change
 WLOG, we say that thread 1 (T1) does the first access, called {\tt x1}, and thread 2 (T2) does the second, {\tt x2}.
 
 \begin{lemma}
-	If DPOR will reorder {\tt x2} to before {\tt x1}, then a non-malloc-recycle data race or a use-after-free bug will be identified.
+	If DPOR will reorder {\tt x2} to before {\tt x1}, and the location of access {\tt x2} doesn't change,
+	then a non-malloc-recycle data race or a use-after-free bug will be identified.
 	\label{lem:reorder}
 \end{lemma}
 \begin{proof}
 By case on which threads the middle free and middle malloc came from.
 \begin{itemize}
 	\item T1 free, T2 malloc (as shown in Figure~\ref{fig:recycle-bug}). The malloc will go with {\tt x2} to before the free, and because the allocation of concern has not been freed yet, will return a different value. Hence {\tt x1} and {\tt x2} will be in the same allocation; hence the race is not malloc-recycle anymore.
-	\item T1 free, T1 malloc. Same as above, but the malloc does not move. The middle malloc will still recycle the memory, but {\tt x2} now occurs before then, being in the same allocation.
+	\item T1 free, T1 malloc. Same as above, but the malloc does not move. The middle malloc will still recycle the memory, but {\tt x2} now occurs before then, being in the same, older, allocation.
 	\item T2 free, T2 malloc. Both the free and re-malloc will occur before either {\tt x1} or {\tt x2}. The memory will be recycled and both accesses will appear to be in the later allocation.
 	\item T2 free, T1 malloc. The free gets reordered earlier, the malloc stays put, and the accesses go in between. This will be a use-after-free bug.
 \end{itemize}
 If either the middle free or middle malloc came from a third thread, the case is the same as if it belonged to T1.
 \end{proof}
+
+The keen reader might ask here, what if T1 contains some extra spurious malloc calls (not related to {\tt x1}) that affect what T2's malloc returns after being reordered?
+However, these could at best either cause {\tt x}'s memory to be recycled slightly differently (not affecting the proof), or not at all (which simply changes some cases to be immediate use-after-frees).
+%If such a malloc could affect {\tt x2}, the data race would be a false positive after all.
+In general, adding spurious mallocs that could affect {\tt x1} or {\tt x2} could only convert the program back into a false-positive scenario;
+and adding more spurious synchronization events could only make it more easy to find PPs we need to trigger the reordering.
+So, WLOG, we say that the only relevant events are the ones we mention explicitly.
 
 By our last assumption, there must also be an ``original malloc'' which allocated the heap block to begin with.
 We must ask, which thread did the malloc which returned {\tt x1}'s address in the first place?
@@ -272,12 +276,14 @@ Because of our last assumption, we know that the other thread must obtain that a
 \subsection{T2 originally malloced x}
 
 \begin{lemma}[Greedo]
-	If T2 originally malloced the block containing {\tt x}, DPOR will reorder the threads.
+	If T2 originally malloced the block containing {\tt x}, DPOR will reorder the threads to uncover a non-malloc-recycle race or a use-after-free bug.
 	\label{lem:greedo}
 \end{lemma}
 \begin{proof}
 Because T1 had the first access, there was a thread switch between the original malloc and {\tt x1}, as well as between {\tt x1} and {\tt x2}. By Definition~\ref{def:transition}, each switch will be a PP.
-By Definition~\ref{def:dpor}, DPOR will reorder {\tt x2} to before {\tt x1}. Lemma~\ref{lem:reorder} finishes.
+By Definition~\ref{def:dpor}, DPOR will reorder {\tt x2} to before {\tt x1},
+and because T1 is not involved in the logic determining {\tt x2}, the access's location stays the same.
+Lemma~\ref{lem:reorder} finishes.
 \end{proof}
 
 This lemma also applies if a third thread was responsible for this malloc, as there would still be a thread switch in the same spot.
@@ -285,12 +291,102 @@ This lemma also applies if a third thread was responsible for this malloc, as th
 \subsection{T1 originally malloced x}
 
 \begin{lemma}[Han]
-	If T1 originally malloced the block containing {\tt x}, DPOR will reorder the threads.
+	If T1 originally malloced the block containing {\tt x}, DPOR will reorder the threads to uncover a non-malloc-recycle race or a use-after-free bug.
 	\label{lem:han}
 \end{lemma}
 
 \begin{proof}
-This is the hard case. We must prove there is a PP... TODO
+We must guarantee there will be a PP during T1 before its {\tt x1} access, but after whatever action it took to communicate the heap address to T2\footnote{
+Note why we assert the publish action must come before {\tt x1}: otherwise, T2 couldn't be reordered to race {\tt x2} with {\tt x1} before T1 communicated the address, and it would be a false positive after all.}.
+
+%\begin{figure}[t]
+%	\small
+%\begin{tabular}{rll}
+%	& Thread 1 & Thread 2 \\
+%	0 & \texttt{lock();} & \\
+%	1 & \texttt{publish(x1);} & \\
+%	3 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
+%	4 & \texttt{\hilight{olivegreen}{free}(x1);} \\
+%	0 & \texttt{unlock();} & \\
+%	0 & & \texttt{lock();} \\
+%	2 & & \texttt{x2 = get\_published\_x();} \\
+%	0 & & \texttt{unlock();} \\
+%	5 & & \texttt{// x's memory recycled} \\
+%	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+%	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+%\end{tabular}
+%\caption{If the locksets are the same in T1 during publish and x1, you can't avoid the data race on publish+get.}
+%\label{fig:recycle-bug}
+%\end{figure}
+
+We ask: was there a synchronization event (unlock or message-pass) between the publish action and {\tt x1}?
+If so, then by the maximal state space assumption, the event will be a PP, and we are done.
+If not, then  T1's lockset during publish will be the same as the lockset during {\tt x1} (and the fact that there is no MHB cannot change).
+For T1's publish to reach T2, they must access the same memory ({\em outside} of the block containing {\tt x1}; T2 doesn't have that yet),
+which we'll call {\tt p}.
+By the previous two statements, {\tt p} must be a data race of its own.
+%(whether by writing {\tt x}'s address directly into the shared memory, or by sharing a pointer to a data structure containing {\tt x} -- doesn't matter which)
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& Thread 1 & Thread 2 \\
+
+	%1 & \texttt{p1 = \hilight{olivegreen}{malloc}(...);} & \\
+	1 & \texttt{\hilight{brickred}{p1->ptr = x1;}} & \\
+	2 & \texttt{publish(p1);} & \\
+	3 & \texttt{\hilight{olivegreen}{free}(p1);} & \\
+	4 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
+	5 & \texttt{\hilight{olivegreen}{free}(x1);} \\
+
+
+	6 & & \texttt{p2 = get\_published\_p();} \\
+	7 & & \texttt{// p's memory recycled} \\
+	8 & & \texttt{q = \hilight{olivegreen}{malloc}(sizeof *q);} \\
+	9 & & \texttt{\hilight{brickred}{x2 = p2->ptr;}} \\
+
+
+	10 & & \texttt{// x's memory recycled} \\
+	11 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	12 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+\end{tabular}
+\caption{If the accesses used to publish {\tt x}'s address are a data race, their PPs may also be eliminated under the malloc-recycle pattern. Induction on the pointer structure leading to {\tt x} handles this case.}
+\label{fig:induction}
+\end{figure}
+
+Because it's possible for {\tt p} to {\em also} be a malloc-recycle data race,
+as shown in Figure~\ref{fig:induction},
+we do not necessarily get the PP for free here.
+In this case we need to prove that DPOR will likewise reorder any intermediate malloc-recycle pattern to generate the PP we need\footnote{
+In \quicksand, data race PPs are not used immediately, but rather generate new state spaces to explore in the future. Anyway, under the maximal state space assumption, we will get to it eventually.}.
+We handle this with induction on T2's pointer chain leading to {\tt x}.
+
+\newcommand\publish[1]{{\tt p}$_{#1}$}
+\begin{itemize}
+	\item For the base case, the publish location \publish{0} is either in global memory, or shared directly using synchronization.
+		Non-heap memory data races are not subject to the malloc-recycle pattern, so will always get a data-race PP,
+		and use of synchronization always gets a PP in the maximal state space.
+	\item For the inductive step, a pointer \publish{n} is published in some heap memory \publish{n-1}\texttt{->ptr},
+		and we assume that however \publish{n-1} is shared to T2,
+		there will be a PP there
+		% where \publish{n-1} is shared
+		sufficient to make the \publish{n-1}\texttt{->ptr} access not malloc-recycle after DPOR.
+		%DPOR will test some interleaving in which T1's
+		Hence a data race PP will be generated on the \publish{n-1}\texttt{->ptr} access.
+		Hence by Definition~\ref{def:dpor} and Lemma~\ref{lem:reorder},
+		DPOR will reorder T1's and T2's subsequent accesses to \publish{n} sufficiently to place a PP on them.
+		% i.e., so that the p_n access no longer appears to be malloc-recycle.
+\end{itemize}
+
+Hence, even if the accesses by which T1 shares {\tt x} with T2 appear in a different malloc-recycle pattern,
+a PP will be identified on the publish location {\tt p}.
+Hence by Definition~\ref{def:dpor} DPOR will reorder T2's execution to just after the publish action.
+% XXX: Landslide does not do this! It only puts a PP immediately *before* the access. That's incompatible with this, which needs you to put one both before and after.
+As long as T2's execution occurs after the publish, it will receive the same value for its {\tt x2}, so the location of the data race does not change.
+Lemma~\ref{lem:reorder} finishes.
+%Hence for any type of publish action, there will be a PP between it and {\tt x1}, hence DPOR will reorder {\tt x2} to before {\tt x1} (without changing the address at which {\tt x2} occurs), and Lemma~\ref{lem:reorder} finishes.
+
+
 \end{proof}
 
 
@@ -306,6 +402,7 @@ This is the hard case. We must prove there is a PP... TODO
 	Between Lemmas \ref{lem:greedo} and \ref{lem:han}, all cases of possible program structure are covered.
 \end{proof}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Heap overruns}
 \label{sec:owned}
@@ -325,7 +422,7 @@ So we must also consider the cases where T1 mallocs the real block and T2 overfl
 	3 & & \texttt{x2 = \&z[50];} \\
 	4 & \texttt{x1 = malloc(...);} & \\
 	5 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
-	6 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	6 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 	7 & & \texttt{// x's memory recycled} \\
 	8 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	9 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
@@ -345,7 +442,7 @@ So we must also consider the cases where T1 mallocs the real block and T2 overfl
 	5 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
 	6 & \texttt{x1 = malloc(...);} & \\
 	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
-	8 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	8 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 \end{tabular}
 \caption{Without a PP between lines 4 and 5 of Figure~\ref{fig:overrun}, this is the only alternate interleaving DPOR would explore. Because the mallocs have been reordered, they may no longer collide, which wrongly appears to be a false positive.}
 \label{fig:overrun-notenough}
@@ -363,12 +460,13 @@ So we must also consider the cases where T1 mallocs the real block and T2 overfl
 	5 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	6 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
 	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
-	8 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	8 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 \end{tabular}
 \caption{Goal interleaving of Figure~\ref{fig:overrun}. To ensure collision, the sequence of malloc calls which produce {\tt x1} and {\tt x2} must not be disrupted.}
 \label{fig:overrun-goal}
 \end{figure}
 
+% TODO: Replace this with some real discussion.
 
 {\bf Being Owned.}
 The second best thing I can think to do is say, put "speculative" PPs on the end of malloc, and enable them only when that malloc is involved in a FRM situtation. Then, measure among all FRM sitations (gs12642/landslide/pldi/p2-live/frms) how much bigger the state spaces get (and whether that affects our bugfinding ability/cputimes).
@@ -390,6 +488,13 @@ Hopefully you can think of another way to resolve this later.
 	asdfa
 	\label{lem:leia} % "there is another"
 \end{lemma}
+
+% TODO
+% We suspect that DPOR + pure-HB will always eventually find all data races uncovered by MHB.
+% for the purpose of iterative deepening, MHB is
+% better because it will find the data races much sooner, rather than requiring you
+% to explore the maximal state space before the race can be uncovered
+
 
 %\subsection{Malloc with internal mutexes}
 %
