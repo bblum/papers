@@ -5,7 +5,7 @@
 	%\includegraphics[width=0.25\textwidth]{tree2.pdf}
 	%\includegraphics[width=0.35\textwidth]{tree3.pdf}
 	\caption{Iterative Deepening example.
-		The minimal state space (top) includes only voluntary thread switches, such as {\tt yield()} or {\tt cond\_wait()}~\cite{landslide}.
+		The minimal state space (top) includes only voluntary thread switches, such as {\tt yield()} or {\tt cond\_wait()}.
 		Multiple further tests can be run: preempting on calls to {\tt mutex\_lock} alone (left), {\tt mutex\_unlock} alone (right), or both together (bottom).
 Each option increases the state space size by an unpredictable factor, so multiple state spaces should be tested in parallel.
 Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
@@ -292,7 +292,7 @@ Here, Thread 2's logic usually corresponds to the initialization pattern \cite{e
 % This class of false positive is unique to heap-allocated memory, among all ways threads could communicate. By contrast, global memory has unlimited lifetime, and message-passing primitives enforce a must-happens-before relationship which precludes the race.
 
 It is quite simple to mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address.
-\landslide~implements this check by adding a generation counter to its heap state tracking:
+We implemented this check by adding a generation counter to \landslide's heap tracking:
 each allocation is given a unique ID,
 and when evaluating whether two heap accesses can race,
 the IDs of their containing blocks must match.

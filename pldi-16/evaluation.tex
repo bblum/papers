@@ -154,7 +154,7 @@ In Table~\ref{tab:allbugs} .... %TODO
 \label{sec:eval-falsepos}
 % Though we mechanically verify whether each data race candidate leads to a bug, each new PP can increase combinatorially..... obviously wish to avoid...
 
-We also counted the number of free-re-malloc false positives that \landslide~suppressed.
+We also counted the number of malloc-recycle false positives that \landslide~suppressed.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -172,8 +172,8 @@ thereby making them {\em false negatives} of the single-pass approach.
 We classified each data-race candidate according to whether \landslide~had reported them during the first interleaving, before any backtracking or preempting: if so, they were {\em deterministic data races} (hence could be found by single-pass).
 
 To ensure a fair comparison, we disabled \landslide's {\em false-positive}-avoidance techniques during this experiment.
-For example, we reported free-re-malloc data races during the first interleaving as {\em deterministic}, as a single-pass analysis must,
-rather than waiting until future interleavings to confirm them (as explained in \sect{\ref{sec:free-re-malloc}}).
+For example, we reported malloc-recycle data races during the first interleaving as {\em deterministic}, as a single-pass analysis must,
+rather than waiting until future interleavings to confirm them (as explained in \sect{\ref{sec:recycle}}).
 
 				% TODO: Argue:
 				% It is fair to compare multiple pass DR-analysis under Landslide against just a single execution because prior work DR detectors, being not integrated with a MC, are not intended to uncover different results under subsequent runs.

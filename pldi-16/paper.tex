@@ -92,6 +92,7 @@ Our evaluation shows that \quicksand~achieves better bug-finding results than ei
 We dramatically reduce false-positive data race reports,
 %by verifying the absence of bugs in their associated state spaces
 and find crashes caused by nondeterministic data-races in alternate thread interleavings missed entirely by single-pass analysis.
+% TODO: Not true; Replace instead with a claim about partial verification.
 Compared to SSS-MC, we find bugs faster in smaller subset state spaces,
 %when the maximal state space is too large to explore
 and find new bugs with data-race PPs that the maximal state space would not expose at all.
@@ -100,16 +101,26 @@ Although \landslide~itself is not publicly available due to its dependency on th
 We have also posted our evaluation's full data set and logs.
 They can be found here:
 
-\url{https://github.com/bblum/landslide} % TODO: put QS in its own repository
+% TODO: Make data set, at least, public.
+TODO: Data set at least can be public.
 
-\url{https://github.com/bblum/landslide} % TODO: put final logs somewhere
+{\em github links removed for double-blind review}
+%\url{https://github.com/bblum/landslide} % POST-SUBMISSION TODO: put QS in its own repository
+%
+%\url{https://github.com/bblum/landslide} % POST-SUBMISSION TODO: put final logs somewhere
+% POST-SUBMISSION TODO: Don't forget to anonymize the names of all your grupos.
 
 \section{Acknowledgements}
 
-Many thanks to David A. Eckhardt, Vaishaal Shankar, and Haryadi Gunawi for generously providing student implementations from CMU's, Berkeley's, and U. of Chicago's OS classes respectively.
+%Many thanks to David A. Eckhardt, Vaishaal Shankar, and Haryadi Gunawi for generously providing student implementations from CMU's, Berkeley's, and U. of Chicago's OS classes respectively.
+Many thanks to Vaishaal Shankar, Haryadi Gunawi, and David A. Eckhardt for generously providing student implementations from Berkeley's, U. of Chicago's, and CMU's OS classes respectively.
 Thanks to Wind River for the use of their simulator \simics, upon which \landslide~is built.
-Thanks to Ji\v{r}\'{i} \v{S}im\v{s}a and the anonymous PLDI reviewers for their helpful comments.
+Thanks to
+% TODO: Post-double-blind-review
+% Ji\v{r}\'{i} \v{S}im\v{s}a and
+the anonymous PLDI reviewers for their helpful comments.
 This work was supported in part by % TODO: funding sources
+the U.S. Army Research Office under grant number W911NF0910273.
 
 
 \bibliographystyle{abbrvnat}
