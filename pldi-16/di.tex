@@ -48,7 +48,8 @@ Should a future interleaving, preempting during those accesses,
 lead to a failure (e.g. assertion or deadlock), then we report a {\em data-race bug}.
 Otherwise, if the access pair can be reordered, but does not produce a failure under any interleaving, it is a {\em benign data race}.
 If they cannot be reordered at all, it is a {\em false positive}.
-For brevity, we count benign data races as a subset of false positives.
+%TODO: Don't do this, below. Scan paper for uses of 'false positive' where you mean to say 'benign' or 'both'.
+%For brevity, we count benign data races as a subset of false positives.
 
 We also identify the {\em minimal} and {\em maximal state space} for each test.
 The {\em minimal state space} includes only thread switches arising from normal execution (Figure~\ref{fig:id}).
@@ -166,13 +167,14 @@ However, Iterative Deepening can automatically verify a large quantity of data-r
 Hence, we extended \landslide~with a custom option to change the lock-set tracking to include accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()} in the analysis. (Accesses from other sync functions, such as {\tt cond\_wait()}, would either be included already, or be protected by an internal mutex.)
 % TODO: Add a code sample showing how the lockset boundaries change? If there's room?
 
-\subsection{Quicksand} %Managing multiple state spaces
+\subsection{Quicksand}
 
 \quicksand~is an independent program that wraps the execution of several \landslide~instances.
 The implementation is roughly 3000 lines of C.
 It uses a thread pool to schedule the available state spaces,
 sorting such jobs according to their status among a running queue, pending queue, and suspended queue.
 Jobs are further prioritized by number of PPs, ETA, and whether they include data-race PPs.
+We seed the exploration with the four subsets of ``hard-coded'' locking API PPs shown in Figure~\ref{fig:id}.
 
 {\bf Communication protocol.}
 The interface to \landslide~, which any similar MC could implement, is in two parts.
@@ -210,11 +212,7 @@ so we prioritize jobs with both-order data-race PPs more highly.
 For single-order races, we do not add PPs for the later access at all;
 should they be needed, preempting on the first access will suffice to upgrade it to both-order.
 
-
-
 % If there's room, mention the cant_swap mechanism for killing the top half of deferred jobs.
-
-% TODO: decide which subsection should come first for better flow
 
 \subsection{Data-race preemption points}
 
@@ -318,12 +316,66 @@ it would miss the bug in this adversarial program.}
 \label{fig:recycle-bug}
 \end{figure}
 
-TODO: Here will be a proof sketch that, during MC only, that mechanism is safe, because in the Figure~\ref{fig:recycle-bug} scenario, we are sure DPOR will reorder away the {\tt free} in a future interleaving.
+%Because concurrent {\tt malloc} is often implemented with an internal lock, under a {\em pure} happens-before analysis,
+% FIXME: I'm really not satisfied with the flow of this paragraph.
+Note that under a {\em pure} happens-before analysis,
+these accesses are not concurrent at all
+because of {\tt malloc}'s internal locking events,
+and would not result in such false positives.
+However, as \cite{hybriddatarace} and \cite{tsan} argue,
+the hybrid approach combining lockset tracking and the {\em limited} happens-before relation is not vulnerable to false negatives,
+which is more appropriate in our context.
 
-% TODO: Figure out why they claim "Happens before produces NO false positives, only benign races".
-% It seems impossible.
-% But if true, it means either (a) they can somehow identify FRM DRs on the 1st pass, not needing to replay,
-% or (b) reuse of memory by malloc is somehow outside their concurrency model.
+Fortunately, when data-race detection is combined with DPOR and Iterative Deepening, pruning these false positives is sound even when such adversarial programs are considered.
+This makes it unnecessary to verify such data races by actively preempting threads during them,
+achieving a potentially combinatorial reduction in how many state spaces we generate.
+%Intuitively, we need not worry about cases such as Figure~\ref{fig:recycle-bug} because,
+%should they be true races,
+%DPOR will reorder threads sufficiently for the malloc-recycle pattern to disappear.
+We provide a proof sketch below.
 
-% TODO: proof goes here
-% TODO: example codez with malloc re free go here
+\renewcommand\proofname{Proof Sketch}
+
+\begin{theorem}[Soundness of eliminating malloc-recycle races]
+If a malloc-recycle data race is not a false positive,
+%DPOR will reorder threads such that
+DPOR will test an alternate thread interleaving in which
+%either
+the accesses still race without fitting the malloc-recycle pattern.
+%, or a use-after-free bug will be reported immediately.
+\end{theorem}
+
+\begin{proof}
+By definition of the malloc-recycle pattern,
+any such program must contain an access {\tt x1} by one thread T1,
+followed by a {\tt free} and a {\tt malloc} possibly by either thread,
+followed by an access {\tt x2} by the other thread T2. % not depending on the result of the middle malloc.
+We say WLOG that T1 performs the {\tt free} and T2 the subsequent {\tt malloc}; the other cases are similar.
+We also assume the only way for the program to get pointers to heap memory is through {\tt malloc};
+hence, there must also be some ``publish'' action {\tt p} by T1 which communicates the address to T2.
+Because this is a true data race, {\tt p} must occur before {\tt x1}, as {\tt x2} cannot be reordered before {\tt p}.
+
+We now show that a PP will be identified during T1 between {\tt p} and {\tt x1}.
+The publish action must involved some thread communication, whether through a shared data structure or message-passing API.
+If locking or message-passing is used, our set of hard-coded PPs suffices.
+Otherwise, {\tt p} (and the corresponding read by T2) will be a data race, although it may itself be a malloc-recycle race.
+In this case we use induction on the pointer chain leading to {\tt x}:
+in the base case, {\tt p} is global or obtained via message-passing,
+and in the inductive step, DPOR will reorder threads sufficiently to identify the PP on {\tt p}.
+Hence there will be a PP between {\tt p} and {\tt x1} no matter the mode of communication.
+
+By definition of DPOR, this PP causes {\tt x2} to be reordered before {\tt x1} while not changing {\tt x2}'s location.
+As T2's {\tt malloc} now occurs before T1's {\tt free}, it will allocate different memory.
+Hence {\tt x1} and {\tt x2} will be in the same allocation;
+hence the accesses can race without fitting the malloc-recycle pattern.
+% Mario-man is very very hunger from not having enough plumming jobs, so his Quest for Eat and Dollars.
+% This spells QED so we are done.
+\end{proof}
+
+Our full proof
+{\em [submitted as supplementary material; will be cited as a tech report in the final version of the paper]}
+discusses our assumptions explicitly and provides the similar cases in more detail.
+\renewcommand\proofname{Proof}
+
+%For further discussion and for the full proof, refer to
+%{\em our supplementary material which we will cite as a tech report in the final version of the paper}.
