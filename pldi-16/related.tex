@@ -78,6 +78,7 @@ It uses symbolic execution to test input nondeterminism as well as schedule nond
 while we explore the latter only.
 However, Portend does not test alternate interleavings {\em in advance} of knowing data races,
 which is necessary to expose some bugs (\sect{\ref{sec:eval-falseneg}}).
+% XXX: Is this true??
 It also assumes the POSIX synchronization API, so cannot verify lock implementations such as we do with \mxtest.
 Future work could combine the two approaches, using \landslide~to produce new traces for Portend to classify, or using Portend's analysis to inform \quicksand's state space priorities.
 
