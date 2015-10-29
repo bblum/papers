@@ -35,10 +35,11 @@ In this paper we focus on dynamic data-race detection~\cite{tsan} as the mechani
 
 \subsection{Terminology}
 
-For the remainder of the paper, we will abbreviate {\em preemption point} (PP),
+For the rest of the paper, we abbreviate {\em preemption point} (PP),
+%For the remainder of the paper, we will abbreviate {\em preemption point} (PP),
 {\em model checking} (MC),
-{\em single-state-space model checking} (SSS-MC) (i.e., the approach of prior work),
-and {\em state space estimate} (ETA).
+{\em single-state-space MC} (SSS-MC) (i.e., the approach of prior work),
+Dynamic Partial Order Reduction (DPOR), and {\em state space estimate} (ETA).
 
 Please note the difference between data-race {\em candidates} and data-race {\em bugs}.
 Because data-race analysis is false-positive-prone,
@@ -143,7 +144,9 @@ to avoid repeatedly resuming larger jobs briefly while their ETAs only become wo
 \label{sec:landslide}
 
 We chose \landslide~\cite{landslide} as our stateless model checker due to its ability to trace program execution at the granularity of individual instructions and memory accesses, which dynamic data-race detection requires.
-\landslide~features Dynamic Partial Order Reduction (DPOR) \cite{dpor}, state space estimation, and a hybrid lockset/happens-before data-race analysis.
+\landslide~features DPOR,
+%\cite{dpor},
+state space estimation, and a hybrid lockset/happens-before data-race analysis.
 It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield()} or even {\tt xchg} loops) with a heuristic similar to Fair-Bounded Search \cite{bpor}. % TODO: devote a paragraph to this, after talking about drs in locks
 % this line can be cut if space is needed
 It can test both user- and kernel-level code, although is limited to timer-driven nondeterminism.
@@ -304,9 +307,9 @@ Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to rac
 \begin{tabular}{rll}
 	& Thread 1 & Thread 2 \\
 	1 & \texttt{publish(x);} & \\
-	2 & & \texttt{x2 = get\_published\_x();} \\
-	3 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
-	4 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	2 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
+	3 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	4 & & \texttt{x2 = get\_published\_x();} \\
 	5 & & \texttt{// x's memory recycled} \\
 	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
@@ -317,14 +320,14 @@ it would miss the bug in this adversarial program.}
 \end{figure}
 
 %Because concurrent {\tt malloc} is often implemented with an internal lock, under a {\em pure} happens-before analysis,
-% FIXME: I'm really not satisfied with the flow of this paragraph.
-Note that under a {\em pure} happens-before analysis,
-these accesses are not concurrent at all
+Note that under a {\em pure happens-before} analysis,
+these accesses are not considered concurrent % at all
 because of {\tt malloc}'s internal locking events,
 and would not result in such false positives.
-However, as \cite{hybriddatarace} and \cite{tsan} argue,
-the hybrid approach combining lockset tracking and the {\em limited} happens-before relation is not vulnerable to false negatives,
-which is more appropriate in our context.
+However, pure happens-before can miss many real bugs \cite{hybriddatarace,tsan},
+so in our context it is more appropriate to use the
+{\em limited happens-before} relation in a hybrid approach with lockset tracking.
+%the hybrid approach combining lockset tracking and the {\em limited} happens-before relation is not vulnerable to false negatives,
 
 Fortunately, when data-race detection is combined with DPOR and Iterative Deepening, pruning these false positives is sound even when such adversarial programs are considered.
 This makes it unnecessary to verify such data races by actively preempting threads during them,
@@ -356,7 +359,7 @@ hence, there must also be some ``publish'' action {\tt p} by T1 which communicat
 Because this is a true data race, {\tt p} must occur before {\tt x1}, as {\tt x2} cannot be reordered before {\tt p}.
 
 We now show that a PP will be identified during T1 between {\tt p} and {\tt x1}.
-The publish action must involved some thread communication, whether through a shared data structure or message-passing API.
+The publish action must involve some thread communication, whether through a shared data structure or message-passing API.
 If locking or message-passing is used, our set of hard-coded PPs suffices.
 Otherwise, {\tt p} (and the corresponding read by T2) will be a data race, although it may itself be a malloc-recycle race.
 In this case we use induction on the pointer chain leading to {\tt x}:
@@ -372,6 +375,8 @@ hence the accesses can race without fitting the malloc-recycle pattern.
 % This spells QED so we are done.
 \end{proof}
 
+Note especially that our reasoning does not require PPs on the internal locking of {\tt malloc} or {\tt free},
+which are ideal candidates to ignore via {\tt without\_function} (\sect{\ref{sec:landslide}}) to reduce state space size.
 Our full proof
 {\em [submitted as supplementary material; will be cited as a tech report in the final version of the paper]}
 discusses our assumptions explicitly and provides the similar cases in more detail.
