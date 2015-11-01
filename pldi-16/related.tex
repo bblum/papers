@@ -48,6 +48,8 @@ Too many related projects to list have made contributions to the false-positive 
 \cite{hybriddatarace} and \cite{tsan} combine the lockset and happens-before analyses into a hybrid technique, which we employ.
 % TODO: any more?
 DroidRacer \cite{droidracer} and CAFA \cite{cafa} extend the analysis to event-driven Android applications, using domain-specific heuristics (orthogonal to our method) to reduce false positives. % cut for space?
+% No, IDGAF about pure happens before.
+%FastTrack \cite{fasttrack} optimizes the performance of pure happens-
 
 % TODO: Figure out why they claim "Happens before produces NO false positives, only benign races".
 % It seems impossible.
@@ -64,9 +66,7 @@ they require replaying the threads in a new interleaving.
 Moreover, \cite{portend} argues that accurate classification may require many re-executions,
 %according to many pre- and post-race sequences,
 which is tantamount to adding a new state space in \quicksand.
-% XXX: you *ARE* replaying threads! you're just not requiring any *additional* replay with *new* PPs beyond what you already do
-% XXX need rephrase!
-Our proof in \sect{\ref{sec:recycle}} allows eliminating this special case with no replay required.
+Our proof in \sect{\ref{sec:recycle}} allows eliminating this special case with no additional replay beyond what DPOR already requires.
 
 Portend \cite{portend} is the most closely related work we have found.
 % FIXME: "limited"?

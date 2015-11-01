@@ -330,7 +330,7 @@ so in our context it is more appropriate to use the
 %the hybrid approach combining lockset tracking and the {\em limited} happens-before relation is not vulnerable to false negatives,
 
 Fortunately, when data-race detection is combined with DPOR and Iterative Deepening, pruning these false positives is sound even when such adversarial programs are considered.
-This makes it unnecessary to verify such data races by actively preempting threads during them,
+This makes it unnecessary to verify such data races by actively adding more preemptions,
 achieving a potentially combinatorial reduction in how many state spaces we generate.
 %Intuitively, we need not worry about cases such as Figure~\ref{fig:recycle-bug} because,
 %should they be true races,
@@ -353,7 +353,7 @@ By definition of the malloc-recycle pattern,
 any such program must contain an access {\tt x1} by one thread T1,
 followed by a {\tt free} and a {\tt malloc} possibly by either thread,
 followed by an access {\tt x2} by the other thread T2. % not depending on the result of the middle malloc.
-We say WLOG that T1 performs the {\tt free} and T2 the subsequent {\tt malloc}; the other cases are similar.
+For brevity we say that T1 performs the {\tt free} and T2 the subsequent {\tt malloc}; the other cases are similar.
 We also assume the only way for the program to get pointers to heap memory is through {\tt malloc};
 hence, there must also be some ``publish'' action {\tt p} by T1 which communicates the address to T2.
 Because this is a true data race, {\tt p} must occur before {\tt x1}, as {\tt x2} cannot be reordered before {\tt p}.

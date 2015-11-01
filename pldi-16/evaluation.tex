@@ -55,7 +55,6 @@ The Pintos kernel project
 involves implementing priority scheduling, \texttt{sleep()}, and user-space process management (\texttt{wait()} and \texttt{exit()})
 using provided bare-bones mutex, context-switch, and virtal memory implementations
 \cite{pintos}.
-
 % P2 SLOC stats: 1807 avg; 1723 median; range 1181-4114.
 % All numbers, obtained with:
 % cd p2s; for i in */*; do wc -l $i/user/libthread/*.{c,h,S} $i/user/libthread/*/*.{c,h,S} ; done | grep total
@@ -64,10 +63,19 @@ using provided bare-bones mutex, context-switch, and virtal memory implementatio
 % 1716 1719 1720 1723 1723 1727 1737 1743 1744 1751 1769 1777 1782 1789 1789 1812 1918
 % 1926 1946 1994 2022 2043 2066 2077 2088 2099 2131 2164 2172 2190 2215 2227 2277 2282
 % 2384 2387 2483 2486 2503 2514 2551 2597 2610 2665 4114
-Though not ``real world'' programs, both projects are quite large: % maybe "complex"?
+Though not ``real world'' programs, both projects are quite complex:
 the P2s average 1807 lines of C and x86 assembly (stddev 489.5),
 % Pintos SLOC stats: TODO
 and the Pintoses average {\bf 9999999} % TODO
+
+We chose P2s and Pintoses for our test suite because of the relative ease of generating hundreds of unique state spaces,
+varied in size and correctness, and with a diverse set of bug types\footnote{
+Many of the codebases exhibited {\em deterministic} bugs (i.e., encountered on the first interleaving tested);
+these we fixed by hand in advance to ensure that every bug in our study required some meaningful work by the MC.}.
+% TODO: Is this ok? Too arrogant?
+We believe that merely finding a small handful of new real-world bugs is too anecdotal,
+and that our test suite's size allows for a more statistically significant comparison among MC and data-race testing strategies,
+%compared to anecdotally showing a small handful of new bugs that could be found in real-world programs.
 
 \newcommand\mxtest{\texttt{mx\_test}}
 \newcommand\tej{\texttt{thr\_exit\_join}}
@@ -87,45 +95,39 @@ and for \mxtest~we enabled \landslide's mutex-testing option
 % TODO: Add more test cases
 We tested the Pintoses with 2 programs from the class test suite: \prisema, a test of the kernel scheduling algorithm, and \waitsimple, a test of process lifecycle system calls.
 For all tests, we used {\tt without\_function} to blacklist PPs on the {\tt malloc} mutex.
-All tests were run on 12-core 3.2 GHz Xeon machines with 12GB of RAM.
-
-We chose P2s and Pintoses for our test suite because of the relative ease of generating hundreds of unique state spaces,
-varied in size and correctness, and with a diverse set of bug types.
+Finally, all tests were run on 12-core 3.2 GHz Xeon machines with 12GB of RAM.
 % XXX: Some pintoses can't run all the tests. So this number is too high.
 In total, the test suite comprises 632 unique state spaces, at least 106 of which contain bugs.
-% TODO: Is this ok? Too arrogant?
-We believe this test suite's size allows for a more statistically significant comparison among MC strategies,
-compared to anecdotally showing a small handful of new bugs that could be found in real-world programs.
 
-\begin{table}[t]
-	\begin{tabular}{l|l|l}
-			& QS bugs & SSS-MC bugs \\
-		\hline
-		\mxtest & eg 1000 & eg 0 \\
-		\bct & & \\
-		etc... & & \\
-		\hline
-		Total & & \\
-	\end{tabular}
-	\caption{Comparison of all bugs found, broken down by test case, among all P2s (top 6) and Pintoses (bottom 2)}
-	\label{tab:allbugs}
-\end{table}
-
-\begin{table}[t]
-	\small
-	\begin{tabular}{l|l|l||l|l}
-	& QS bug & \begin{tabular}{c} SSS-MC \\ completed\end{tabular}
-	& QS bug & \begin{tabular}{c}SSS-MC \\ timeout \end{tabular} \\
-		\hline
-		\mxtest & e.g. 5 & 10 & 0 & 0 \\
-		\bct & & & & \\
-		etc... & & & & \\
-		\hline
-		Total & & & & \\
-	\end{tabular}
-	\caption{Bugs requiring data-race PPs to expose, found by \quicksand~but missed by the single-state-space approach.}
-	\label{tab:drbugs}
-\end{table}
+%\begin{table}[t]
+%	\begin{tabular}{l|l|l}
+%			& QS bugs & SSS-MC bugs \\
+%		\hline
+%		\mxtest & eg 1000 & eg 0 \\
+%		\bct & & \\
+%		etc... & & \\
+%		\hline
+%		Total & & \\
+%	\end{tabular}
+%	\caption{Comparison of all bugs found, broken down by test case, among all P2s (top 6) and Pintoses (bottom 2)}
+%	\label{tab:allbugs}
+%\end{table}
+%
+%\begin{table}[t]
+%	\small
+%	\begin{tabular}{l|l|l||l|l}
+%	& QS bug & \begin{tabular}{c} SSS-MC \\ completed\end{tabular}
+%	& QS bug & \begin{tabular}{c}SSS-MC \\ timeout \end{tabular} \\
+%		\hline
+%		\mxtest & e.g. 5 & 10 & 0 & 0 \\
+%		\bct & & & & \\
+%		etc... & & & & \\
+%		\hline
+%		Total & & & & \\
+%	\end{tabular}
+%	\caption{Bugs requiring data-race PPs to expose, found by \quicksand~but missed by the single-state-space approach.}
+%	\label{tab:drbugs}
+%\end{table}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -139,15 +141,16 @@ compared to anecdotally showing a small handful of new bugs that could be found 
 
 %In this section we show that using data-race PPs with \landslide~is more effective than either SSS-MC or single-pass data-race detection alone.
 
+% XXX: I hate this paragraph. I have no idea what order to put the sentences in.
 To compare to SSS-MC, we ran a control experiment for each test, running \landslide~on a single state space with all PPs on sync primitives enabled in advance (and no data-race PPs).
 We gave each \quicksand~test 10 CPUs for 1 hour each. % XXX
-% TODO figure out somewhere to mention what landslide's pps are: mx lock/unlock (aka sema up/down)
 Though \landslide~does not implement parallel DPOR \cite{parallel-dpor}, we compensated by giving each control test 1 CPU for 10 hours,
 %then dividing all associated times by 10 (simulating perfect parallelism).
 and instrumenting \quicksand~to report total CPU-hours rather than wall-clock time.
 %\quicksand's times by 10 to convert from wall-clock time to CPU-hours (even though it sometimes falls short of 100\% parallelism).
-Figure~\ref{fig:dowefindbugsfaster} plots the bug-finding speed of SSS-MC against that of two different \quicksand~experiments:
-%which we explain presently.
+Figure~\ref{fig:dowefindbugsfaster} plots a cumulative distribution of bugs found before a given elapsed CPU-time. % during its associated test.
+We tested several configurations of \quicksand~to compare against SSS-MC from multiple angles,
+which we explain presently.
 
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{dowefindbugsfaster.pdf}
@@ -159,18 +162,27 @@ Figure~\ref{fig:dowefindbugsfaster} plots the bug-finding speed of SSS-MC agains
 
 {\bf Finding the same bugs faster.}
 To show that Iterative Deepening is effective even for MC domains without data races, such as message-passing distributed systems,
-we ran the test suite with \quicksand~configured to explore only subsets of the hard-coded mutex PPs (i.e., ignoring all data-race reports)\footnote{
+we ran the test suite with \quicksand~configured to explore only subsets of the hard-coded mutex PPs
+(i.e., ignoring all data-race candidates)\footnote{
 Because \quicksand~is not yet instrumented to subset hard-coded PPs beyond the 4 ways shown in Figure~\ref{fig:id},
 we ran these tests for 2.5 hours on 4 CPUs each.
 Future work could parallelize QS-no-DR-PPs further; see \sect{\ref{sec:future}}.}.
 %
-The line QS-no-DR-PPs represents this experiment;
-% TODO: rephrase based on result of expt
-we see that even though SSS-MC mostly catches up to it by the end of the 10-hour budget,
+The line QS-no-DR-PPs represents this experiment.
+Even though SSS-MC mostly catches up to it by the end of the 10-hour budget,
 QS-no-DR-PPs finds many more of the bugs much sooner.
 From this we conclude that for smaller arbitrary CPU budgets,
 Iterative Deepening is likely to find bugs SSS-MC will miss,
-and programmers can be more confident in the verification provided when \quicksand~times out with no bug found.
+and for more ambitiously-sized tests,
+programmers can be more confident in the verification provided when \quicksand~times out with no bug found.
+%We conclude that for smaller arbitrary CPU budgets, especially less than 1 hour,
+%Iterative Deepening is likely to find bugs SSS-MC will miss.
+%Moreover, it is also easy to imagine scaling up the size of each test case to test ,
+%using more threads or longer sequences of API calls.
+%We hope that is compelling even to users willing to spend many CPU-hours on testing.
+%These results show explicitly that for arbitrary CPU-time budgets
+
+%Note that even users willing to spend 10 CPU-hours should find this ``early advantage'' compelling:
 
 {\bf Finding new data-race bugs.}
 Though state-of-the-art MCs preempt only on synchronization events, many serious concurrency bugs are caused by data races leading to corrupted shared state.
@@ -181,21 +193,26 @@ The break-even point is at a negligible 45 seconds.
 Furthermore, we plotted another line from this dataset, QS-no-DR-bugs,
 which represents only the bugs found in state spaces without data-race PPs (like QS-no-DR-PPs, but even when data-race PPs are enabled).
 Intuitively, this line shows that for programs with only benign data races,
-\quicksand~can afford the extra overhead of verifying them while still slightly edging out SSS-MC\footnote{
-The initial perfect overlap between QS-DRs and QS-no-DR-bugs indicates how long it takes before the first data-race bug is found.}.
+\quicksand~can afford the extra overhead of verifying them while still slightly edging out SSS-MC.
+%\footnote{The initial perfect overlap between QS-DRs and QS-no-DR-bugs indicates how long it takes before the first data-race bug is found.}
 %even after the extra overhead of verifying them, \quicksand~still slightly edges out SSS-MC
 
-{\bf Partial verification guarantees.}
-We know of no approach to quantify the probability, when a state space times out,
+{\bf Partial verification.}
+% TODO: But what about state space estimation? Does that count as probability? I don't think it does. But can you mention it?
+When a state space times out, the user may prefer a brief summary of what parts of the test were verified, rather than writing off all the CPU time as a waste.
+Beyond using the state space estimator to guess the percent coverage,
+we know of no approach to quantify the probability
 that a bug would be exposed by an untested interleaving.
-\quicksand~does not attempt any such quantitative partial verification guarantee,
-but can at least report which subsets of PPs produced state spaces that could be completed.
+\quicksand~does not attempt any such quantitative guarantee,
+but can at least report which subsets of PPs produced state spaces that completed in time.
 
 The SSS-MC control experiment timed out in 10 hours on 77 tests.
-For these, we counted the number of state spaces \quicksand~was able to complete.
+Among these, \quicksand~found data-race bugs in 15.
+For the other 62, we counted the number of state spaces \quicksand~was able to complete and the number of unique PPs among them.
 In two cases, \quicksand~also failed to complete anything; beyond these,
-between 1 and 508 state spaces could be completed, with a mean of 72.8 and median of 30.
-These completed state spaces guarantee that, if the test case could expose a bug,
+between 1 and 253 state spaces were completed, with a mean of 58.9 and median of 29.
+Between 0 and 233 unique PPs were verified among some subsets, with a mean of 27.2 and median of 7.5.
+These completions guarantee that, if the test case could expose a bug,
 % Justify implicit hypothesis: Sync PPs + DR PPs = all possible relevant PPs.
 it would only be found by a new data-race PP not discovered yet, or by a superset combination of PPs not reached.
 
@@ -210,6 +227,8 @@ it would only be found by a new data-race PP not discovered yet, or by a superse
 % Though we mechanically verify whether each data race candidate leads to a bug, each new PP can increase combinatorially..... obviously wish to avoid...
 
 We also counted the number of malloc-recycle false positives that \landslide~suppressed.
+
+TODO
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -235,12 +254,18 @@ rather than waiting until future interleavings to confirm them (as explained in 
 				% Define a "stress tester" as a class of bug detectors where they are intended to [...]
 				% Maybe say: Do there exist any stress-tester DR detectors where they are intended to produce new results under reruns?
 
+TODO: Present results.
+
 % TODO: restructure this paragraph to account for RaceFuzzer/Portend. Be like, "Yes they explore multiple schedules, but only AFTER finding a race." And/or make this argument in prior work
 One might also wonder: Why is it fair to compare the data race bugs \quicksand~finds (10 CPU-hours)
 against the candidates found by a prior work's single execution (less than a minute)?
 We argue this comparison is meaningful because prior work data-race tools, being not integrated with a MC,
-are not intended to uncover different results under subsequent runs.
-One could run a data-race tool repeatedly for 10 CPU-hours, but the advantage of stateless MC over stress testing is already well-understood.
+are not intended to discover new data race candidates under subsequent runs.
+Running a data-race tool repeatedly for 10 CPU-hours could potentially uncover some of these false negatives at random,
+but the reliability problem of stress testing compared to stateless MC is already well-understood
+% TODO: 1 more good citation here
+\cite{chess-icb,gambit}.
+%One could run a data-race tool repeatedly for 10 CPU-hours, but the advantage of stateless MC over stress testing is already well-understood.
 % TODO TODO TODO get a big citation for teh above sentence.
 
 
