@@ -209,6 +209,8 @@ Further, we assume that the static PPs include all lock/unlock/trylock operation
 Using only a subset of PPs or aborting early due to time-out could each ruin our ability to reach the goal interleaving.
 However, Iterative Deepening aims to test the most important interleavings with the time available,
 so in the case of not enough time, our point here is that continuing the current state space fits that goal best.
+An alternate approach would be to accept the malloc-recycle PPs, giving them the lowest possible priority, just in case any CPUs would otherwise be idle with not enough jobs to run.
+In that case, our point is to justify deprioritizing those jobs so aggressively.
 
 %{\bf Low overhead.}
 %We assume the model checker can identify malloc-recycle data races with little or no overhead beyond what's already associated with data race detection.
@@ -468,20 +470,15 @@ So we must also consider the cases where T1 mallocs the real block and T2 overfl
 
 % TODO: Replace this with some real discussion.
 
-{\bf Being Owned.}
-The second best thing I can think to do is say, put "speculative" PPs on the end of malloc, and enable them only when that malloc is involved in a FRM situtation. Then, measure among all FRM sitations (gs12642/landslide/pldi/p2-live/frms) how much bigger the state spaces get (and whether that affects our bugfinding ability/cputimes).
-
-
-The first best thing I can think to do is to argue that this case doesn't disrupt soundness because the original model we were working with was already unsound. If the other interleaving ("the best dpor could find") occurred first, dpor would not identify a memory conflict at all, and would not reorder to find the original interleaving (with the FRM false pos) at all. this is because dpor ignores malloc's internal accesses from the shm conflict relation.
+%{\bf Being Owned.}
+%The second best thing I can think to do is say, put "speculative" PPs on the end of malloc, and enable them only when that malloc is involved in a FRM situtation. Then, measure among all FRM sitations (gs12642/landslide/pldi/p2-live/frms) how much bigger the state spaces get (and whether that affects our bugfinding ability/cputimes).
+%
+%
+%The first best thing I can think to do is to argue that this case doesn't disrupt soundness because the original model we were working with was already unsound. If the other interleaving ("the best dpor could find") occurred first, dpor would not identify a memory conflict at all, and would not reorder to find the original interleaving (with the FRM false pos) at all. this is because dpor ignores malloc's internal accesses from the shm conflict relation.
 
 what we are trying to prove is that, if we START WITH a sound dpor, and add this FRM-elimination, you end up with a sound dpor. BUT, the original one was not sound with respect to this bug to begin with.
 
 then you can simply point out that if you want dpor to be sound wrt this bug, you have to put a PP on the end of malloc (other spots, beginning of malloc and either end of free, are not needed), and also make the shm conflix relation account for the way malloc reordering can change the address collision issue.
-
-is that good enough?
-
-if not,
-Hopefully you can think of another way to resolve this later.
 
 
 \begin{lemma}
