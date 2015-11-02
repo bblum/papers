@@ -89,7 +89,7 @@ our malloc-recycle false positives are indistinguishable from such false negativ
 }.
 
 \begin{definition}[Shared memory conflict]
-A pair of memory accesses between two threads where at least one of them is a write.
+A pair of memory accesses between two threads to the same address where at least one of them is a write.
 \end{definition}
 Intuitively, the behaviour of a program could change by reordering two transitions only if they contain a memory conflict.
 
@@ -240,6 +240,12 @@ For Section \ref{sec:proof}, we further assume a malloced block's address cannot
 
 \section{Proof}
 \label{sec:proof}
+
+We seek to prove that ignoring malloc-recycle data races cannot cause DPOR + Iterative Deepening to miss a bug that could be found by using the malloc-recycle race as a PP. Hence, our soundness statement is as follows:
+
+\begin{theorem}[Soundness of eliminating malloc-recycle races]
+	If a malloc-recycle data race is not a false positive, DPOR will reorder threads such that either the same accesses will still race without fitting the malloc-recycle pattern, or a use-after-free bug will be reported immediately.
+\end{theorem}
 
 Though Figures~\ref{fig:recycle-bug} and \ref{fig:recycle-goal} show example programs, they do not capture all possible cases of how a true data race can fit the malloc-recycle pattern.
 We proceed by establishing what must be true of any such program, then casing on the ambiguous possibilities, and showing that PPs will exist where we need them to reorder the threads.
@@ -397,6 +403,7 @@ Lemma~\ref{lem:reorder} finishes.
 
 \subsection{Conclusion}
 
+\setcounter{theorem}{0}
 \begin{theorem}[Soundness of eliminating malloc-recycle races]
 	If a malloc-recycle data race is not a false positive, DPOR will reorder threads such that either the same accesses will still race without fitting the malloc-recycle pattern, or a use-after-free bug will be reported immediately.
 \end{theorem}
@@ -512,6 +519,11 @@ then you can simply point out that if you want dpor to be sound wrt this bug, yo
 %%\cite{landslide} % uncomment post-double-blind review
 %
 %This spells QED so we are done.
+
+\section{Acknowledgements}
+
+{\em removed for double blind review}
+%Thanks to Michael J. ``Sully'' Sullivan and Carlo Angiuli, who double-checked the proof and helped with the flow of explanation.
 
 \bibliographystyle{abbrvnat}
 \bibliography{citations}{}
