@@ -42,10 +42,10 @@ For the rest of the paper, we abbreviate {\em preemption point} (PP),
 Dynamic Partial Order Reduction (DPOR), and {\em state space estimate} (ETA).
 
 SSS-MC indicates the approach of prior model checking tools:
-the set of PPs is fixed in advance, and the tool commits to testing every interleaving available via those PPs.
+the set of PPs is fixed in advance, and the tool commits to testing every interleaving available with those PPs.
 %Reduction techniques are often used to skip equivalent interleavings \cite{dpor}, and search-ordering strategies
 Many techniques exist to skip equivalent interleavings and order the search to uncover bugs faster \cite{dpor,demeter,chess-icb,gambit},
-but dynamic analysis cannot add new PPs or remove ineffective ones.
+but new PPs cannot be added, nor ineffective ones removed, by any dynamic analysis.
 
 Please note the difference between data-race {\em candidates} and data-race {\em bugs}.
 Because data-race analysis is prone to false-positives,
@@ -66,13 +66,47 @@ The {\em maximal state space} is simply the one explored by SSS-MC: all statical
 
 \subsection{Classifying data races as buggy or benign} % FIXME: dont say 'benign'; also, do you have enough left to say that this can even still be a full subsection?
 
+Iterative Deepening must be seeded with some initial state spaces,
+which can be any number of subsets of the statically-available PPs that SSS-MC would use.
+While exploring those state spaces, runtime data-race detection may find data-race candidates that we wish to investigate further.
+Because data races indicate access pairs that can interleave at instruction granularity,
+it is logical to re-execute the test and issue preemptions during those instructions to test alternate thread interleavings~\cite{racefuzzer,portend}.
+
+With Iterative Deepening, this is a simple matter of creating a new state space with a PP enabled on the racing instructions by each thread.
+That state space may expose a failure, in which case we report a data-race bug,
+or complete successfully, which indicates a benign or false-positive data race.
+It may also uncover a new data-race candidate in some alternate interleaving,
+in which case we iteratively advance to a superset state space containing PPs for both racing access pairs.
+Because Iterative Deepening is constrained by a CPU budget,
+we may time out before completing a data race's associated state space,
+in which case it remains a potential false positive that the user must handle.
+
 \subsection{Choosing the best job}
 
-% TODO: put colour in this code
 \newcommand\PendingJobs{\ensuremath{\mathcal{P}}}
 \newcommand\SuspendedJobs{\ensuremath{\mathcal{S}}}
 \newcommand\GetETA[1]{ETA(#1)}
 \newcommand\GetPPSet[1]{PPSet(#1)}
+With a limited CPU budget, we must avoid running tests that are likely to time out.
+Hence, we separate the available PP sets into a set of {\em suspended} jobs (partially-explored state spaces with high ETAs),
+and a set of {\em pending} jobs (untested ones with unknown ETAs).
+When a MC instance reports an ETA too high,
+we compare other pending jobs to find another one more likely to complete in time.
+%
+Our method for doing so, listed in Algorithm~\ref{alg:shouldworkblock}, is the heart of Iterative Deepening\footnote{
+Though its worst-case performance is $O(mn)$ in the
+%number of pending and suspended jobs,
+sizes of $\mathcal{P}$ and $\mathcal{S}$,
+in practice the non-constant portion beyond line 4 runs very infrequently
+and is negligible compared to the exponentially-sized state spaces.}.
+Its main feature is understanding that if \GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$},
+and $j_1$ is suspended,
+then $j_2$'s state space is guaranteed to be strictly larger, so $j_2$ will take at least as long.
+Hence we should avoid testing $j_2$ unless $j_1$'s ETA improves over time.
+%reveals that it might finish in time after all.
+Similarly, when some job finds a bug, we cancel all pending superset jobs, as they would find the same bug.
+
+% TODO: put colour in this code
 \begin{algorithm}[t]
 	\SetKwInOut{Input}{Input}
 	%\textbf{Function} GetBestJob($j_0$, PendingJobs, SuspendedJobs): \\
@@ -106,22 +140,6 @@ The {\em maximal state space} is simply the one explored by SSS-MC: all statical
 	\caption{Suspending exploration of a state space in favour of a potentially smaller one.}
 	\label{alg:shouldworkblock}
 \end{algorithm}
-
-With a limited CPU budget, we must avoid running tests that are likely to time out.
-When a MC instance reports an ETA too high,
-we compare other yet-untested PP sets to find another job more likely to complete in time.
-Our method for doing so, listed in Algorithm~\ref{alg:shouldworkblock}, is the heart of Iterative Deepening\footnote{
-Though its worst-case performance is $O(mn)$ in the
-%number of pending and suspended jobs,
-sizes of $\mathcal{P}$ and $\mathcal{S}$,
-in practice the non-constant portion beyond line 4 runs very infrequently
-and is negligible compared to the exponentially-sized state spaces.}.
-Its main feature is understanding that if \GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$},
-and $j_1$ is suspended,
-then $j_2$'s state space is guaranteed to be strictly larger, so $j_2$ will take at least as long.
-Hence we should avoid testing $j_2$ unless $j_1$'s ETA improves over time.
-%reveals that it might finish in time after all.
-Similarly, when some job finds a bug, we cancel all pending superset jobs, as they would find the same bug.
 
 %
 We also account for the inherent inaccuracy of ETA estimates.
@@ -264,6 +282,13 @@ which can change based on different interleavings of previous code
 % especially when malloc is involved.
 %Figure~\ref{fig:dont-filter-dr-by-address} shows example code where qualifying by memory address will miss the bug.
 
+\begin{figure}[t]
+	\includegraphics[width=0.48\textwidth]{dr-jobs.pdf}
+	\caption{\quicksand~manages the exploration of multiple state spaces, communicating with each MC instance to receive ETAs, data race candidates, and bug reports.
+		When an access pair is reported as a data race, we generate a new PP for each access and add new jobs corresponding to different combinations of those with the existing PPs.}
+	\label{fig:new-dr-jobs}
+\end{figure}
+
 
 When \quicksand~receives a data race report, it adds two new jobs to its workqueue:
 a ``small'' job to preempt on the racing instruction only,
@@ -280,13 +305,6 @@ In practice, we observed some bugs found quickly by these small jobs, and other 
 which motivates the need for Iterative Deepening to decide at runtime which jobs to prioritize.
 % TODO: Put numbers here.
 
-\begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{dr-jobs.pdf}
-	\caption{\quicksand~manages the exploration of multiple state spaces, communicating with each MC instance to receive ETAs, data race candidates, and bug reports.
-		When an access pair is reported as a data race, we generate a new PP for each access and add new jobs corresponding to different combinations of those with the existing PPs.}
-	\label{fig:new-dr-jobs}
-\end{figure}
-
 \subsection{Suppressing ``malloc-recycle'' false positives}
 \label{sec:recycle}
 
@@ -299,6 +317,18 @@ If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on l
 We term this a {\em malloc-recycle data race}.
 To the human eye, this is obviously a false positive: reordering lines 4-7 before lines 1-2 will change {\tt malloc}'s return value, causing {\tt x} and {\tt y} to no longer collide.
 Here, Thread 2's logic usually corresponds to the initialization pattern \cite{eraser}, but for generality we have added a {\tt publish} action on line 6.
+
+% This class of false positive is unique to heap-allocated memory, among all ways threads could communicate. By contrast, global memory has unlimited lifetime, and message-passing primitives enforce a must-happens-before relationship which precludes the race.
+
+It is quite simple to mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address.
+We implemented this check by adding a generation counter to \landslide's heap tracking:
+each allocation is given a unique ID,
+and when evaluating whether two heap accesses can race,
+the IDs of their containing blocks must match.
+However, when limited to a single execution, suppressing any data race matching this pattern is unsound.
+Consider the more unusual program in Figure~\ref{fig:recycle-bug}:
+Now, the memory is recycled the same way, but the racing access's address is not tied to {\tt malloc}'s return value.
+Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to race.
 
 \begin{figure}[t]
 	\small
@@ -318,19 +348,6 @@ Here, Thread 2's logic usually corresponds to the initialization pattern \cite{e
 \caption{A common execution pattern with {\tt malloc()} that produces false positive data race candidates.}
 \label{fig:recycle}
 \end{figure}
-
-% This class of false positive is unique to heap-allocated memory, among all ways threads could communicate. By contrast, global memory has unlimited lifetime, and message-passing primitives enforce a must-happens-before relationship which precludes the race.
-
-It is quite simple to mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address.
-We implemented this check by adding a generation counter to \landslide's heap tracking:
-each allocation is given a unique ID,
-and when evaluating whether two heap accesses can race,
-the IDs of their containing blocks must match.
-However, when limited to a single execution, suppressing any data race matching this pattern is unsound.
-Consider the more unusual program in Figure~\ref{fig:recycle-bug}:
-Now, the memory is recycled the same way, but the racing access's address is not tied to {\tt malloc}'s return value.
-Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to race.
-
 \begin{figure}[t]
 	\small
 \begin{tabular}{rll}
