@@ -16,7 +16,7 @@ to Verisoft, the original C model checker \cite{verisoft}.
 We compare related tools by their treatment of shared-memory thread communication.
 
 {\bf Synchronization events only.} CHESS \cite{chess} and dBug \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
-Hence they will miss any crashes that require interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
+Hence they will miss any bugs that require interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
 
 {\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, MaceMC \cite{macemc}, MoDist \cite{modist}, and ETA \cite{dbug-retreat}, limit thread communication to a message-passing API to more effectively test distributed systems.
 This eliminates the need for data-race analysis, but restricts the class of programs that can be tested.
@@ -24,14 +24,14 @@ Nevertheless, Iterative Deepening is still applicable to these tools.
 
 {\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs.
 However, the resulting state space explosion demands that any such tool either
-choose a small subset of instructions to consider as PPs.
+choose a small subset of instructions to consider as PPs
 or be limited to very small test inputs.
 %However, every such prior tool we know of has serious drawbacks.
 SKI \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
 which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
 SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our \mxtest~experiment.
-However, SPIN explicitly stores visited program states rather than using DPOR, limiting the size of programs that can be practically tested,
-and requires code to be written in the PROMELA DSL.
+However, SPIN is stateful rather than stateless, and explicitly storing visited program states rather than using DPOR limits the size of programs that can be practically tested.
+SPIN also requires code to be written in the PROMELA DSL.
 %so cannot check implementations directly.
 
 {\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
@@ -44,7 +44,8 @@ However, ICB is limited to a fixed set of PPs, and so far no algorithm has been 
 
 \subsection{Data Race Detection}
 
-Too many related projects to list have made contributions to the false-positive problem first introduced in \cite{eraser}.
+%Too many related projects to list have made contributions to the
+Many advances have been made on the false-positive data race problem first introduced in \cite{eraser}.
 \cite{hybriddatarace} and \cite{tsan} combine the lockset and happens-before analyses into a hybrid technique, which we employ.
 % TODO: any more?
 DroidRacer \cite{droidracer} and CAFA \cite{cafa} extend the analysis to event-driven Android applications, using domain-specific heuristics (orthogonal to our method) to reduce false positives. % cut for space?
@@ -58,7 +59,7 @@ DroidRacer \cite{droidracer} and CAFA \cite{cafa} extend the analysis to event-d
 Closer to our work, replay analysis \cite{recordreplaydrs} also suppresses false positives by testing multiple thread interleavings.
 %after finding data race candidates.
 This work compares the immediately resulting program states for differences,
-preferring instead still to err on the side of false positives.
+preferring to err on the side of false positives.
 RaceFuzzer \cite{racefuzzer} avoids false positives by requiring an actual failure be exhibited,
 although it uses random schedule fuzzing rather than stateless model checking.
 Note while these techniques can also classify our malloc-recycle candidates as false positives (\sect{\ref{sec:recycle}}),
@@ -79,8 +80,8 @@ while we explore the latter only.
 However, Portend does not test alternate interleavings {\em in advance} of knowing data races,
 which is necessary to expose some bugs (\sect{\ref{sec:eval-falseneg}}).
 % XXX: Is this true??
-It also assumes the POSIX synchronization API, so cannot verify lock implementations such as we do with \mxtest.
-Future work could combine the two approaches, using \landslide~to produce new traces for Portend to classify, or using Portend's analysis to inform \quicksand's state space priorities.
+It also assumes the POSIX synchronization API, so cannot verify arbitrary synchronization algorithms such as we do with \mxtest.
+Future work could combine the two approaches, using MC to produce new data-race traces for Portend to classify, or using Portend's analysis to inform \quicksand's state space priorities.
 
 % \subsection{Other Concurrency Testing Approaches} % TODO: Well?
 %

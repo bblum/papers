@@ -90,10 +90,10 @@ and that our test suite's size allows for a more statistically significant compa
 %compared to anecdotally showing a small handful of new bugs that could be found in real-world programs.
 
 \newcommand\mxtest{\texttt{mx\_test}}
-\newcommand\tej{\texttt{thr\_exit\_join}}
-\newcommand\bct{\texttt{broadcast}}
-\newcommand\paraguay{\texttt{paraguay}}
-\newcommand\paradise{\texttt{paradise\_lost}}
+\newcommand\tej{\texttt{join\_test}}
+\newcommand\bct{\texttt{broadcast\_test}}
+\newcommand\paraguay{\texttt{signal\_test}}
+\newcommand\paradise{\texttt{sem\_test}}
 \newcommand\rwl{\texttt{rwl\_test}}
 We tested P2s with 6 multithreaded programs:
 % from the 410 test suite % XXX: I would like to say this but this is a lie; figure out what else i can say instead
@@ -344,7 +344,8 @@ to prune some or all of this repeated work.
 However, in 2 tests, no more than the minimal state space could be verified,
 and in 2 other tests, not even that much.
 Larger state spaces often result from finer-grained locking,
-which can indicate a more complicated concurrent algorithm requiring more rigorous verification than a program with a single global lock.
+which can indicate a more intricate concurrent algorithm or an unnecessarily complicated design.
+Such programs may require even more rigorous verification than a program with a single global lock.
 %Hence these corner cases are important to consider for future work.
 While this work used {\tt within\_function} (\sect{\ref{sec:landslide}}) {\em statically} to restrict where PPs could arise in advance of the test,
 we envision future Iterative Deepening implementations could incorporate this method to {\em dynamically} subset PPs further,

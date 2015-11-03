@@ -55,20 +55,23 @@
 \maketitle
 \begin{abstract}
 Stateless model checking is a promising technique for testing concurrent programs,
-but is vulnerable to exponential explosion of the state space when the test input parameters are too large.
+but suffers from exponential explosion of the state space when the test input parameters are too large.
 Several partial-order reduction techniques exist for mitigating this explosion,
 but even after pruning equivalent interleavings, the state space size for a fixed set of preemption points is unpredictable and often intractable.
 %
 Data race detection, another concurrency testing approach, focuses on identifying suspicious memory access pairs during a single test execution.
-It avoids concerns of intractable state space size, but suffers from a high rate of false positives.
+It avoids concerns of intractable state space size, but is prone to false positives.
 
 We present an {\em Iterative Deepening} framework for stateless model checking,
 which manages the exploration of many state spaces using different subsets of preemption points.
 It uses state space estimation to prioritize jobs most likely to complete in a fixed CPU budget,
-and it incorporates a data-race analysis to dynamically add new preemption points to verify each data race as buggy or benign.
+and it incorporates a data-race analysis to dynamically add new preemption points to classify each data race as buggy or benign.
 %
-Our evaluation shows this technique is
-more effective than single-state-space model checking, both at finding more bugs and at completing more state spaces when no bug exists.
+Our evaluation shows that combining data-race detection with stateless model checking can find new bugs neither technique would find on their own.
+%Our evaluation shows this technique is
+%more effective than single-state-space model checking
+%%both at finding more bugs and at completing more state spaces when no bug exists.
+%both at finding the same bugs faster and at finding new bugs entirely.
 
 \end{abstract}
 
@@ -93,13 +96,14 @@ and manages multiple \landslide~instances to test many different PP subsets in a
 Our evaluation shows that \quicksand~achieves better bug-finding results than either single-pass data-race detection or single-state-space model checking (SSS-MC) alone.
 We dramatically reduce false-positive data race reports,
 %by verifying the absence of bugs in their associated state spaces
-and find crashes caused by nondeterministic data-races in alternate thread interleavings missed entirely by single-pass analysis.
+and find bugs caused by nondeterministic data-races in alternate thread interleavings missed entirely by single-pass analysis.
 % TODO: Not true; Replace instead with a claim about partial verification.
 Compared to SSS-MC, we find bugs faster in smaller subset state spaces,
 %when the maximal state space is too large to explore
 and find new bugs with data-race PPs that the maximal state space would not expose at all.
 
-Although \landslide~itself is not publicly available due to its dependency on the non-free simulator \simics, \quicksand~is open-source and its interface can be adapted to fit any similar tool.
+%Although \landslide~itself is not publicly available due to its dependency on the non-free simulator \simics, \quicksand~is open-source and its interface can be adapted to fit any similar tool.
+\quicksand~is open-source and its interface can be adapted to fit any MC tool similar to \landslide.
 We have also posted our evaluation's full data set and logs.
 They can be found here:
 
