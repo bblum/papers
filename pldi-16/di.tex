@@ -183,20 +183,23 @@ Jobs are further prioritized by number of PPs, ETA, and whether they include dat
 For testing user-space code, we seed the exploration with the four subsets of ``hard-coded'' locking API PPs shown in Figure~\ref{fig:id}.
 By extension, these also introduce preemptions on any other sync primitives implemented with mutexes,
 such as condvars, semaphores, and r/w locks.
+Preempting on voluntary switches such as {\tt yield} is necessary for the invariant that only one thread runs between consecutive PPs,
+so the {\tt yield} PP is always implicitly enabled.
 
 For kernel-level testing, we consider interrupt-disabling to be analogous to locking,
-so we also preempt just before {\tt cli} and just after {\tt sti}\footnote{
+so (e.g. on x86) we also preempt just before {\tt cli} and just after {\tt sti}\footnote{
 During data-race detection, {\tt cli}/{\tt sti} are treated as a single global lock,
 as {\tt cli}'d memory accesses can still race with others that have interrupts on.}.
 % FIXME: "What happened to yield?" "Yield is implicitly included in each subset."
-\quicksand~is configured to use the subsets
+\quicksand~is configured to begin with the subsets
 $\{ \}$,
 $\{lock\}$,
 $\{unlock\}$,
 $\{cli\}$,
 $\{sti\}$,
 and $\{lock,unlock,cli,sti\}$.
-Other subsets are obviously possible, but as a heuristic, we don't bother with them.
+As a heuristic, we don't bother with every intermediate subset such as $\{lock,sti\}$,
+which could potentially be improved in future work (\sect{\ref{sec:future}}).
 
 {\bf Communication protocol.}
 The interface to \landslide~, which any similar MC could implement, is in two parts.
