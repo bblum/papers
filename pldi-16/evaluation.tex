@@ -48,7 +48,7 @@ Our test suite consists of \numthrlibs~``P2'' student thread libraries, from CMU
 %across the Spring and Fall 2014 and Spring 2015 semesters;
 and \numpintoses~``Pintos'' student kernels, from Berkeley's CS162 and U. Chicago's CS230 OS classes.
 %
-The P2 thread library comprises \texttt{thr\_create()}, \texttt{thr\_exit()}, \texttt{thr\_join()}, mutexes, condvars, semaphores, and r/w locks;
+The P2 thread library comprises \texttt{thr\_create()}, \texttt{thr\_exit()}, \texttt{thr\_join()}, mutexes, condition variables, semaphores, and r/w locks;
 all implemented from scratch in userspace with a UNIX-like system call interface \cite{kspec,thrlib}.
 %
 The Pintos kernel project
@@ -82,8 +82,8 @@ and the Pintoses average 718.
 
 We chose P2s and Pintoses for our test suite because of the relative ease of generating hundreds of unique state spaces,
 varied in size and correctness, and with a diverse set of bug types\footnote{
-Many of the codebases exhibited {\em deterministic} bugs (i.e., encountered on the first interleaving tested);
-these we fixed by hand in advance to ensure that every bug in our study required some meaningful work by the MC.}.
+Many of the codebases exhibited {\em deterministic} bugs (i.e., encountered on the first interleaving tested).
+We fixed these by hand in advance to ensure that every bug in our study required some meaningful work by the MC.}.
 % TODO: Is this ok? Too arrogant?
 We believe that merely finding a small handful of new real-world bugs is too anecdotal,
 and that our test suite's size allows for a more statistically significant comparison among MC and data-race testing strategies,
@@ -91,19 +91,23 @@ and that our test suite's size allows for a more statistically significant compa
 
 \newcommand\mxtest{\texttt{mx\_test}}
 \newcommand\tej{\texttt{join\_test}}
-\newcommand\bct{\texttt{broadcast\_test}}
+\newcommand\bct{\texttt{bcast\_test}}
 \newcommand\paraguay{\texttt{signal\_test}}
 \newcommand\paradise{\texttt{sem\_test}}
 \newcommand\rwl{\texttt{rwl\_test}}
 We tested P2s with 6 multithreaded programs:
 % from the 410 test suite % XXX: I would like to say this but this is a lie; figure out what else i can say instead
 % each tailored to exercise a different part of the P2 project
-\mxtest, for locking algorithm correctness, \tej, a test of thread lifecycle, \bct~and \paraguay, for condvars, \paradise~for semaphores, and \rwl~for r/w locks.
+\mxtest, for locking algorithm correctness,
+\tej, a test of thread lifecycle,
+\bct~and \paraguay~for condvars,
+\paradise~for semaphores,
+and \rwl~for r/w locks.
 For \mxtest, \paradise, and \paraguay, we used {\tt without\_function} to blacklist {\tt thr\_create}, {\tt thr\_exit}, and {\tt thr\_join},
 and for \mxtest~we enabled \landslide's mutex-testing option
 (see \sect{\ref{sec:landslide}}).
-\newcommand\prisema{\texttt{priority\_sema}}
-\newcommand\waitsimple{\texttt{wait\_simple}}
+\newcommand\prisema{\texttt{sched\_test}}
+\newcommand\waitsimple{\texttt{wait\_test}}
 % TODO: Add more test cases
 We tested the Pintoses with 2 programs from the class test suite: \prisema, a test of the kernel scheduling algorithm, and \waitsimple, a test of process lifecycle system calls.
 For all tests, we used {\tt without\_function} to blacklist PPs on the {\tt malloc} lock.
@@ -198,7 +202,8 @@ programmers can be more confident in the verification provided when \quicksand~t
 
 {\bf Finding new data-race bugs.}
 Though state-of-the-art MCs preempt only on synchronization events, many serious concurrency bugs are caused by data races leading to corrupted shared state.
-The line QS-DRs represents our ``no holds barred'' \quicksand~tests:
+The line QS-DRs represents our ``no holds barred'' \quicksand~tests,
+with dynamically-discovered data-race PPs enabled:
 we quickly pull ahead of SSS-MC, and ultimately conclude with 69\% more bugs in total.
 The break-even point is at a negligible 45 seconds.
 
@@ -211,6 +216,36 @@ Intuitively, this line shows that for programs with only benign data races,
 
 % TODO: Make a table with a breakdown by test case.
 
+\begin{table*}[t]
+	\begin{center}
+		%\small
+	\begin{tabular}{r||c|c|c||c|c|c|c}
+		& {\bf SSS-MC} & {\bf QS} & {\bf DR-only} & {\bf Total} & {\bf Malloc-} & {\bf Nondet.} & {\bf Nondet.} \\
+		{\bf Test name} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR PPs} & {\bf recycle FPs} & {\bf DR PPs} & {\bf DR bugs} \\
+		\hline
+		{\bct		} & 7	& 11	& 4	&	& 65	&	& 4	\\
+		{\tej		} & 14 	& 25	& 11	&	& 471	&	& 6	\\
+		{\mxtest	} & 1	& 10	& 9	&	& 7	&	& 1	\\
+		{\paradise	} & 10	& 17	& 7	&	& 268	&	& 3	\\
+		{\paraguay	} & 4	& 12	& 9	&	& 188	&	& 0	\\
+		{\rwl		} & 26	& 30	& 3	&	& 157	&	& 3	\\
+		\hline
+		{\prisema	} &	&	&	&	&	&	&	\\
+		{\waitsimple	} &	&	&	&	&	&	&	\\
+		\hline
+		{\bf Total}	&	&	&	&	&	&	&
+	\end{tabular}
+	\end{center}
+	\caption{Breakdown of number and types of bugs found by test case.
+		SSS-MC is the control; QS is \quicksand.
+		``DR-only'' counts among \quicksand's bugs how many required data-race PPs to expose.
+	``Nondeterministic DRs'' counts among the DR-only bugs how many candidates required MC integration to identify (\sect{\ref{sec:eval-falseneg}}).
+		TODO: more explanation}
+	\label{tab:drbugs}
+\end{table*}
+
+The left half of Table~\ref{tab:drbugs} breaks down the number and types of bugs found by each test case.
+% The astute observer will note that the sum of all types of failures observed is more than the total number of data-race bugs...
 %TODO: Run a mutex expt where "all atomic instrs" are PPs. See how many bugs are missed anyway.
 % Wwe re-ran the \mxtest control experiment with \landslide~hard-coded to preempt on any atomic instruction
 % (as well as on the mutex API boundaries).
