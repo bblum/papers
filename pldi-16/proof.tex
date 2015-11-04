@@ -44,13 +44,21 @@
 \definecolor{olivegreen}{RGB}{0,127,0}
 \definecolor{brickred}{RGB}{192,0,0}
 
-\title{Soundness Proof for Eliminating Malloc-Recycle Data Races in Stateless Model Checking}
+%\title{Soundness Proof for Eliminating Malloc-Recycle Data Races in Stateless Model Checking}
+\title{Soundness Proofs for Iterative Deepening}
 \authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
 
 \maketitle
 \begin{abstract}
 In our paper we show the effectiveness of combining dynamic data-race detection \cite{eraser,hybriddatarace} with stateless model checking \cite{verisoft,dpor}.
 Our approach involves adding new state spaces to explore each time a new data-race candidate is found.
+This document presents two proofs concerning the technique.
+
+First, we prove that given enough time, Iterative Deepening will converge to the same degree of schedule coverage that would be provided by a naive MC preempting on every single instruction.
+In other words, when Iterative Deepening finishes generating new data-race PPs, and completes all associated state spaces,
+it serves as a full verification of {\em all possible} thread schedules of the given test case.
+
+Second, we prove the soundness of the {\em malloc-recycle} false-positive-elimination tactic we discuss in the paper.
 Despite many powerful reduction techniques, the state spaces are still exponentially sized,
 so any way to avoid exploring some in advance is obviously beneficial.
 We prove that for the special case of {\em malloc-recycle} false positives, it is safe to eliminate these immediately upon discovering them, without bothering to explore their associated state spaces.
@@ -114,6 +122,15 @@ The same as in the paper, we distinguish between data-race {\em candidates} and 
 In this proof we are concerned solely with candidates, and judging whether they are true data races or false positives.
 It is up to \quicksand, outside the scope of this proof, to decide whether true data races are benign or buggy.
 
+\begin{definition}[Reachable data race]
+A data race candidate which will be identified by a MC configured to preempt only on locking API boundaries,
+or transitively also configured to use data-race PPs of other (already) reachable data races.
+\end{definition}
+
+%To prove a theory, generally sized super mario bros is not possible to complete, there is two step, one step for each F.
+To prove Iterative Deepening's convergence to full coverage,
+we are concerned with showing that any data race PP necessary to expose a bug will be reachable.
+
 \begin{definition}[False positive data race]
 	An apparent data race that cannot be observed in the opposite order from what was actually executed.
 \end{definition}
@@ -154,15 +171,6 @@ These can immediately be identified as failures by a MC which tracks allocation 
 \caption{False-positive malloc-recycle pattern. This is the common case for which we avoid creating new state spaces.}
 \label{fig:recycle}
 \end{figure}
-\section{Intuition}
-
-In summary, we are proving that if a malloc-recycle-pattern data race is a true race, rather than a false positive,
-then DPOR is guaranteed to ``reorder away the free and re-malloc''.
-In other words, DPOR's exploration will eventually interleave threads in such a way that the malloc-recycle pattern will disappear,
-while the access pair remains for the data-race detector to find, as shown in Figure~\ref{fig:recycle-goal}.
-Hence, in the same state space where the malloc-recycle data race was found, if it's a true race, the same race will also appear without the recycle pattern.
-So if that race hides a failure bug (assertion, segfault, etc.), Iterative Deepening will still be led to the necessary preemption point to find that bug.
-
 
 \begin{figure}[t]
 	\small
@@ -197,24 +205,77 @@ So if that race hides a failure bug (assertion, segfault, etc.), Iterative Deepe
 \label{fig:recycle-goal}
 \end{figure}
 
+\section{Intuition}
+
+In this section we provide (hopefully) intuitive summaries of both our proof goals,
+for readers who might be satisfied without necessarily following the proofs' internal structure.
+
+{\bf Intuition for Iterative Deepening convergence.}
+In summary, we are proving that when Iterative Deepening finishes saturating the set of available data-race PPs,
+that set represents every single code location where a preemption could possibly affect the program's behaviour,
+and that completing the associated state spaces is as strong of a verification as testing all possible thread interleavings under any preemptions anywhere.
+Some data-races may be hidden in control-flow paths which could only be executed after preempting on a different data-race,
+but the technique's iterative nature will eventually find it.
+On the other hand, relying on the soundness of DPOR, preempting on an instruction which is neither a data-race or sync API boundary cannot affect the program's behaviour.
+
+{\bf Intuition for malloc-recycle soundness.}
+In summary, we are proving that if a malloc-recycle-pattern data race is a true race, rather than a false positive,
+then DPOR is guaranteed to ``reorder away the free and re-malloc''.
+In other words, DPOR's exploration will eventually interleave threads in such a way that the malloc-recycle pattern will disappear,
+while the access pair remains for the data-race detector to find, as shown in Figure~\ref{fig:recycle-goal}.
+Hence, in the same state space where the malloc-recycle data race was found, if it's a true race, the same race will also appear without the recycle pattern.
+So if that race hides a failure bug (assertion, segfault, etc.), Iterative Deepening will still be led to the necessary preemption point to find that bug.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Assumptions}
+
+This section documents the assumptions we make about the concurrency model, language model, and test environment,
+and discusses some limitations that may arise from these assumptions.
+
+\subsection{Assumptions for both proofs}
 
 {\bf Maximal state space.}
 We assume the model checker has all static/hard-coded PPs enabled during this state space exploration,
 and that we are not limited by a pressing CPU budget.
 Further, we assume that the static PPs include all lock/unlock/trylock operations on mutexes (or whatever other low-level locks are used) and also all higher-level sync primitives which can cause HB (either directly, or because they are built on top of mutexes).
 
-Using only a subset of PPs or aborting early due to time-out could each ruin our ability to reach the goal interleaving.
+Using only a subset of PPs or aborting early due to time-out could each ruin our ability to reach the goal interleaving or goal state space.
 However, Iterative Deepening aims to test the most important interleavings with the time available,
 so in the case of not enough time, our point here is that continuing the current state space fits that goal best.
-An alternate approach would be to accept the malloc-recycle PPs, giving them the lowest possible priority, just in case any CPUs would otherwise be idle with not enough jobs to run.
-In that case, our point is to justify deprioritizing those jobs so aggressively.
+%An alternate approach would be to accept the malloc-recycle PPs, giving them the lowest possible priority, just in case any CPUs would otherwise be idle with not enough jobs to run.
+%In that case, our point is to justify deprioritizing those jobs so aggressively.
 
 %{\bf Low overhead.}
 %We assume the model checker can identify malloc-recycle data races with little or no overhead beyond what's already associated with data race detection.
 %Our MC already tracks the heap state, so we implement this check for free with a simple generation counter.
+
+{\bf Shared memory thread communication.}
+We assume that the only way for two threads' transitions to affect each other's behaviour, should they be reordered,
+is through either shared memory or a correctly-instrumented sync API. Both DPOR and data-race detec
+
+{\bf Schedule nondeterminism only.}
+We discount the possibility of other types of nondeterminism,
+such as program input nondeterminism (including randomness/timestamps) or
+store-buffer nondeterminism on weak-memory architectures.
+We refer the reader to \cite{klee,portend} for related work on the former, and to \cite{tsopso} for the latter.
+
+\subsection{Assumptions for Iterative Deepening convergence}
+
+{\bf Locks are correct.}
+Because hybrid data-race detection uses lockset analysis to conclude that many access pairs could not possibly race,
+we assume that no preemption during a lock-protected critical section could cause a contending thread to make meaningful progress.
+This extends to use of disabling/enabling interrupts during kernel-space testing, which we model as a single global lock,
+although we do not model RCU.
+Our data-race analysis also models the behaviour of r/w locks and 1-initialized semaphores (the latter heuristically), although this is tangential to the proof.
+
+Should the user wish to verify these properties of locks,
+they could either run a locking test separately (as we suggest in our paper),
+which would cheaply test the locks to an extent limited by the separate test case;
+or they could remove the data-race analysis's lockset tracking,
+which would expensively test all the main program's required locking properties in tandem with the program itself.
+
+\subsection{Assumptions for malloc-recycle soundness}
 
 {\bf Malloc is a magic black box.}
 We assume the malloc implementation is correct (e.g., it won't double-allocate blocks), although we don't assume any implementation details such as a tendency to reuse blocks or allocate adjacent ones.
@@ -238,7 +299,13 @@ For Section \ref{sec:proof}, we further assume a malloced block's address cannot
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Proof}
+\section{Proof of Iterative Deepening convergence}
+
+% TODO
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Proof of malloc-recycle soundness}
 \label{sec:proof}
 
 We seek to prove that ignoring malloc-recycle data races cannot cause DPOR + Iterative Deepening to miss a bug that could be found by using the malloc-recycle race as a PP. Hence, our soundness statement is as follows:
@@ -413,7 +480,7 @@ Lemma~\ref{lem:reorder} finishes.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Heap overruns}
+\subsection{Heap overruns}
 \label{sec:owned}
 
 Actually, there is another way to share the allocation's address without T1 and T2 communicating outside of {\tt x1}/{\tt x2}: one thread overruns a {\em different} heap block which happened to be adjacent to the one containing {\tt x1}/{\tt x2} (call them the ``neighbour block'' and ``real block'' respectively).
