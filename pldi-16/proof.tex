@@ -208,7 +208,7 @@ These can immediately be identified as failures by a MC which tracks allocation 
 \section{Intuition}
 
 In this section we provide (hopefully) intuitive summaries of both our proof goals,
-for readers who might be satisfied without necessarily following the proofs' internal structure.
+for readers who might be satisfied without necessarily double-checking the proofs' internal structure.
 
 {\bf Intuition for Iterative Deepening convergence.}
 In summary, we are proving that when Iterative Deepening finishes saturating the set of available data-race PPs,
@@ -216,7 +216,8 @@ that set represents every single code location where a preemption could possibly
 and that completing the associated state spaces is as strong of a verification as testing all possible thread interleavings under any preemptions anywhere.
 Some data-races may be hidden in control-flow paths which could only be executed after preempting on a different data-race,
 but the technique's iterative nature will eventually find it.
-On the other hand, relying on the soundness of DPOR, preempting on an instruction which is neither a data-race or sync API boundary cannot affect the program's behaviour.
+On the other hand, relying on the soundness of DPOR, preempting on an instruction which is neither a data-race or sync API boundary cannot affect the program's behaviour,
+so any PPs beyond the ones we consider are irrelevant.
 
 {\bf Intuition for malloc-recycle soundness.}
 In summary, we are proving that if a malloc-recycle-pattern data race is a true race, rather than a false positive,
@@ -266,7 +267,7 @@ We refer the reader to \cite{klee,portend} for related work on the former, and t
 Because hybrid data-race detection uses lockset analysis to conclude that many access pairs could not possibly race,
 we assume that no preemption during a lock-protected critical section could cause a contending thread to make meaningful progress.
 This extends to use of disabling/enabling interrupts during kernel-space testing, which we model as a single global lock,
-although we do not model RCU.
+although we do not model RCU \cite{rcu}.
 Our data-race analysis also models the behaviour of r/w locks and 1-initialized semaphores (the latter heuristically), although this is tangential to the proof.
 
 Should the user wish to verify these properties of locks,
@@ -301,7 +302,69 @@ For Section \ref{sec:proof}, we further assume a malloced block's address cannot
 
 \section{Proof of Iterative Deepening convergence}
 
-% TODO
+We seek to prove that, given enough time, Iterative Deepening offers the same coverage of thread interleavings that could be achieved by preempting at every single instruction.
+We'll call the latter the {\em naive maximal state space}, and call the condition of testing all its interleavings {\em convergence}.
+(It could also be called soundness, from the perspective of viewing Iterative Deepening as a search re-ordering heuristic that doesn't miss any interleavings.)
+Hence, our convergence statement is as follows:
+
+\begin{theorem}[Total verification]
+	If Iterative Deepening fully saturates its set of data-race PPs and completes all associated state spaces,
+	it serves as a verification of all possible thread schedules of the given test program.
+	\label{thm:totalverif}
+\end{theorem}
+
+The contrapositive statement offers more structure for an easier proof\footnote{
+For the reader who likes to avoid non-constructive proofs, % \cite{vargomax}, % TODO: uncomment for camready/TR
+note that we are using the constructive contrapositive direction:
+Theorem~\ref{thm:convergence} is $A \rightarrow B$ and Theorem~\ref{thm:totalverif} is $\neg B \rightarrow \neg A$.}:
+
+%DPOR + Iterative Deepening will eventually test every nonequivalent thread interleaving that would be exposed by preempting at every single instruction
+\begin{theorem}[Convergence of Iterative Deepening]
+	If a bug is exposed by an interleaving in the naive maximal state space, Iterative Deepening will eventually test an interleaving which exposes the same bug.
+	\label{thm:convergence}
+\end{theorem}
+
+First we will prove a slightly weaker statement, limiting the naive approach's PPs to data races,
+then strengthen it by showing that the all interleavings in the naive maximal state space
+are equivalent to some interleaving made of data-race PPs (and sync API PPs) alone.
+
+\subsection{Saturation of data-race PPs}
+
+\begin{lemma}
+	If a bug is exposed by any interleaving comprising any combination of data-race PPs and sync API PPs,
+	Iterative Deepening will eventually test a state space in which all those PPs are enabled\footnote{
+		In the paper we noted that when a bug is found, \quicksand~cancels all superset state spaces, anticipating that they would find the same bug.
+		Because we are concerned with verifying the absence of bugs, we say this also suffices for convergence, but for brevity, we will leave this condition implicit.}.
+	\label{lem:saturation}
+\end{lemma}
+
+\begin{proof}
+TODO % TODO
+\end{proof}
+
+\subsection{Saturation of data-race PPs}
+
+\begin{lemma}
+	For any interleaving in the naive maximal state space, there exists an equivalent interleaving which uses only data-race PPs and sync API PPs.
+	\label{lem:equivalent}
+\end{lemma}
+
+\begin{proof}
+TODO % TODO
+\end{proof}
+
+\subsection{Conclusion}
+
+\setcounter{theorem}{1}
+\begin{theorem}[Convergence of Iterative Deepening]
+	If a bug is exposed by an interleaving in the naive maximal state space, Iterative Deepening will eventually test an interleaving which exposes the same bug.
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:equivalent}, the naive interleaving must be equivalent to some interleaving built of data-race PPs and sync API PPs.
+By Lemma~\ref{lem:saturation}, Iterative Deepening will eventually discover and enable all necessary data-race PPs, with sync API PPs being enabled by the maximal state space assumption.
+Then we simply lean on the soundness of DPOR~\cite{dpor} to guarantee finding the buggy interleaving within this state space.
+\end{proof}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -470,7 +533,7 @@ Lemma~\ref{lem:reorder} finishes.
 
 \subsection{Conclusion}
 
-\setcounter{theorem}{0}
+\setcounter{theorem}{2}
 \begin{theorem}[Soundness of eliminating malloc-recycle races]
 	If a malloc-recycle data race is not a false positive, DPOR will reorder threads such that either the same accesses will still race without fitting the malloc-recycle pattern, or a use-after-free bug will be reported immediately.
 \end{theorem}
