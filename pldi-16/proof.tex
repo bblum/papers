@@ -54,7 +54,7 @@ In our paper we show the effectiveness of combining dynamic data-race detection 
 Our approach involves adding new state spaces to explore each time a new data-race candidate is found.
 This document presents two proofs concerning the technique.
 
-First, we prove that given enough time, Iterative Deepening will converge to the same degree of schedule coverage that would be provided by a naive MC preempting on every single instruction.
+First, we prove that given enough time, Iterative Deepening will converge to the same degree of schedule coverage that would be provided by a na\"{i}ve MC preempting on every single instruction.
 In other words, when Iterative Deepening finishes generating new data-race PPs, and completes all associated state spaces,
 it serves as a full verification of {\em all possible} thread schedules of the given test case.
 
@@ -253,7 +253,11 @@ so in the case of not enough time, our point here is that continuing the current
 
 {\bf Shared memory thread communication.}
 We assume that the only way for two threads' transitions to affect each other's behaviour, should they be reordered,
-is through either shared memory or a correctly-instrumented sync API. Both DPOR and data-race detec
+is through either shared memory or a correctly-instrumented sync API.
+Both DPOR and data-race detection rely on this assumption,
+as any other way for threads to affect each other's behaviour would invisibly reduce independence and break soundness.
+For brevity in these proofs, we refer to all thread communication as shared memory,
+and assume that other mechanisms, such as system calls that access the filesystem, could be instrumented to fit the same model.
 
 {\bf Schedule nondeterminism only.}
 We discount the possibility of other types of nondeterminism,
@@ -275,6 +279,12 @@ they could either run a locking test separately (as we suggest in our paper),
 which would cheaply test the locks to an extent limited by the separate test case;
 or they could remove the data-race analysis's lockset tracking,
 which would expensively test all the main program's required locking properties in tandem with the program itself.
+
+{\bf No forcibly blocking other threads.}
+We assume the sync API behaves much like pthreads and/or message-passing:
+that is, a thread can cause itself to block on some condition,
+and other threads may wake it up,
+but there exists no primitive which one thread can use to revoke another thread's runnable status when that other thread is not itself using the sync API concurrently.
 
 \subsection{Assumptions for malloc-recycle soundness}
 
@@ -303,7 +313,7 @@ For Section \ref{sec:proof}, we further assume a malloced block's address cannot
 \section{Proof of Iterative Deepening convergence}
 
 We seek to prove that, given enough time, Iterative Deepening offers the same coverage of thread interleavings that could be achieved by preempting at every single instruction.
-We'll call the latter the {\em naive maximal state space}, and call the condition of testing all its interleavings {\em convergence}.
+We'll call the latter the {\em na\"{i}ve state space}, and call the condition of testing all its interleavings {\em convergence}.
 (It could also be called soundness, from the perspective of viewing Iterative Deepening as a search re-ordering heuristic that doesn't miss any interleavings.)
 Hence, our convergence statement is as follows:
 
@@ -320,32 +330,69 @@ Theorem~\ref{thm:convergence} is $A \rightarrow B$ and Theorem~\ref{thm:totalver
 
 %DPOR + Iterative Deepening will eventually test every nonequivalent thread interleaving that would be exposed by preempting at every single instruction
 \begin{theorem}[Convergence of Iterative Deepening]
-	If a bug is exposed by an interleaving in the naive maximal state space, Iterative Deepening will eventually test an interleaving which exposes the same bug.
+	If a bug is exposed by an interleaving in the na\"{i}ve state space, Iterative Deepening will eventually test an interleaving which exposes the same bug.
 	\label{thm:convergence}
 \end{theorem}
 
-First we will prove a slightly weaker statement, limiting the naive approach's PPs to data races,
-then strengthen it by showing that the all interleavings in the naive maximal state space
+First we will prove a slightly weaker statement, limiting the na\"{i}ve approach's PPs to data races,
+then strengthen it by showing that the all interleavings in the na\"{i}ve state space
 are equivalent to some interleaving made of data-race PPs (and sync API PPs) alone.
 
 \subsection{Saturation of data-race PPs}
 
 \begin{lemma}
-	If a bug is exposed by any interleaving comprising any combination of data-race PPs and sync API PPs,
+	If a bug can be exposed by some combination of preemptions on any data-race instruction and sync API boundaries,
 	Iterative Deepening will eventually test a state space in which all those PPs are enabled\footnote{
 		In the paper we noted that when a bug is found, \quicksand~cancels all superset state spaces, anticipating that they would find the same bug.
 		Because we are concerned with verifying the absence of bugs, we say this also suffices for convergence, but for brevity, we will leave this condition implicit.}.
 	\label{lem:saturation}
 \end{lemma}
 
+The main challenge of this proof is that some data-race candidates are nondeterministic;
+i.e., they may be hidden in an obscure control flow path which requires a prior preemption on a different data race to expose,
+as shown in Figure~\ref{fig:nondet-dr}.
+Hence, the maximal state space of statically-available sync API PPs will not necessarily uncover all possible data-race PPs;
+Iterative Deepening may need to iterate through some data-race state spaces before finding certain nondeterministic races.
+However, the proof is surprisingly straightforward.
+
 \begin{proof}
-TODO % TODO
+Let $\mathcal{I} = \{p_0, p_1 \dots p_n\}$ be the interleaving and sequence of preemption points in the premise of the lemma which exposed a bug.
+We induct on the $p$s to show that all data-race PPs will be reachable.
+\begin{itemize}
+	\item For the base case, $p_0$ required 
+	\item
+\end{itemize}
 \end{proof}
 
-\subsection{Saturation of data-race PPs}
+% TODO make this be on the right column
+\begin{figure}[t]
+	\small
+	\begin{tabular}{rl}
+	& \multicolumn{1}{c}{~\texttt{int x = 0, y = 0;~~~~~~~~~~~~~~~~}} \\
+	& \multicolumn{1}{c}{\texttt{bool t1\_x = false, t1\_y = false;}} \\
+	& \multicolumn{1}{c}{\texttt{bool t2\_x = false, t2\_y = false;}} \\
+\\
+		& Thread 1 (Thread 2 similar, with {\tt t1} and {\tt t2} vars swapped) \\
+	1 & \texttt{\hilight{brickred}{x = x + 1;}} \\
+	2 & \texttt{t1\_x = true;} \\
+	3 & \texttt{// "if x raced"} \\
+	4 & \texttt{if (x == 1 \&\& t2\_x) \{} \\
+	5 & \texttt{~~~~\hilight{brickred}{y = y + 1;}} \\
+	6 & \texttt{~~~~t1\_y = true;} \\
+	7 & \texttt{~~~~// "if y raced"} \\
+	8 & \texttt{~~~~if (y == 1 \&\& t2\_y) \{} \\
+	9 & \texttt{~~~~~~~~panic();} \\
+	10 & \texttt{~~~~\}} \\
+	11 & \texttt{\}} \\
+	\end{tabular}
+	\caption{Not all data races will immediately be uncovered by interleaving threads around sync API PPs alone. Here, preempting during the race on line 1 is necessary to force the program into the control flow which can race on line 5.}
+	\label{fig:nondet-dr}
+\end{figure}
+
+\subsection{Equivalence of irrelevant PPs}
 
 \begin{lemma}
-	For any interleaving in the naive maximal state space, there exists an equivalent interleaving which uses only data-race PPs and sync API PPs.
+	For any interleaving in the na\"{i}ve state space, there exists an equivalent interleaving which uses only data-race PPs and sync API PPs.
 	\label{lem:equivalent}
 \end{lemma}
 
@@ -357,11 +404,11 @@ TODO % TODO
 
 \setcounter{theorem}{1}
 \begin{theorem}[Convergence of Iterative Deepening]
-	If a bug is exposed by an interleaving in the naive maximal state space, Iterative Deepening will eventually test an interleaving which exposes the same bug.
+	If a bug is exposed by an interleaving in the na\"{i}ve state space, Iterative Deepening will eventually test an interleaving which exposes the same bug.
 \end{theorem}
 
 \begin{proof}
-By Lemma~\ref{lem:equivalent}, the naive interleaving must be equivalent to some interleaving built of data-race PPs and sync API PPs.
+By Lemma~\ref{lem:equivalent}, the na\"{i}ve interleaving must be equivalent to some interleaving built of data-race PPs and sync API PPs.
 By Lemma~\ref{lem:saturation}, Iterative Deepening will eventually discover and enable all necessary data-race PPs, with sync API PPs being enabled by the maximal state space assumption.
 Then we simply lean on the soundness of DPOR~\cite{dpor} to guarantee finding the buggy interleaving within this state space.
 \end{proof}
