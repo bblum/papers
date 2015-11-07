@@ -330,33 +330,114 @@ Theorem~\ref{thm:convergence} is $A \rightarrow B$ and Theorem~\ref{thm:totalver
 
 %DPOR + Iterative Deepening will eventually test every nonequivalent thread interleaving that would be exposed by preempting at every single instruction
 \begin{theorem}[Convergence of Iterative Deepening]
-	If a bug is exposed by an interleaving in the na\"{i}ve state space, Iterative Deepening will eventually test an interleaving which exposes the same bug.
+	If a bug is exposed by an interleaving in the na\"{i}ve state space, Iterative Deepening will eventually test an equivalent interleaving which exposes the same bug.
 	\label{thm:convergence}
 \end{theorem}
 
-First we will prove a slightly weaker statement, limiting the na\"{i}ve approach's PPs to data races,
-then strengthen it by showing that the all interleavings in the na\"{i}ve state space
-are equivalent to some interleaving made of data-race PPs (and sync API PPs) alone.
+%First we will prove a slightly weaker statement, limiting the na\"{i}ve approach's PPs to data races,
+%then strengthen it by showing that the all interleavings in the na\"{i}ve state space
+%are equivalent to some interleaving made of data-race PPs (and sync API PPs) alone.
+
+%%%%
+
+\newcommand\ppnext[1]{\ensuremath{\mathsf{next}(#1)}}
+\newcommand\ppinstr[1]{\ensuremath{\mathsf{instr}(#1)}}
+\newcommand\ppothers[1]{\ensuremath{\mathsf{others}(#1)}}
+\newcommand\pppfx[1]{\ensuremath{\mathsf{pfx}(#1)}}
+\newcommand\conflicts[2]{\ensuremath{\mathsf{conflicts}(#1,#2)}}
+\newcommand\pai{\ensuremath{p_{\alpha{}i}}}
+Let
+\[
+	\mathcal{I} = \{(t_\alpha, p_\alpha)_1, (t_\beta, p_\beta)_1, ... (t_\alpha, p_\alpha)_n, ...\}
+\]
+be an interleaving trace, where the element $(t_\alpha, p_\alpha)_i$ represents the $i$th transition $t$ of thread $\alpha$, and the associated preemption point $p$.
+We will use the following notation:
+\begin{itemize}
+	\item $\ppnext{p_{\alpha{}i}}$ indicates the next transition by the same thread, $t_{\alpha{}(i+1)}$,
+	\item $\ppinstr{p_{\alpha{}i}}$ indicates the first instruction executed during $t_{\alpha{}(i+1)}$. and
+	\item $\ppothers{p_{\alpha{}i}}$ indicates the set of all transitions by other threads between $t_{\alpha{}i}$ and $t_{\alpha{}(i+1)}$.
+	\item $\conflicts{t_\alpha,t_\beta}$ indicates the set of memory access pairs between $t_\alpha$ and $t_\beta$ such that among each pair, one access belongs to each thread $\alpha$ and $\beta$, the address is the same, and at least one is a write; i.e., precisely the shared memory conflict relation required by DPOR to determine dependent interleavings.
+\end{itemize}
+
+\subsection{Equivalence of irrelevant PPs}
+
+Iterative Deepening will not, of course, preempt on exactly the same instructions that an arbitrary naive interleaving would,
+as it is only capable of preempting on data races and sync API boundaries.
+Thus, our first task is to show that all naive interleavings have an equivalent interleaving with only data-race and sync API PPs.
+
+% TODO: come up with a better name
+\begin{definition}[Relevant preemption point]
+	We say a PP $\pai$ is {\em relevant} if either $\ppnext{\pai}$ is a sync API boundary (including a voluntary yield),
+	or if
+	\[
+		\conflicts{\ppothers{\pai}}{\ppinstr{\pai}} \ne \emptyset
+	\]
+	i.e., the instruction by thread $\alpha$ immediately after $\pai$ has a memory conflict with some other thread interleaved during $\pai$.
+\end{definition}
+\begin{definition}[Fully-relevant interleaving]
+	An interleaving comprised only of relevant PPs.
+\end{definition}
+
+\begin{lemma}
+	For any interleaving in the na\"{i}ve state space, there exists an equivalent interleaving which uses only relevant PPs.
+	%data-race PPs and sync API PPs.
+	\label{lem:equivalent}
+\end{lemma}
+
+\begin{proof}
+	Let $\pai$ be the first irrelevant PP of a naive interleaving $\mathcal{I}$.
+	We ask, did some thread among $\ppothers{\pai}$ conflict with any instruction from $\ppnext{\pai}$, even though there was no conflict with $\ppinstr{\pai}$?
+	\begin{itemize}
+			% rho for relevant.
+		\item If $\conflicts{\ppothers{\pai}}{\ppnext{\pai}} \ne \emptyset$, or if $t_{\alpha{}i}$ contains a sync API boundary instruction that's not already a PP,
+			then let $\rho$ be either the first instruction by $\ppnext{\pai}$ among the conflicts or the first sync API instruction, whichever comes first.
+			Let $\pppfx{\rho}$ denote the instruction sequence between $\ppinstr{\pai}$ and $\rho$, including the former but not the latter.
+			Now, we output the new interleaving:
+
+			\begin{tabular}{lll}
+				\\
+				$\mathcal{I}' = \{...,$&$(t_{\alpha{}i} \cup \pppfx{\rho}, \pai'),$& \\
+									   &$\ppothers{\pai},$& \\
+					       &$(t_{\alpha{}(i+1)}) \setminus \pppfx{\rho}, p_{\alpha{}(i+1)}),$ & $ ...\}$ \\
+				\\
+			\end{tabular}
+
+			In English, we have simply reordered $\ppothers{\pai}$ to between $\pppfx{\rho}$ and $\rho$, removing the irrelevant $\pai$ and adding a new PP $\pai'$, which is relevant by the construction of $\rho$.
+			We know it must be possible to reorder $\ppothers{\pai}$ to after $\alpha$'s execution because no synchronization is done during $\pppfx{\rho}$, hence the other threads' runnability cannot be affected.
+			Likewise $\pppfx{\rho}$ is independent with $\ppothers{\pai}$, so by the soundness of DPOR \cite{dpor}, $\mathcal{I}' \equiv \mathcal{I}$.
+		\item Otherwise, $\conflicts{\ppothers{\pai}}{\ppnext{\pai}} = \emptyset$, and no instructions among $\ppnext{\pai}$ are a sync API boundary.
+			Then we output the new interleaving:
+			\[
+				\mathcal{I}' = \{..., (t_{\alpha{}i} \cup t_{\alpha(i+1)}, p_{\alpha(i+1)}), \ppothers{\pai},...\}
+			\]
+			In English, we have reordered {\ppothers{\pai}} with the entire next transition by thread $\alpha$.
+			We know this must be possible for the same reasons as above, and again, the transitions are independent, so $\mathcal{I}' \equiv \mathcal{I}$.
+					       %&$(t_{\alpha{}(i+1)}) \setminus \pppfx{\rho}, p_{\alpha{}(i+1)}),$ & $ ...\}$ \\
+	\end{itemize}
+	This constitutes an algorithm for inductively converting all irrelevant PPs to relevant ones.
+\end{proof}
+
+%%%%
 
 \subsection{Saturation of data-race PPs}
 
 \begin{lemma}
-	If a bug can be exposed by some combination of preemptions on any data-race instruction and sync API boundaries,
+	If a bug can be exposed by any fully-relevant interleaving, %some combination of preemptions on any data-race instruction and sync API boundaries,
 	Iterative Deepening will eventually test a state space in which all those PPs are enabled\footnote{
 		In the paper we noted that when a bug is found, \quicksand~cancels all superset state spaces, anticipating that they would find the same bug.
 		Because we are concerned with verifying the absence of bugs, we say this also suffices for convergence, but for brevity, we will leave this condition implicit.}.
 	\label{lem:saturation}
 \end{lemma}
 
-The main challenge of this proof is that some data-race candidates are nondeterministic;
+The main challenge of this proof is that some data-race candidates are nondeterministic to find;
 i.e., they may be hidden in an obscure control flow path which requires a prior preemption on a different data race to expose,
 as shown in Figure~\ref{fig:nondet-dr}.
 Hence, the maximal state space of statically-available sync API PPs will not necessarily uncover all possible data-race PPs;
 Iterative Deepening may need to iterate through some data-race state spaces before finding certain nondeterministic races.
-However, the proof is surprisingly straightforward.
 
 \begin{proof}
 Let $\mathcal{I} = \{p_0, p_1 \dots p_n\}$ be the interleaving and sequence of preemption points in the premise of the lemma which exposed a bug.
+% TODO: define the special way of ordering the pps
 We induct on the $p$s to show that all data-race PPs will be reachable.
 \begin{itemize}
 	\item For the base case, $p_0$ required 
@@ -389,16 +470,7 @@ We induct on the $p$s to show that all data-race PPs will be reachable.
 	\label{fig:nondet-dr}
 \end{figure}
 
-\subsection{Equivalence of irrelevant PPs}
-
-\begin{lemma}
-	For any interleaving in the na\"{i}ve state space, there exists an equivalent interleaving which uses only data-race PPs and sync API PPs.
-	\label{lem:equivalent}
-\end{lemma}
-
-\begin{proof}
-TODO % TODO
-\end{proof}
+%%%%
 
 \subsection{Conclusion}
 
