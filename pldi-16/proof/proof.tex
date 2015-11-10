@@ -4,7 +4,7 @@
 % Requires temporary version of sigplanconf style file provided on
 % PLDI'15 web site.
 %
-\documentclass[pldi]{sigplanconf-pldi15}
+\documentclass[pldi]{../sigplanconf-pldi15}
 
 %
 % the following standard packages may be helpful, but are not required
@@ -121,15 +121,6 @@ A shared memory conflict where furthermore:
 The same as in the paper, we distinguish between data-race {\em candidates} and data-race {\em bugs}.
 In this proof we are concerned solely with candidates, and judging whether they are true data races or false positives.
 It is up to \quicksand, outside the scope of this proof, to decide whether true data races are benign or buggy.
-
-\begin{definition}[Reachable data race]
-A data race candidate which will be identified by a MC configured to preempt only on locking API boundaries,
-or transitively also configured to use data-race PPs of other (already) reachable data races.
-\end{definition}
-
-%To prove a theory, generally sized super mario bros is not possible to complete, there is two step, one step for each F.
-To prove Iterative Deepening's convergence to full coverage,
-we are concerned with showing that any data race PP necessary to expose a bug will be reachable.
 
 \begin{definition}[False positive data race]
 	An apparent data race that cannot be observed in the opposite order from what was actually executed.
@@ -348,9 +339,9 @@ Theorem~\ref{thm:convergence} is $A \rightarrow B$ and Theorem~\ref{thm:totalver
 \newcommand\pai{\ensuremath{p_{\alpha{}i}}}
 Let
 \[
-	\mathcal{I} = \{(t_\alpha, p_\alpha)_1, (t_\beta, p_\beta)_1, ... (t_\alpha, p_\alpha)_n, ...\}
+	\mathcal{I} = \{(t_{\alpha{}1}, p_{\alpha{}1}), (t_{\beta{}1}, p_{\beta{}1}), ... (t_{\alpha{}n}, p_{\alpha{}n}), ...\}
 \]
-be an interleaving trace, where the element $(t_\alpha, p_\alpha)_i$ represents the $i$th transition $t$ of thread $\alpha$, and the associated preemption point $p$.
+be an interleaving trace, where the element $(t_{\alpha{}i}, \pai)$ represents the $i$th transition $t$ of thread $\alpha$, and the associated preemption point $p$.
 We will use the following notation:
 \begin{itemize}
 	\item $\ppnext{p_{\alpha{}i}}$ indicates the next transition by the same thread, $t_{\alpha{}(i+1)}$,
@@ -402,7 +393,7 @@ Thus, our first task is to show that all naive interleavings have an equivalent 
 				\\
 			\end{tabular}
 
-			In English, we have simply reordered $\ppothers{\pai}$ to between $\pppfx{\rho}$ and $\rho$, removing the irrelevant $\pai$ and adding a new PP $\pai'$, which is relevant by the construction of $\rho$.
+			In other words, we have simply reordered $\ppothers{\pai}$ to between $\pppfx{\rho}$ and $\rho$, removing the irrelevant $\pai$ and adding a new PP $\pai'$, which is relevant by the construction of $\rho$.
 			We know it must be possible to reorder $\ppothers{\pai}$ to after $\alpha$'s execution because no synchronization is done during $\pppfx{\rho}$, hence the other threads' runnability cannot be affected.
 			Likewise $\pppfx{\rho}$ is independent with $\ppothers{\pai}$, so by the soundness of DPOR \cite{dpor}, $\mathcal{I}' \equiv \mathcal{I}$.
 		\item Otherwise, $\conflicts{\ppothers{\pai}}{\ppnext{\pai}} = \emptyset$, and no instructions among $\ppnext{\pai}$ are a sync API boundary.
@@ -410,42 +401,25 @@ Thus, our first task is to show that all naive interleavings have an equivalent 
 			\[
 				\mathcal{I}' = \{..., (t_{\alpha{}i} \cup t_{\alpha(i+1)}, p_{\alpha(i+1)}), \ppothers{\pai},...\}
 			\]
-			In English, we have reordered {\ppothers{\pai}} with the entire next transition by thread $\alpha$.
+			In other words, we have reordered {\ppothers{\pai}} with the entire next transition by thread $\alpha$.
 			We know this must be possible for the same reasons as above, and again, the transitions are independent, so $\mathcal{I}' \equiv \mathcal{I}$.
 					       %&$(t_{\alpha{}(i+1)}) \setminus \pppfx{\rho}, p_{\alpha{}(i+1)}),$ & $ ...\}$ \\
 	\end{itemize}
-	This constitutes an algorithm for inductively converting all irrelevant PPs to relevant ones.
+	This constitutes an algorithm for inductively converting (or removing) all irrelevant PPs to relevant ones.
 \end{proof}
 
 %%%%
 
 \subsection{Saturation of data-race PPs}
 
-\begin{lemma}
-	If a bug can be exposed by any fully-relevant interleaving, %some combination of preemptions on any data-race instruction and sync API boundaries,
-	Iterative Deepening will eventually test a state space in which all those PPs are enabled\footnote{
-		In the paper we noted that when a bug is found, \quicksand~cancels all superset state spaces, anticipating that they would find the same bug.
-		Because we are concerned with verifying the absence of bugs, we say this also suffices for convergence, but for brevity, we will leave this condition implicit.}.
-	\label{lem:saturation}
-\end{lemma}
-
-The main challenge of this proof is that some data-race candidates are nondeterministic to find;
+Now we must show that, starting from a sync-PP-only state space,
+Iterative Deepening will eventually interleave threads sufficiently to expose all data races which are used as PPs in any buggy fully-relevant interleaving.
+The challenge of this proof is that some data-race candidates are nondeterministic to find;
 i.e., they may be hidden in an obscure control flow path which requires a prior preemption on a different data race to expose,
 as shown in Figure~\ref{fig:nondet-dr}.
 Hence, the maximal state space of statically-available sync API PPs will not necessarily uncover all possible data-race PPs;
 Iterative Deepening may need to iterate through some data-race state spaces before finding certain nondeterministic races.
 
-\begin{proof}
-Let $\mathcal{I} = \{p_0, p_1 \dots p_n\}$ be the interleaving and sequence of preemption points in the premise of the lemma which exposed a bug.
-% TODO: define the special way of ordering the pps
-We induct on the $p$s to show that all data-race PPs will be reachable.
-\begin{itemize}
-	\item For the base case, $p_0$ required 
-	\item
-\end{itemize}
-\end{proof}
-
-% TODO make this be on the right column
 \begin{figure}[t]
 	\small
 	\begin{tabular}{rl}
@@ -470,6 +444,77 @@ We induct on the $p$s to show that all data-race PPs will be reachable.
 	\label{fig:nondet-dr}
 \end{figure}
 
+\begin{definition}[Reachable data race]
+A data race candidate which will be identified by a MC configured to preempt only on locking API boundaries,
+or transitively also configured to use data-race PPs of other (already) reachable data races.
+\end{definition}
+
+\begin{definition}[Reachable preemption point]
+A PP $\pai$ such that either $\ppinstr{\pai}$ is part of a reachable data race, or a sync API boundary.
+\end{definition}
+
+\begin{lemma}
+	Given a fully-relevant interleaving
+	\[
+		\mathcal{I} = \{ ..., (t_{\alpha{}i},\pai), \ppothers{\pai}, (t_{\alpha(i+1)},p_{\alpha(i+1)}), ... \}
+	\]
+	if $\pai$ is a data-race PP, and the all PPs in the interleaving prefix
+	\[
+		\mathcal{J} = \{ ..., (t_{\alpha{}i} \cup t_{\alpha(i+1)}',p_{\alpha(i+1)}'), \ppothers(\pai)' \}
+	\]
+	are reachable, then $\pai$ is reachable.
+	\label{lem:coalesce}
+\end{lemma}
+
+Note here that in $\mathcal{J}$, some instructions of $t_{\alpha(i+1)}$ may change because they were reordered with $\ppothers(\pai)$;
+i.e., $\ppinstr(\pai)$ may not necessarily be the only site of thread communication,
+and some other conflicts may cause $t_{\alpha(i+1)}$ to behave differently.
+Hence we have labelled it $t_{\alpha(i+1)}'$, and similar for thread $\alpha$'s next PP.
+Nevertheless, the first instruction of $t_{\alpha(i+1)}'$ must still be the same as $\ppinstr{\pai}$.
+
+% TODO: What if ppothers changes based on ppinstr(pai)? You say, there must exist some J where ppothers has fewer PPs. You just stop preempting! Those preemptions don't matter. Gotta go fast. Gotta keep the induction metric of getting fewer pps in J than in I.
+
+%%% 
+
+\begin{lemma}
+	If a bug can be exposed by any fully-relevant interleaving, %some combination of preemptions on any data-race instruction and sync API boundaries,
+	Iterative Deepening will eventually test a state space in which all those PPs are enabled\footnote{
+		In the paper we noted that when a bug is found, \quicksand~cancels all superset state spaces, anticipating that they would find the same bug.
+		Because we are concerned with verifying the absence of bugs, we say this also suffices for convergence, but for brevity, we will leave this condition implicit.}.
+	\label{lem:saturation}
+\end{lemma}
+
+% TODO: Here's what to do.
+% Induct on the PPs by the order of next(my_PP) in the trace.
+% Inductive assumption gives that all prior other data race PPs with next(other_PP) before next(my_PP) are reachable,
+% Is there a prior data race PP with next(other_PP) *AFTER* next(my_PP)?
+% If not, then we are done, and this one is reachable.
+% If so, then we ask, which transition among others(other_PP) (this includes us) does instr(other_PP) conflict with?
+% <vague handwavy part>
+% Then we show that there must be a trace with next(other_PP) interleaved to be before next(my_PP) where, even if the bug doesn't show up, the data race still shows up, which makes other_PP reachable.
+% </vague handwavy part>
+% Since other_PP is reachable then my_PP is reachable.
+
+\begin{proof}
+Let $\mathcal{I} = \{(t_{\alpha{}1}, p_{\alpha{}1}), ...\}$ be the fully-relevant interleaving and PP sequence in the premise of the lemma which exposed a bug.
+We proceed by inducting on the PPs according to the order in which for each PP $\pai$, $\ppnext{\pai}$ appeared in the trace.
+Note that this is not necessarily the same as the order of the $\pai$s themselves in $\mathcal{I}$;
+i.e., it is the order of the racy instructions rather than the order of their immediately preceding preemptions.
+%Figure~\ref{fig:why-ppnext} shows why the first PP, ordered by earliest point of preemption, might not necessarily be the first reachable one.
+%%% well, the way we do it, might not be the first reachable one either...
+
+\newcommand\pbj{\ensuremath{p_{\beta{}j}}}
+For both the base case and inductive step, we know (vacuously, for the former) that for each other PP $\pbj$ with $\ppnext{\pbj}$ occurring before $\ppnext{\pai}$ in $\mathcal{I}$, $\pbj$ is reachable.
+% Now to show \pai is reachable.
+
+
+
+\begin{itemize}
+	\item
+	\item
+\end{itemize}
+\end{proof}
+
 %%%%
 
 \subsection{Conclusion}
@@ -480,7 +525,8 @@ We induct on the $p$s to show that all data-race PPs will be reachable.
 \end{theorem}
 
 \begin{proof}
-By Lemma~\ref{lem:equivalent}, the na\"{i}ve interleaving must be equivalent to some interleaving built of data-race PPs and sync API PPs.
+By Lemma~\ref{lem:equivalent}, there must be some equivalent fully-relevant interleaving.
+%the na\"{i}ve interleaving must be equivalent to some interleaving built of data-race PPs and sync API PPs.
 By Lemma~\ref{lem:saturation}, Iterative Deepening will eventually discover and enable all necessary data-race PPs, with sync API PPs being enabled by the maximal state space assumption.
 Then we simply lean on the soundness of DPOR~\cite{dpor} to guarantee finding the buggy interleaving within this state space.
 \end{proof}
@@ -775,5 +821,5 @@ then you can simply point out that if you want dpor to be sound wrt this bug, yo
 %Thanks to Michael J. ``Sully'' Sullivan and Carlo Angiuli, who double-checked the proof and helped with the flow of explanation.
 
 \bibliographystyle{abbrvnat}
-\bibliography{citations}{}
+\bibliography{../citations}{}
 \end{document}
