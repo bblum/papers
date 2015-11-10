@@ -55,6 +55,20 @@ that is, a thread can cause itself to block on some condition,
 and other threads may wake it up,
 but there exists no primitive which one thread can use to revoke another thread's runnable status when that other thread is not itself using the sync API concurrently.
 
+{\bf Halting.}
+From a certain perspective, proving convergence is the same as proving completeness,
+which should be impossible for any runtime analysis of a Turing-complete language \cite{entscheidungsproblem}.
+However, being already limited by practical real-world CPU budgets,
+we are already accepting that many tests will time out.
+We are concerned with proving the limited case that when \quicksand~{\em does} terminate with all state spaces completed, the verification is sound.
+Inversely, during our proof, when we show that Iterative Deepening will eventually converge to an arbitrary buggy interleaving, we assume that no intermediate state spaces contain nontermination bugs.
+If they do, for the sake of testing/verification, we are satisfied with finding that bug instead.
+In this proof, we assume that the MC's heuristic infinite loop checker has no false negatives;
+i.e., it will never get stuck forever in an infinite loop without identifying a bug, while occasionally producing false positives.
+% , such as for a program trying to find a counterexample for Sally's Conjecture.
+% TODO: cite some unproved mathematical conjecture by a woman, as an example of an undecidable program?
+
+
 \subsection{Assumptions for malloc-recycle soundness}
 
 {\bf Malloc is a magic black box.}
