@@ -1,0 +1,78 @@
+\section{Assumptions}
+
+This section documents the assumptions we make about the concurrency model, language model, and test environment,
+and discusses some limitations that may arise from these assumptions.
+
+\subsection{Assumptions for both proofs}
+
+{\bf Maximal state space.}
+We assume the model checker has all static/hard-coded PPs enabled during this state space exploration,
+and that we are not limited by a pressing CPU budget.
+Further, we assume that the static PPs include all lock/unlock/trylock operations on mutexes (or whatever other low-level locks are used) and also all higher-level sync primitives which can cause HB (either directly, or because they are built on top of mutexes).
+
+Using only a subset of PPs or aborting early due to time-out could each ruin our ability to reach the goal interleaving or goal state space.
+However, Iterative Deepening aims to test the most important interleavings with the time available,
+so in the case of not enough time, our point here is that continuing the current state space fits that goal best.
+%An alternate approach would be to accept the malloc-recycle PPs, giving them the lowest possible priority, just in case any CPUs would otherwise be idle with not enough jobs to run.
+%In that case, our point is to justify deprioritizing those jobs so aggressively.
+
+%{\bf Low overhead.}
+%We assume the model checker can identify malloc-recycle data races with little or no overhead beyond what's already associated with data race detection.
+%Our MC already tracks the heap state, so we implement this check for free with a simple generation counter.
+
+{\bf Shared memory thread communication.}
+We assume that the only way for two threads' transitions to affect each other's behaviour, should they be reordered,
+is through either shared memory or a correctly-instrumented sync API.
+Both DPOR and data-race detection rely on this assumption,
+as any other way for threads to affect each other's behaviour would invisibly reduce independence and break soundness.
+For brevity in these proofs, we refer to all thread communication as shared memory,
+and assume that other mechanisms, such as system calls that access the filesystem, could be instrumented to fit the same model.
+
+{\bf Schedule nondeterminism only.}
+We discount the possibility of other types of nondeterminism,
+such as program input nondeterminism (including randomness/timestamps) or
+store-buffer nondeterminism on weak-memory architectures.
+We refer the reader to \cite{klee,portend} for related work on the former, and to \cite{tsopso} for the latter.
+
+\subsection{Assumptions for Iterative Deepening convergence}
+
+{\bf Locks are correct.}
+Because hybrid data-race detection uses lockset analysis to conclude that many access pairs could not possibly race,
+we assume that no preemption during a lock-protected critical section could cause a contending thread to make meaningful progress.
+This extends to use of disabling/enabling interrupts during kernel-space testing, which we model as a single global lock,
+although we do not model RCU \cite{rcu}.
+Our data-race analysis also models the behaviour of r/w locks and 1-initialized semaphores (the latter heuristically), although this is tangential to the proof.
+
+Should the user wish to verify these properties of locks,
+they could either run a locking test separately (as we suggest in our paper),
+which would cheaply test the locks to an extent limited by the separate test case;
+or they could remove the data-race analysis's lockset tracking,
+which would expensively test all the main program's required locking properties in tandem with the program itself.
+
+{\bf No forcibly blocking other threads.}
+We assume the sync API behaves much like pthreads and/or message-passing:
+that is, a thread can cause itself to block on some condition,
+and other threads may wake it up,
+but there exists no primitive which one thread can use to revoke another thread's runnable status when that other thread is not itself using the sync API concurrently.
+
+\subsection{Assumptions for malloc-recycle soundness}
+
+{\bf Malloc is a magic black box.}
+We assume the malloc implementation is correct (e.g., it won't double-allocate blocks), although we don't assume any implementation details such as a tendency to reuse blocks or allocate adjacent ones.
+%particular allocation pattern regarding adjacency/coalescing/reuse.
+In fact, in our experiments we instruct our MC to ignore all potential PPs which might be inserted on malloc's internal mutex;
+in essence treating it as a ``magic primitive'', because we are not interested in verifying its implementation.
+Furthermore, we configured DPOR to ignore the internal heap metadata accesses
+when tracking shared memory conflicts to achieve greater state space reduction
+(i.e., if the only consequence of reordering two transitions is malloc returning different addresses, we consider them independent).
+%for the purpose of avoiding malloc-only shared memory conflicts.
+This is not without consequences; see section~\ref{sec:owned}.
+
+{\bf Sharing heap addresses.}
+Finally, we assume that the only way the program can obtain heap addresses is through the return value of malloc().
+Because we are testing C programs, any bizarre violations of this assumption are technically possible,
+but should you wish to check for bugs like this,
+%we would recommend a data-flow analysis which is much cheaper than model checking anyway.
+symbolic execution \cite{klee} would be more appropriate.
+
+For Section \ref{sec:proof}, we further assume a malloced block's address cannot be obtained through arithmetic on the address of a different block; in Section \ref{sec:owned} we show how to account for this case by relaxing the previous ``black box'' assumption.

@@ -1,6 +1,6 @@
 .PHONY: clean
 
-proof: proof.tex ../citations.bib
+proof: proof.tex di.tex assumptions.tex convergence.tex recycle.tex ../citations.bib
 	pdflatex $< ; bibtex $(<:%.tex=%) ; pdflatex $< ; pdflatex $<
 
 clean:
