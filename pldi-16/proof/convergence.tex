@@ -193,7 +193,7 @@ is reachable, and we are not allowed to use $\pai$ until we find the data race b
 
 Consider the alternate interleaving prefix:
 \[
-	\mathcal{I}' = \{..., (\tai \cup \ppnext\pai', \paj), \ppothers\pai' \}
+	\mathcal{J} = \{..., (\tai \cup \ppnext\pai', \paj), \ppothers\pai' \}
 \]
 where we have reordered $\ppnext\pai$ to before the execution of $\ppothers\pai$.
 Here, $\paj$ is the first sync API PP in $\alpha$ after $\pai$ (as $p_{\alpha(i+1)}$ may be a not-yet-reachable data race PP),
@@ -207,12 +207,12 @@ The only certainty so far is that $\ppnext\pai'$ begins with $\ppinstr\pai$.
 It would be straightforward to show that any other data races in $\ppnext\pai'$, which would be discovered in this interleaving,
 could be reordered to after $\ppothers\pai'$,
 eventually transforming $\ppnext\pai'$ to contain no conflicting memory accesses but $\ppinstr\pai$ itself.
-Unfortunately, $\mathcal{I}'$ is not necessarily reachable, as $\ppothers\pai'$ still includes any data-race PPs from $\ppothers\pai$,
+Unfortunately, $\mathcal{J}$ is not necessarily reachable, as $\ppothers\pai'$ still includes any data-race PPs from $\ppothers\pai$,
 which were ordered after $\pai$ in $\mathcal{I}$ and hence not covered by the inductive assumption.
 Hence, we must perform the same ``coalescing'' for each thread in $\ppothers\pai'$ that we did for $\alpha$,
 which we will abbreviate:
 \[
-	\mathcal{I}'' = \{..., (\tai \cup \ppnext\pai', \paj), \coalesce{\ppothers\pai'} \}
+	\mathcal{K} = \{..., (\tai \cup \ppnext\pai', \paj), \coalesce{\ppothers\pai'} \}
 \]
 For each other thread $\beta$, $\coalesce{\ppothers\pai'}$ will contain a single transition,
 starting with the first instruction of $\beta$'s corresponding transition in $\ppothers\pai$,
@@ -233,10 +233,10 @@ that $\mathcal{I''}$ is reachable.
 \end{figure}
 
 Now, we show by induction that a data race on $\ppinstr\pai$ will be reachable.
-We assume that a state space $\mathcal{S}$ containing $\mathcal{I}''$,
+We assume that a state space $\mathcal{S}$ containing $\mathcal{K}$,
 plus $n$ unique data race PPs among $\ppnext\pai'$ and $\ppothers\pai$,
 will be reachable.
-(In the base case, the number of new data-race PPs is 0, and $\mathcal{I}''$'s reachability is justified above.)
+(In the base case, the number of new data-race PPs is 0, and $\mathcal{K}$'s reachability is justified above.)
 We must show that in this state space, if the $\ppinstr\pai$ data race is not reachable,
 a new unique data-race PP nevertheless will be.
 
