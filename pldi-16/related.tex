@@ -71,15 +71,14 @@ which is tantamount to adding a new state space in \quicksand.
 Our proof in \sect{\ref{sec:recycle}} allows eliminating this special case with no additional replay beyond what DPOR already requires.
 
 Portend \cite{portend} is the most closely related work we have found.
-% FIXME: "limited"?
-Based on single-pass data race reports, it explores a limited state space to classify candidates in a taxonomy of likely severity.
-Compared to us, Portend additionally finds non-failing races which nevertheless cause
-%suspiciously
-different program output, while we depend on directly detecting failures.
+Based on single-pass data race reports, it tests alternate program executions to classify candidates in a taxonomy of likely severity.
 It uses symbolic execution to test input nondeterminism as well as schedule nondeterminism,
 while we explore the latter only.
+Portend additionally reports non-failing races which nevertheless cause
+%suspiciously
+different program output, which is orthogonal to our technique.
 However, Portend does not test alternate interleavings {\em in advance} of knowing data races,
-which is necessary to expose some bugs (\sect{\ref{sec:eval-falseneg}}).
+which is necessary to expose certain bugs (\sect{\ref{sec:eval-falseneg}}) or to provide full verification (\sect{\ref{sec:totalverif}}).
 % XXX: Is this true??
 It also assumes the POSIX synchronization API, so cannot verify arbitrary synchronization algorithms such as we do with \mxtest.
 Future work could combine the two approaches, using MC to produce new data-race traces for Portend to classify, or using Portend's analysis to inform \quicksand's state space priorities.
@@ -87,9 +86,6 @@ Future work could combine the two approaches, using MC to produce new data-race 
 % \subsection{Other Concurrency Testing Approaches} % TODO: Well?
 %
 % blah blah pldi'15 symbiosis DSP
-
-% TODO: talk about data race detectors???
-% eg Scalable Race Detection for Android Applications -- uses domain specific heuristics to filter out false positives
 
 % Note that BPOR paper claims that ICB(3+) repeats LOADS of work, and that makes it ok for landslide-ID to repeat work.
 
