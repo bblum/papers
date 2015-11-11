@@ -157,6 +157,7 @@ A PP $\pai$ such that either $\ppinstr{\pai}$ is part of a reachable data race, 
 \newcommand\paj{\ensuremath{p_{\alpha{}j}}}
 \newcommand\pbk{\ensuremath{p_{\beta{}k}}}
 \newcommand\tbh{\ensuremath{t_{\beta{}h}}}
+\newcommand\pgk{\ensuremath{p_{\gamma{}k}}}
 \newcommand\tgk{\ensuremath{t_{\gamma{}k}}}
 \newcommand\tgka{\ensuremath{t_{\gamma{}k1}}}
 \newcommand\tgkb{\ensuremath{t_{\gamma{}k2}}}
@@ -220,32 +221,57 @@ plus $n$ unique data race PPs among $\ppnext\pai'$ and $\ppothers\pai$,
 will be reachable.
 (In the base case, the number of new data-race PPs is 0, and $\mathcal{K}$'s reachability is justified above.)
 We must show that in this state space, if the $\ppinstr\pai$ data race is not reachable,
-a new unique data-race PP nevertheless will be.
+a new unique data-race PP will instead be reachable.
 
-By the definition of fully-relevant interleaving, it must be possible for some other thread $\beta$ to execute an instruction that conflicts with $\ppinstr\pai$.
+By the definition of fully-relevant interleaving, $\mathcal{I}$ guarantees that some other thread $\omega$ can execute a data-racing instruction with $\ppinstr\pai$.
 %
-If this conflict is not observed in $\mathcal{S}$,
-it means that some preceding thread communication (involving $\beta$ and any number of other threads, possibly including $\alpha$)
-must exist to have suppressed it,
-and that not all possible interleavings of that communication were tested in $\mathcal{S}$.
-%
-By the soundness of DPOR \cite{dpor}, if a program behaviour is possible by interleaving threads at the boundaries of
+By the soundness of DPOR, if a program behaviour is possible by interleaving threads at the boundaries of
 the given transitions, that interleaving will be tested.
-By contrapositive\footnote{
-Still constructive: again, going from $A \rightarrow B$ to $\neg B \rightarrow \neg A$.},
-% XXX: Handwave. This neglects the possiblity that TWO necessariy sites of interleaving are as such, and that they are dependent (both preemptions must occur before either data race can be identified).
-% TODO: Prove that there must exist one single transition with next paragraph's property, without needing to preempt on any other such transition.
-because it was not tested, a necessary site of interleaving must be in the middle of some transition, rather than at its boundaries.
+By contrapositive,
+because $\omega$'s data-racing instruction was not tested in $\mathcal{S}$, one or more necessary sites of interleaving must be in the middle of some transition, rather than at its boundaries.
 
-Let $\tgk$ be this transition, $\tgka$ and $\tgkb$ be the result of splitting at that site, and $\tdl$ be the communicating transition of the other thread.
+However, we do not get a {\em single} such transition for free.
+We have arrived at the crux of the proof:
+to show that there cannot be multiple data-race PPs which must both be enabled before either data race can be identified.
+Such a circular dependency seems intuitively impossible, but to actually find the ``first reachable'' PP is not straightforward.
+We require that in $\mathcal{S}$, there exists a single transition $\tgk$ that can alone be split into $\{\tgka,\tgkb\}$,
+and some other communicating transition $\tdl$ which conflicts with $\tgkb$.
+%i.e., $\{\tgka, \tdl', \tgkb'\}$ exposes new program behaviour.
+
+% TODO: rename gamma->beta, delta->gamma
+We show this by contradiction\footnote{
+Regrettably, we could not devise a constructive algorithm for this part of the proof.
+We leave actually identifying the first-reachable data-race PP to future work,
+and trust that merely showing one must exist will satisfy the demands of modern verification.}:
 %
-If the interleaving $\{\tgka, \tdl', \tgkb'\}$ can produce a different program behaviour than $\{\tgka, \tgkb, \tdl\}$,
-then again by the soundness of DPOR, $\tgkb$ and $\tdl$ must contain some shared memory conflict.
-By the maximal state space assumption, all sync API PPs are enabled, so the locks held by $\gamma$ cannot change during $\tgk$,
-and if $\tdl$ can be reordered to the middle of $\tgk$, the locksets of $\gamma$ and $\delta$ cannot overlap,
-and likewise there is no sync-enforced MHB relation.
+Assume that for all $\tgk \in \mathcal{S}$,
+and all possible points $\pgk'$ at which to split it into $\{\tgka,\tgkb\}$,
+and all other non-MHB transitions $\tdl$,
+$\tdl$ has no shared memory conflicts with $\tgkb$.
+%
+Let $\mathcal{S}' = \mathcal{S} \cup \pgk'$, i.e., the state space obtained by adding any such $\pgk'$ to $\mathcal{S}$'s PP-set.
+By the soundness of DPOR, because any such $\tdl$ is independent with $\tgkb$,
+\[
+	\{..., \tgka, \tgkb, \tdl\}
+	\equiv
+	\{..., \tgka, \tdl', \tgkb'\}
+\]
+Hence, $\mathcal{S} \equiv \mathcal{S}'$. % This jump to full-state-space-equivalence seems a bit big, but the middle steps are all just more equivalence, obviously.
+Then, the above assumption also applies to $\mathcal{S}'$,
+which shows that for any {\em pair} of transitions such as $\tgk$, adding two new PPs cannot expose new program behaviour.
+Hence, inductively, no set of new PPs of any size would expose new program behaviour not already exposed in $\mathcal{S}$.
+However, the instruction by $\omega$ which conflicts with $\ppinstr\pai$ was not observed in $\mathcal{S}$,
+so we have our contradiction.
+
+Hence, if $\mathcal{S}$ does not expose the $\ppinstr\pai$ data race directly,
+there must exist some transitions $\tgk = \{\tgka,\tgkb\}$ and $\tdl$ such that $\tdl$ shared-memory-conflicts with $\tgkb$ and could be interleaved immediately before it.
+By the maximal state space assumption, all sync API PPs are already enabled, so the locksets of $\beta$ and $\gamma$ cannot overlap and there is no MHB relation.
+%%% more verbose version
+%so the locks held by $\gamma$ cannot change during $\tgk$,
+%and if $\tdl$ can be reordered to the middle of $\tgk$, the locksets of $\gamma$ and $\delta$ cannot overlap,
+%and likewise there is no sync-enforced MHB relation.
 Hence the memory conflict between $\tdl$ and $\tgkb$ will be identified as a data-race.
-Because $\tgk$ was split such that the first instruction of $\tgkb$ was not previously a PP, the data-race was not already enabled as a PP.
+Finally, because $\tgk$ was not previously split by a PP, the data-race was not already discovered.
 
 {\bf Reaching $\mathbf{p_{\alpha{}i}}$.}
 Hence either a data-race with $\ppinstr\pai$ will be identified,
