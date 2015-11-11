@@ -65,23 +65,6 @@ The {\em maximal state space} is simply the one explored by SSS-MC: all statical
 %However, should new data-race PPs be added during a test, the new maximal state space will be the one including those as well.
 %% don't say this ^ -- because when you add dr pps, they add in pairs and there would be multiple maximals, at least until they each get explored and subseuqnetly add a pp of the other of the pair.
 
-\subsection{Classifying data races as buggy or benign} % FIXME: dont say 'benign'; also, do you have enough left to say that this can even still be a full subsection?
-
-Iterative Deepening must be seeded with some initial state spaces,
-which can be any number of subsets of the statically-available PPs that SSS-MC would use.
-While exploring those state spaces, runtime data-race detection may find data-race candidates that we wish to investigate further.
-Because data races indicate access pairs that can interleave at instruction granularity,
-it is logical to re-execute the test and issue preemptions during those instructions to test alternate thread interleavings~\cite{racefuzzer,portend}.
-
-With Iterative Deepening, this is a simple matter of creating a new state space with a PP enabled on the racing instructions by each thread.
-That state space may expose a failure, in which case we report a data-race bug,
-or complete successfully, which indicates a benign or false-positive data race.
-It may also uncover a new data-race candidate in some alternate interleaving,
-in which case we iteratively advance to a superset state space containing PPs for both racing access pairs.
-Because Iterative Deepening is constrained by a CPU budget,
-we may time out before completing a data race's associated state space,
-in which case it remains a potential false positive that the user must handle.
-
 \subsection{Choosing the best job}
 
 \newcommand\PendingJobs{\ensuremath{\mathcal{P}}}
@@ -160,6 +143,75 @@ and $j_1$ perhaps ran much longer before suspending.
 We heuristically assume the smaller job's ETA is more accurate
 to avoid repeatedly resuming larger jobs briefly while their ETAs only become worse
 (it lets us avoid thrashing in \quicksand).
+
+\subsection{Classifying data races as buggy or benign}
+
+Iterative Deepening must be seeded with some initial state spaces,
+which can be any number of subsets of the statically-available PPs that SSS-MC would use.
+While exploring those state spaces, runtime data-race detection may find data-race candidates that we wish to investigate further.
+Because data races indicate access pairs that can interleave at instruction granularity,
+it is logical to re-execute the test and issue preemptions during those instructions to test alternate thread interleavings~\cite{racefuzzer,portend}.
+
+With Iterative Deepening, this is a simple matter of creating a new state space with a PP enabled on the racing instructions by each thread.
+That state space may expose a failure, in which case we report a data-race bug,
+or complete successfully, which indicates a benign or false-positive data race.
+It may also uncover a new data-race candidate in some alternate interleaving,
+in which case we iteratively advance to a superset state space containing PPs for both racing access pairs.
+Because Iterative Deepening is constrained by a CPU budget,
+we may time out before completing a data race's associated state space,
+in which case it remains a potential false positive that the user must handle.
+
+\subsection{Convergence to total verification}
+\label{sec:totalverif}
+
+Although Iterative Deepening's main purpose is to heuristically choose the most effective PP subsets to test
+when the maximal state space is too large,
+some tests may be small enough that their maximal state spaces can also be completed in time.
+For such tests, a SSS-MC tool configured to preempt on every shared memory access \cite{spin} would provide a total verification of all possible thread schedules, if it could complete in time.
+In this section, we show that Iterative Deepening provides a verification of the same strength if it completes the state spaces associated with every discovered data-race PP.
+%In other words, contrapositively,
+%if it is possible to find a bug with any sequence of preemptions on any instruction whatsoever,
+%an equivalent thread interleaving will be reachable using only data-race PPs and synchronization API PPs.
+A proof sketch of the contrapositive statement follows.
+
+\begin{theorem}
+If a bug can be exposed by any thread interleaving possible by preempting on any instruction,
+Iterative Deepening will eventually test an equivalent interleaving which exposes the same bug.
+\end{theorem}
+\begin{proof}
+The proof has two parts:
+first, we show that preempting on data-racing instructions and synchronization API boundaries suffices to test all possible program behavior;
+second, we show that Iterative Deepening will eventually detect all such data races.
+
+\begin{lemma}[Equivalence of irrelevant PPs]
+For any thread interleaving possible by preempting on any instruction,
+there exists an equivalent interleaving which uses only data-race PPs and sync API PPs.
+	\label{lem:relevant}
+\end{lemma}
+
+asdfadsf % TODO
+
+\begin{definition}[Reachable data race]
+A data race candidate (or associated PP) is reachable if it will be identified by an MC configured to preempt only on already-reachable PPs.
+\end{definition}
+Initially, the statically-available sync API PPs are reachable. Reachability of data-race PPs is transitive.
+\begin{lemma}[Saturation of data-race PPs]
+	Given any interleaving comprising only data-race PPs and sync API PPs, all such PPs are reachable.
+	\label{lem:saturation}
+\end{lemma}
+
+asdfasdfas % TODO
+
+
+To conclude,
+for any possible interleaving, Lemma \ref{lem:relevant} provides an equivalent one with only data-race and sync API PPs,
+and Lemma \ref{lem:saturation} proves all involved PPs are reachable.
+Hence, Iterative Deepening will eventually test a state space containing the equivalent buggy interleaving.
+\end{proof}
+
+Our full proof
+{\em [submitted as supplementary material; will be cited as a tech report in the final version of the paper]}
+discusses our assumptions explicitly and includes more formal definitions and structure.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -432,8 +484,8 @@ hence the accesses can race without fitting the malloc-recycle pattern.
 Note especially that our reasoning does not require PPs on the internal locking of {\tt malloc} or {\tt free},
 which are ideal candidates to ignore via {\tt without\_function} (\sect{\ref{sec:landslide}}) to reduce state space size.
 Our full proof
-{\em [submitted as supplementary material; will be cited as a tech report in the final version of the paper]}
-discusses our assumptions explicitly and provides the similar cases in more detail.
+{\em [see supplementary material]}
+provides the similar cases in more detail.
 \renewcommand\proofname{Proof}
 
 %For further discussion and for the full proof, refer to

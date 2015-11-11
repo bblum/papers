@@ -295,6 +295,7 @@ TODO
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% TODO: You should introduce this in the narrative as a key contribution way earlier.
 \subsection{Finding nondeterministic data-race candidates}
 \label{sec:eval-falseneg}
 Some memory accesses may be hidden in a control flow path that requires a nondeterministic preemption to be executed.
@@ -370,6 +371,12 @@ the superset state spaces we run later will always repeat each branch of their a
 %
 We measured the proportion of repeated work among completed state spaces across our test suite;
 on average, {\bf \large 999\%} of the interleavings in each test were repeated, with some tests as high as {\bf \large 9999\%}.
+
+In some cases, this repeated work can cause Iterative Deepening to be slower than SSS-MC to find certain bugs,
+for example, if both {\tt mutex\_lock} and {\tt mutex\_lock} preemptions together would expose a bug, but not either alone.
+Similarly, when pursuing total verification (\sect{\ref{sec:totalverif}}),
+if the state space resulting from preempting on every instruction could be completed,
+SSS-MC will achieve that verification faster, as Iterative Deepening will test many subsets of data-race PPs first.
 Predicting whether each still-untested interleaving will uncover new PPs is not straightforward,
 but we believe future implementations of Iterative Deepening could incorporate cross-job memoization
 to prune some or all of this repeated work.

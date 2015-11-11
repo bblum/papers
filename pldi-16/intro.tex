@@ -35,6 +35,11 @@ Named after the analogous technique in chess AI \cite{iterative-deepening-chess-
 Rather than attempting to search a single state space with every available preemption point enabled (e.g., preempting on every pthread API call),
 \quicksand~tests many different state spaces corresponding to subsets of those points, managing a model checker instance to explore each one.
 It estimates the size of each state space to decide when long-running instances should be suspended, and dynamically generates new state spaces based on data race analysis.
+%In fact, if given enough time to fully test all discovered data-race preemption points,
+%Iterative Deepening provides a full verification of all thread schedules that could arise from preempting anywhere.
+In fact, Iterative Deepening is fully general:
+we have proved that if it completes all state spaces resulting from data-race preemption points,
+that serves as a total verification of all possible thread interleavings of the given test program.
 
 We evaluated \quicksand~by testing \numstudence~student thread libraries and kernels from the undergraduate OS classes at Carnegie Mellon, Berkeley, and the University of Chicago.
 We show that \quicksand~finds more bugs than the conventional stateless model checking approach given the same CPU budget,
@@ -43,6 +48,7 @@ and furthermore that adding data-race preemption points quickly exposes bugs mis
 This paper's contributions are as follows:
 \begin{enumerate}
 	\item Iterative Deepening, a new technique for combining data-race analysis with stateless model checking, and \quicksand, an open source implementation of the technique;
+	\item A proof of convergence, which shows that fully testing every discovered data-race preemption point is equivalent to testing all possible thread schedules, should that be possible in the given CPU budget;
 	\item A new tactic for eliminating one class of false-positive data races,
 		which cannot soundly be used in a single-pass analysis,
 		but which we prove correct when used with Iterative Deepening;
@@ -52,8 +58,8 @@ This paper's contributions are as follows:
 \end{enumerate}
 
 The remainder of the paper is organized as follows.
-\sect{\ref{sec:design}} discusses the background and design of Iterative Deepening,
-\sect{\ref{sec:implementation}} explains \quicksand's approach to implementing it,
+\sect{\ref{sec:design}} discusses the background and design of Iterative Deepening, including our proof of convergence,
+\sect{\ref{sec:implementation}} explains \quicksand's approach to implementing it, including our new false-positive data-race tactic,
 \sect{\ref{sec:eval}} presents our evaluation,
 \sect{\ref{sec:future}} discusses limitations and future work,
 \sect{\ref{sec:related}} surveys the related work,
