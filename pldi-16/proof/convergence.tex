@@ -148,26 +148,6 @@ reachable data races.
 A PP $\pai$ such that either $\ppinstr{\pai}$ is part of a reachable data race, or a sync API boundary.
 \end{definition}
 
-%%% weird backwards-induction thingie i came up with at the airport that doesn't work
-%\begin{lemma}
-%	Given a fully-relevant interleaving
-%	\[
-%		\mathcal{I} = \{ ..., (\tai,\pai), \ppothers{\pai}, (t_{\alpha(i+1)},p_{\alpha(i+1)}), ... \}
-%	\]
-%	if $\pai$ is a data-race PP, and the all PPs in the interleaving prefix
-%	\[
-%		\mathcal{J} = \{ ..., (\tai \cup t_{\alpha(i+1)}',p_{\alpha(i+1)}'), \ppothers(\pai)' \}
-%	\]
-%	are reachable, then $\pai$ is reachable.
-%	\label{lem:coalesce}
-%\end{lemma}
-%
-%Note here that in $\mathcal{J}$, some instructions of $t_{\alpha(i+1)}$ may change because they were reordered with $\ppothers(\pai)$;
-%i.e., $\ppinstr(\pai)$ may not necessarily be the only site of thread communication,
-%and some other conflicts may cause $t_{\alpha(i+1)}$ to behave differently.
-%Hence we have labelled it $t_{\alpha(i+1)}'$, and similar for thread $\alpha$'s next PP.
-%Nevertheless, the first instruction of $t_{\alpha(i+1)}'$ must still be the same as $\ppinstr{\pai}$.
-
 \begin{lemma}
 	All PPs of any fully-relevant interleaving are reachable.
 	\label{lem:saturation}
@@ -191,6 +171,7 @@ For both the base case and inductive step, we know (vacuously, for the former) t
 We must show that a data race involving $\ppinstr\pai$
 is reachable, and we are not allowed to use $\pai$ until we find the data race between $\ppinstr\pai$ and $\ppothers\pai$.
 
+{\bf Coalescing not-yet-reachable data race PPs.}
 Consider the alternate interleaving prefix:
 \[
 	\mathcal{J} = \{..., (\tai \cup \ppnext\pai', \paj), \ppothers\pai' \}
@@ -217,14 +198,14 @@ which we will abbreviate:
 For each other thread $\beta$, $\coalesce{\ppothers\pai'}$ will contain a single transition,
 starting with the first instruction of $\beta$'s corresponding transition in $\ppothers\pai$,
 and ending with the next sync API PP in $\beta$, which we'll call $\pbk$.
-Again, the only certainly-executed instruction by any thread after $\tai$ is $\ppinstr\pai$.
+Again, the only certainly-executed instruction by $\alpha$ after $\tai$ is $\ppinstr\pai$.
 It is even possible that neither $\ppinstr\pai$ nor any other instruction by thread $\alpha$ will conflict with any other thread,
 until a different data race PP between two other threads is discovered,
 as shown in Figure~\ref{fig:threethreads}.
 
 It follows from the inductive hypothesis (which covers the prefix indicated by ``$...$''),
 and from sync API PPs being reachable by definition,
-that $\mathcal{I''}$ is reachable.
+that $\mathcal{K}$ is reachable.
 
 \begin{figure}[t]
 	TODO % TODO
@@ -232,6 +213,7 @@ that $\mathcal{I''}$ is reachable.
 	\label{fig:threethreads}
 \end{figure}
 
+{\bf Finding the next reachable data-race PP.}
 Now, we show by induction that a data race on $\ppinstr\pai$ will be reachable.
 We assume that a state space $\mathcal{S}$ containing $\mathcal{K}$,
 plus $n$ unique data race PPs among $\ppnext\pai'$ and $\ppothers\pai$,
@@ -243,7 +225,6 @@ a new unique data-race PP nevertheless will be.
 By the definition of fully-relevant interleaving, it must be possible for some other thread $\beta$ to execute an instruction that conflicts with $\ppinstr\pai$.
 %
 If this conflict is not observed in $\mathcal{S}$,
-% XXX: Handwave? I'm not entirely convinced by this step. How does it justify skipping all the way to the first possible "reachable" data race among the chain of PPs needed to expose \beta's communication with \ppinstr\pai?
 it means that some preceding thread communication (involving $\beta$ and any number of other threads, possibly including $\alpha$)
 must exist to have suppressed it,
 and that not all possible interleavings of that communication were tested in $\mathcal{S}$.
@@ -252,6 +233,8 @@ By the soundness of DPOR \cite{dpor}, if a program behaviour is possible by inte
 the given transitions, that interleaving will be tested.
 By contrapositive\footnote{
 Still constructive: again, going from $A \rightarrow B$ to $\neg B \rightarrow \neg A$.},
+% XXX: Handwave. This neglects the possiblity that TWO necessariy sites of interleaving are as such, and that they are dependent (both preemptions must occur before either data race can be identified).
+% TODO: Prove that there must exist one single transition with next paragraph's property, without needing to preempt on any other such transition.
 because it was not tested, a necessary site of interleaving must be in the middle of some transition, rather than at its boundaries.
 
 Let $\tgk$ be this transition, $\tgka$ and $\tgkb$ be the result of splitting at that site, and $\tdl$ be the communicating transition of the other thread.
@@ -264,7 +247,8 @@ and likewise there is no sync-enforced MHB relation.
 Hence the memory conflict between $\tdl$ and $\tgkb$ will be identified as a data-race.
 Because $\tgk$ was split such that the first instruction of $\tgkb$ was not previously a PP, the data-race was not already enabled as a PP.
 
-Hence either a data-race including $\ppinstr\pai$ will be identified,
+{\bf Reaching $\mathbf{p_{\alpha{}i}}$.}
+Hence either a data-race with $\ppinstr\pai$ will be identified,
 or an infinite/nonterminating sequence of other unique data-race PPs will be identified,
 but by the halting assumption, this would constitute an infinite loop bug, which is sufficient.
 (Alternatively, for any program with a finitely-sized instruction listing, the number of unique instruction pairs is finite.)
@@ -272,28 +256,6 @@ This finishes our inner induction.
 Hence $\pai$ is reachable, finishing our outer induction.
 Hence all PPs in $\mathcal{I}$ are reachable.
 \end{proof}
-
-%%%%%%%%%%%%%%%%% this didn't work out
-%We proceed by inducting on the PPs according to the order in which for each PP $\pai$, $\ppnext{\pai}$ appeared in the trace.
-%Note that this is not necessarily the same as the order of the $\pai$s themselves in $\mathcal{I}$;
-%i.e., it is the order of the racy instructions rather than the order of their immediately preceding preemptions\footnote{
-%Why use this strange ordering, rather than simply inducting by the order of preemptions?
-%Figure~\ref{fig:why-ppnext} shows why the first PP, ordered by earliest point of preemption, might not necessarily be the first reachable one.
-%It is also true that the $\ppnext{\pai}$ order does not necessarily match the PPs' reachability dependence relation, but it is easier to cover the exception cases using this ordering rather than vice versa.}.
-%
-%\begin{figure}[t]
-%	\caption{to do}
-%	\label{fig:why-ppnext}
-%\end{figure}
-%%%% well, the way we do it, might not be the first reachable one either...
-%
-%\newcommand\pbj{\ensuremath{p_{\beta{}j}}}
-%\newcommand\pgk{\ensuremath{p_{\gamma{}k}}}
-%For both the base case and inductive step, we know (vacuously, for the former) that for each other PP $\pbj$ with $\ppnext{\pbj} \prec \ppnext{\pai} \in \mathcal{I}$, $\pbj$ is reachable.
-%To show $\pai$ is reachable, the proof has two parts.
-%First, we must handle any preceding data-race PPs $\pgk$ with $\ppnext{\pai} \prec \ppnext{\pgk}$.
-%Second, we must show that when {\pai} is removed, a data-race including $\ppinstr{\pai}$ will be identified.
-%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
