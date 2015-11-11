@@ -240,7 +240,7 @@ and some other communicating transition $\tgl$ which conflicts with $\tbkb$.
 
 We show this by contradiction\footnote{
 Regrettably, we could not devise a constructive algorithm for this part of the proof.
-We leave actually identifying the first-reachable data-race PP to future work,
+We leave constructively identifying the first-reachable data-race PP to future work,
 and trust that merely showing one must exist will satisfy the demands of modern verification.}:
 %
 Assume that for all $\tbk \in \mathcal{S}$,
@@ -295,6 +295,6 @@ By Lemma~\ref{lem:equivalent}, there must be some equivalent fully-relevant inte
 %the na\"{i}ve interleaving must be equivalent to some interleaving built of data-race PPs and sync API PPs.
 By Lemma~\ref{lem:saturation}, Iterative Deepening will eventually discover and enable all necessary data-race PPs, with sync API PPs being enabled by the maximal state space assumption\footnote{
 		In the paper we noted that when a bug is found, \quicksand~cancels all superset state spaces, anticipating that they would find the same bug.
-		Because we are concerned with verifying the absence of bugs, we say this also suffices for convergence, but for brevity, we will leave this condition implicit.}.
+		Because we are concerned with verifying the absence of bugs, this also suffices for convergence, although we have left it implicit for brevity.}.
 Then DPOR will find the buggy interleaving within this state space.
 \end{proof}
