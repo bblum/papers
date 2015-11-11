@@ -88,7 +88,7 @@ Thus, our first task is to show that all naive interleavings have an equivalent 
 
 			In other words, we have simply reordered $\ppothers{\pai}$ to between $\pppfx{\rho}$ and $\rho$, removing the irrelevant $\pai$ and adding a new PP $\pai'$, which is relevant by the construction of $\rho$.
 			We know it must be possible to reorder $\ppothers{\pai}$ to after $\alpha$'s execution because no synchronization is done during $\pppfx{\rho}$, hence the other threads' runnability cannot be affected.
-			Likewise $\pppfx{\rho}$ is independent with $\ppothers{\pai}$, so by the soundness of DPOR \cite{dpor}, $\mathcal{I}' \equiv \mathcal{I}$.
+			Likewise $\pppfx{\rho}$ is independent with $\ppothers{\pai}$, so by the soundness of DPOR, $\mathcal{I}' \equiv \mathcal{I}$.
 		\item Otherwise, $\conflicts{\ppothers{\pai}}{\ppnext{\pai}} = \emptyset$, and no instructions among $\ppnext{\pai}$ are a sync API boundary.
 			Then we output the new interleaving:
 			\[
@@ -157,16 +157,11 @@ A PP $\pai$ such that either $\ppinstr{\pai}$ is part of a reachable data race, 
 \newcommand\paj{\ensuremath{p_{\alpha{}j}}}
 \newcommand\pbk{\ensuremath{p_{\beta{}k}}}
 \newcommand\tbh{\ensuremath{t_{\beta{}h}}}
-\newcommand\pgk{\ensuremath{p_{\gamma{}k}}}
-\newcommand\tgk{\ensuremath{t_{\gamma{}k}}}
-\newcommand\tgka{\ensuremath{t_{\gamma{}k1}}}
-\newcommand\tgkb{\ensuremath{t_{\gamma{}k2}}}
-\newcommand\tdl{\ensuremath{t_{\delta{}l}}}
 \newcommand\coalesce[1]{\ensuremath{\mathsf{coalesce}(#1)}}
 
 \begin{proof}
 Let $\mathcal{I} = \{(t_{\alpha{}1}, p_{\alpha{}1}), ...\}$ be the fully-relevant interleaving and PP sequence in the premise of the lemma which exposed a bug.
-We proceed by inducting on the PPs according to the order of their preemptions.
+We proceed by induction on the PPs according to the order of their preemptions.
 (Note that this is not necessarily the same as the order of the racing instructions $\ppinstr\pai$, which occur in $\ppnext\pai$, not in \tai.)
 For both the base case and inductive step, we know (vacuously, for the former) that for each other PP $\pbh$ with $\tbh \prec \tai \in \mathcal{I}$, $\pbh$ is reachable.
 We must show that a data race involving $\ppinstr\pai$
@@ -214,6 +209,11 @@ that $\mathcal{K}$ is reachable.
 	\label{fig:threethreads}
 \end{figure}
 
+\newcommand\tbk{\ensuremath{t_{\beta{}k}}}
+\newcommand\tbka{\ensuremath{t_{\beta{}k1}}}
+\newcommand\tbkb{\ensuremath{t_{\beta{}k2}}}
+\newcommand\tgl{\ensuremath{t_{\gamma{}l}}}
+
 {\bf Finding the next reachable data-race PP.}
 Now, we show by induction that a data race on $\ppinstr\pai$ will be reachable.
 We assume that a state space $\mathcal{S}$ containing $\mathcal{K}$,
@@ -234,53 +234,51 @@ However, we do not get a {\em single} such transition for free.
 We have arrived at the crux of the proof:
 to show that there cannot be multiple data-race PPs which must both be enabled before either data race can be identified.
 Such a circular dependency seems intuitively impossible, but to actually find the ``first reachable'' PP is not straightforward.
-We require that in $\mathcal{S}$, there exists a single transition $\tgk$ that can alone be split into $\{\tgka,\tgkb\}$,
-and some other communicating transition $\tdl$ which conflicts with $\tgkb$.
-%i.e., $\{\tgka, \tdl', \tgkb'\}$ exposes new program behaviour.
+We require that in $\mathcal{S}$, there exists a single transition $\tbk$ that can alone be split into $\{\tbka,\tbkb\}$,
+and some other communicating transition $\tgl$ which conflicts with $\tbkb$.
+%i.e., $\{\tbka, \tgl', \tbkb'\}$ exposes new program behaviour.
 
-% TODO: rename gamma->beta, delta->gamma
 We show this by contradiction\footnote{
 Regrettably, we could not devise a constructive algorithm for this part of the proof.
 We leave actually identifying the first-reachable data-race PP to future work,
 and trust that merely showing one must exist will satisfy the demands of modern verification.}:
 %
-Assume that for all $\tgk \in \mathcal{S}$,
-and all possible points $\pgk'$ at which to split it into $\{\tgka,\tgkb\}$,
-and all other non-MHB transitions $\tdl$,
-$\tdl$ has no shared memory conflicts with $\tgkb$.
+Assume that for all $\tbk \in \mathcal{S}$,
+and all possible points $\pbk'$ at which to split it into $\{\tbka,\tbkb\}$,
+and all other non-MHB transitions $\tgl$,
+$\tgl$ has no shared memory conflicts with $\tbkb$.
 %
-Let $\mathcal{S}' = \mathcal{S} \cup \pgk'$, i.e., the state space obtained by adding any such $\pgk'$ to $\mathcal{S}$'s PP-set.
-By the soundness of DPOR, because any such $\tdl$ is independent with $\tgkb$,
+Let $\mathcal{S}' = \mathcal{S} \cup \pbk'$, i.e., the state space obtained by adding any such $\pbk'$ to $\mathcal{S}$'s PP-set.
+By the soundness of DPOR, because any such $\tgl$ is independent with $\tbkb$,
 \[
-	\{..., \tgka, \tgkb, \tdl\}
+	\{..., \tbka, \tbkb, \tgl\}
 	\equiv
-	\{..., \tgka, \tdl', \tgkb'\}
+	\{..., \tbka, \tgl', \tbkb'\}
 \]
 Hence, $\mathcal{S} \equiv \mathcal{S}'$. % This jump to full-state-space-equivalence seems a bit big, but the middle steps are all just more equivalence, obviously.
 Then, the above assumption also applies to $\mathcal{S}'$,
-which shows that for any {\em pair} of transitions such as $\tgk$, adding two new PPs cannot expose new program behaviour.
+which shows that for any {\em pair} of transitions such as $\tbk$, adding two new PPs cannot expose new program behaviour.
 Hence, inductively, no set of new PPs of any size would expose new program behaviour not already exposed in $\mathcal{S}$.
 However, the instruction by $\omega$ which conflicts with $\ppinstr\pai$ was not observed in $\mathcal{S}$,
 so we have our contradiction.
 
 Hence, if $\mathcal{S}$ does not expose the $\ppinstr\pai$ data race directly,
-there must exist some transitions $\tgk = \{\tgka,\tgkb\}$ and $\tdl$ such that $\tdl$ shared-memory-conflicts with $\tgkb$ and could be interleaved immediately before it.
+there must exist some transitions $\tbk = \{\tbka,\tbkb\}$ and $\tgl$ such that $\tgl$ shared-memory-conflicts with $\tbkb$ and could be interleaved immediately before it.
 By the maximal state space assumption, all sync API PPs are already enabled, so the locksets of $\beta$ and $\gamma$ cannot overlap and there is no MHB relation.
 %%% more verbose version
-%so the locks held by $\gamma$ cannot change during $\tgk$,
-%and if $\tdl$ can be reordered to the middle of $\tgk$, the locksets of $\gamma$ and $\delta$ cannot overlap,
+%so the locks held by $\beta$ cannot change during $\tbk$,
+%and if $\tgl$ can be reordered to the middle of $\tbk$, the locksets of $\beta$ and $\gamma$ cannot overlap,
 %and likewise there is no sync-enforced MHB relation.
-Hence the memory conflict between $\tdl$ and $\tgkb$ will be identified as a data-race.
-Finally, because $\tgk$ was not previously split by a PP, the data-race was not already discovered.
+Hence the memory conflict between $\tgl$ and $\tbkb$ will be identified as a data-race.
+Finally, because $\tbk$ was not previously split by a PP, the data-race was not already discovered.
 
 {\bf Reaching $\mathbf{p_{\alpha{}i}}$.}
 Hence either a data-race with $\ppinstr\pai$ will be identified,
 or an infinite/nonterminating sequence of other unique data-race PPs will be identified,
 but by the halting assumption, this would constitute an infinite loop bug, which is sufficient.
 (Alternatively, for any program with a finitely-sized instruction listing, the number of unique instruction pairs is finite.)
-This finishes our inner induction.
-Hence $\pai$ is reachable, finishing our outer induction.
-Hence all PPs in $\mathcal{I}$ are reachable.
+Hence by the ``next reachable data-race'' induction, $\pai$ is reachable.
+Hence by the ``$\pai$ is reachable'' induction, all PPs in $\mathcal{I}$ are reachable.
 \end{proof}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -298,5 +296,5 @@ By Lemma~\ref{lem:equivalent}, there must be some equivalent fully-relevant inte
 By Lemma~\ref{lem:saturation}, Iterative Deepening will eventually discover and enable all necessary data-race PPs, with sync API PPs being enabled by the maximal state space assumption\footnote{
 		In the paper we noted that when a bug is found, \quicksand~cancels all superset state spaces, anticipating that they would find the same bug.
 		Because we are concerned with verifying the absence of bugs, we say this also suffices for convergence, but for brevity, we will leave this condition implicit.}.
-Then we simply lean on the soundness of DPOR~\cite{dpor} to guarantee finding the buggy interleaving within this state space.
+Then DPOR will find the buggy interleaving within this state space.
 \end{proof}
