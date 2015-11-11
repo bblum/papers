@@ -37,6 +37,10 @@ Intuitively, the behaviour of a program could change by reordering two transitio
 	\label{def:dpor}
 \end{definition}
 
+The soundness of DPOR guarantees that if a program behaviour can possibly be exposed by any thread interleaving around the given transitions/PPs,
+that interleaving will eventually be tested by reordering only such conflicting transitions.
+In other words, reordering memory-independent thread transitions cannot possibly affect program behaviour.
+
 \subsection{Data race and other memory terms}
 
 \begin{definition}[Data race]
@@ -82,9 +86,9 @@ These can immediately be identified as failures by a MC which tracks allocation 
 	& Thread 1 & Thread 2 \\
 	1 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
 	2 & \texttt{\hilight{olivegreen}{free}(x1);} \\
-	3 & & \texttt{// x's memory recycled} \\
+	3 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
 	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
-	5 & & \texttt{// ...initialize...}\\
+	5 & & \texttt{\hilight{commentblue}{// ...initialize...}}\\
 	6 & & \texttt{publish(y);} \\
 	7 & & \texttt{\hilight{brickred}{y->bar = ...;}} \\
 \end{tabular}
@@ -100,7 +104,7 @@ These can immediately be identified as failures by a MC which tracks allocation 
 	2 & & \texttt{x2 = get\_published\_x();} \\
 	3 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
 	4 & \texttt{\hilight{olivegreen}{free}(x1);} \\
-	5 & & \texttt{// x's memory recycled} \\
+	5 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
 	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
 \end{tabular}
@@ -114,8 +118,8 @@ These can immediately be identified as failures by a MC which tracks allocation 
 	& Thread 1 & Thread 2 \\
 	1 & \texttt{publish(x1);} & \\
 	2 & & \texttt{x2 = get\_published\_x();} \\
-	3 & & \texttt{// x not free, so malloc's} \\
-	4 & & \texttt{// return value changes!} \\
+	3 & & \texttt{\hilight{commentblue}{// x not free, so malloc's}} \\
+	4 & & \texttt{\hilight{commentblue}{// return value changes!}} \\
 	5 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	6 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
 	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\

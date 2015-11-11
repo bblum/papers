@@ -109,12 +109,12 @@ By the previous two statements, {\tt p} must be a data race of its own.
 
 
 	6 & & \texttt{p2 = get\_published\_p();} \\
-	7 & & \texttt{// p's memory recycled} \\
+	7 & & \texttt{\hilight{commentblue}{// p's memory recycled}} \\
 	8 & & \texttt{q = \hilight{olivegreen}{malloc}(sizeof *q);} \\
 	9 & & \texttt{\hilight{brickred}{x2 = p2->ptr;}} \\
 
 
-	10 & & \texttt{// x's memory recycled} \\
+	10 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
 	11 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	12 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
 \end{tabular}
@@ -187,12 +187,12 @@ So we must also consider the cases where T1 mallocs the real block and T2 overfl
 \begin{tabular}{rll}
 	& Thread 1 & Thread 2 \\
 	1 & & \texttt{z = malloc(42);} \\
-	2 & & \texttt{// TODO bounds check??} \\
+	2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
 	3 & & \texttt{x2 = \&z[50];} \\
 	4 & \texttt{x1 = malloc(...);} & \\
 	5 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
 	6 & \texttt{\hilight{olivegreen}{free}(x1);} \\
-	7 & & \texttt{// x's memory recycled} \\
+	7 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
 	8 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	9 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
 \end{tabular}
@@ -205,7 +205,7 @@ So we must also consider the cases where T1 mallocs the real block and T2 overfl
 \begin{tabular}{rll}
 	& Thread 1 & Thread 2 \\
 	1 & & \texttt{z = malloc(42);} \\
-	2 & & \texttt{// TODO bounds check??} \\
+	2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
 	3 & & \texttt{x2 = \&z[50];} \\
 	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	5 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
@@ -223,7 +223,7 @@ So we must also consider the cases where T1 mallocs the real block and T2 overfl
 \begin{tabular}{rll}
 	& Thread 1 & Thread 2 \\
 	1 & & \texttt{z = malloc(42);} \\
-	2 & & \texttt{// TODO bounds check??} \\
+	2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
 	3 & & \texttt{x2 = \&z[50];} \\
 	4 & \texttt{x1 = malloc(...);} & \\
 	5 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\

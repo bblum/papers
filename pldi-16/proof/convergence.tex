@@ -123,11 +123,11 @@ Iterative Deepening may need to iterate through some data-race state spaces befo
 		& Thread 1 (Thread 2 similar, with {\tt t1} and {\tt t2} vars swapped) \\
 	1 & \texttt{\hilight{brickred}{x = x + 1;}} \\
 	2 & \texttt{t1\_x = true;} \\
-	3 & \texttt{// "if x raced"} \\
+	3 & \texttt{\hilight{commentblue}{// "if x raced"}} \\
 	4 & \texttt{if (x == 1 \&\& t2\_x) \{} \\
 	5 & \texttt{~~~~\hilight{brickred}{y = y + 1;}} \\
 	6 & \texttt{~~~~t1\_y = true;} \\
-	7 & \texttt{~~~~// "if y raced"} \\
+	7 & \texttt{~~~~\hilight{commentblue}{// "if y raced"}} \\
 	8 & \texttt{~~~~if (y == 1 \&\& t2\_y) \{} \\
 	9 & \texttt{~~~~~~~~panic();} \\
 	10 & \texttt{~~~~\}} \\
