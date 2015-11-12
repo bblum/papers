@@ -293,6 +293,10 @@ We also counted the number of malloc-recycle false positives that \landslide~sup
 
 TODO
 
+% TODO: Make a CDF graph of how many tests got total verification here.
+
+% TODO: Figure out how to visualize how many unique data race PPs were verified, and how many remained as unclassified false positives
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % TODO: You should introduce this in the narrative as a key contribution way earlier.
@@ -306,32 +310,26 @@ to identify a racing access pair as a candidate to begin with.
 %
 We counted how many such data-races, used as PPs, led to \quicksand~finding new bugs,
 thereby making them {\em false negatives} of the single-pass approach.
-% TODO: Put a figure here giving an example of where e.g. a data race only shows up during the contention path of a mutex.
 We classified each data-race candidate according to whether \landslide~had reported them during the first interleaving, before any backtracking or preempting: if so, they were {\em deterministic data races} (hence could be found by single-pass).
 
 To ensure a fair comparison, we disabled \landslide's {\em false-positive}-avoidance techniques during this experiment.
 For example, we reported malloc-recycle data races during the first interleaving as {\em deterministic}, as a single-pass analysis must,
 rather than waiting until future interleavings to confirm them (as explained in \sect{\ref{sec:recycle}}).
 
-				% TODO: Argue:
-				% It is fair to compare multiple pass DR-analysis under Landslide against just a single execution because prior work DR detectors, being not integrated with a MC, are not intended to uncover different results under subsequent runs.
-				% Define a "stress tester" as a class of bug detectors where they are intended to [...]
-				% Maybe say: Do there exist any stress-tester DR detectors where they are intended to produce new results under reruns?
-
 TODO: Present results.
 
-% TODO: restructure this paragraph to account for RaceFuzzer/Portend. Be like, "Yes they explore multiple schedules, but only AFTER finding a race." And/or make this argument in prior work
-One might also wonder: Why is it fair to compare the data race bugs \quicksand~finds (10 CPU-hours)
-against the candidates found by a prior work's single execution (less than a minute)?
-We argue this comparison is meaningful because prior work data-race tools, being not integrated with a MC,
-are not intended to discover new data race candidates under subsequent runs.
+At first, it might seem unfair to compare the data race bugs \quicksand~finds (10 CPU-hours)
+against the candidates found by a prior work's single execution (less than a minute).
+We argue this comparison is meaningful because prior work data-race tools %, being not integrated with a MC,
+are not intended to discover new data race candidates under subsequent runs. %before discovering any initial candidates.
 Running a data-race tool repeatedly for 10 CPU-hours could potentially uncover some of these false negatives at random,
 but stress testing's comparative problem with achieving reliable coverage is already well-understood
 % TODO: 1 more good citation here
 \cite{chess-icb,gambit}.
+%Prior work data-race tools \cite{portend} could be configured to have the same sort of feedback loop as Iterative Deepening,
+%i.e., discovering transitively-reachable data races while testing initial ones,
+%although that would still not simultaneously be able to provide total verifications.
 % TODO: read gambit paper
-%One could run a data-race tool repeatedly for 10 CPU-hours, but the advantage of stateless MC over stress testing is already well-understood.
-% TODO TODO TODO get a big citation for teh above sentence.
 
 
 % Figure out concretely what the data race tricks are that we do, so we can claim them as contributions in the paper. Then ACTUALLY EVALUATE THEM.
@@ -356,7 +354,6 @@ but stress testing's comparative problem with achieving reliable coverage is alr
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% TODO Rename to "Limitations and Future Work"
 \section{Discussion}
 \label{sec:future}
 
@@ -376,7 +373,8 @@ In some cases, this repeated work can cause Iterative Deepening to be slower tha
 for example, if both {\tt mutex\_lock} and {\tt mutex\_lock} preemptions together would expose a bug, but not either alone.
 Similarly, when pursuing total verification (\sect{\ref{sec:totalverif}}),
 if the state space resulting from preempting on every instruction could be completed,
-SSS-MC will achieve that verification faster, as Iterative Deepening will test many subsets of data-race PPs first.
+an SSS-MC tool such as \cite{spin} might achieve that verification faster,
+as Iterative Deepening will test many subsets of data-race PPs first.
 Predicting whether each still-untested interleaving will uncover new PPs is not straightforward,
 but we believe future implementations of Iterative Deepening could incorporate cross-job memoization
 to prune some or all of this repeated work.
