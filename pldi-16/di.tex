@@ -119,8 +119,7 @@ Similarly, when some job finds a bug, we cancel all pending superset jobs, as th
 			}
 		}
 	}
-	// $j_0$'s ETA was bad, but nothing else was better. \\
-	return $j_0$
+	return $j_0$ // ETA was bad, but no other job was better.
 	\caption{Suspending exploration of a state space in favour of a potentially smaller one.}
 	\label{alg:shouldworkblock}
 \end{algorithm}
@@ -152,8 +151,26 @@ While exploring those state spaces, runtime data-race detection may find data-ra
 Because data races indicate access pairs that can interleave at instruction granularity,
 it is logical to re-execute the test and issue preemptions during those instructions to test alternate thread interleavings~\cite{racefuzzer,portend}.
 
-With Iterative Deepening, this is a simple matter of creating a new state space with a PP enabled on the racing instructions by each thread.
-That state space may expose a failure, in which case we report a data-race bug,
+\newcommand\AllJobs{\ensuremath{\mathcal{J}}}
+\begin{algorithm}[t]
+	\SetKwInOut{Input}{Input}
+	\Input{$j_0$, the currently-running job}
+	\Input{\AllJobs, the set of all existing jobs}
+	\Input{$\alpha$, an instruction reported by the MC as part of a racing access pair}
+	\If{$\forall j \in \AllJobs,$
+	\GetPPSet{$j_0$} $\cup$ $\alpha$
+	$\not\subseteq$
+	\GetPPSet{$j$}
+	}{
+		AddNewJob(\GetPPSet{$j_0$} $\cup$ $\alpha$, HeuristicPriority($\alpha$))
+	}
+	\caption{Adding new jobs with data-race PPs.}
+	\label{alg:handledatarace}
+\end{algorithm}
+
+With Iterative Deepening, this is a simple matter of creating a new state space with a PP enabled on the racing instructions by each thread, as shown in Algorithm~\ref{alg:handledatarace}.
+We take care to avoid duplicating any superset state spaces with PPs on multiple data races.
+The new space may expose a failure, in which case we report a data-race bug,
 or complete successfully, which indicates a benign or false-positive data race.
 It may also uncover a new data-race candidate in some alternate interleaving,
 in which case we iteratively advance to a superset state space containing PPs for both racing access pairs.
@@ -166,7 +183,7 @@ in which case it remains a potential false positive that the user must handle.
 
 Although Iterative Deepening's main purpose is to heuristically choose the most effective PP subsets to test
 when the maximal state space is too large,
-some tests may be small enough that their maximal state spaces can also be completed in time.
+some tests may be small enough that even their maximal state spaces could be completed in time.
 For such tests, a SSS-MC tool configured to preempt on every shared memory access \cite{spin} would provide a total verification of all possible thread schedules, if it could complete in time.
 In this section, we show that Iterative Deepening provides a verification of the same strength if it completes the state spaces associated with every discovered data-race PP.
 %In other words, contrapositively,
@@ -183,7 +200,7 @@ The proof has two parts:
 first, we show that preempting on data-racing instructions and synchronization API boundaries suffices to test all possible program behavior;
 second, we show that Iterative Deepening will eventually detect all such data races.
 
-\begin{lemma}[Equivalence of irrelevant PPs]
+\begin{lemma}[Equivalence of non-data-race PPs]
 For any thread interleaving possible by preempting on any instruction,
 there exists an equivalent interleaving which uses only data-race PPs and sync API PPs.
 	\label{lem:relevant}
@@ -199,8 +216,10 @@ Initially, the statically-available sync API PPs are reachable. Reachability of 
 	Given any interleaving comprising only data-race PPs and sync API PPs, all such PPs are reachable.
 	\label{lem:saturation}
 \end{lemma}
+% TODO: Put a figure here giving an example of where a data race is only transitively reachable, not initially reachable.
 
 TODO: sketch the proof of this lemma % TODO
+\\
 
 To conclude,
 for any possible interleaving, Lemma \ref{lem:relevant} provides an equivalent one with only data-race and sync API PPs,
