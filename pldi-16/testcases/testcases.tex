@@ -1,0 +1,548 @@
+%
+% LaTeX template for prepartion of submissions to PLDI'15
+%
+% Requires temporary version of sigplanconf style file provided on
+% PLDI'15 web site.
+%
+\documentclass[pldi]{../sigplanconf-pldi15}
+
+%
+% the following standard packages may be helpful, but are not required
+%
+\usepackage{SIunits}            % typset units correctly
+\usepackage{courier}            % standard fixed width font
+\usepackage[scaled]{helvet} % see www.ctan.org/get/macros/latex/required/psnfss/psnfss2e.pdf
+\usepackage{url}                  % format URLs
+\usepackage{listings}          % format code
+\usepackage{amsthm}          % format code
+\usepackage{enumitem}      % adjust spacing in enums
+\usepackage[linesnumbered,ruled]{algorithm2e}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+%\usepackage{setspace}
+\usepackage[colorlinks=true,allcolors=blue,breaklinks,draft=false]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
+% known bug: http://tex.stackexchange.com/questions/1522/pdfendlink-ended-up-in-different-nesting-level-than-pdfstartlink
+\newcommand{\doi}[1]{doi:~\href{http://dx.doi.org/#1}{\Hurl{#1}}}   % print a hyperlinked DOI
+%\doublespacing
+
+
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+
+\begin{document}
+
+%
+% any author declaration will be ignored  when using 'plid' option (for double blind review)
+%
+
+%\newcommand\landslide{\textsc{Landslide}} % Don't mention landslide in the proof.
+\newcommand\quicksand{\textsc{Quicksand}}
+\newcommand\simics{\textsc{Simics}}
+\newcommand{\sect}[1]{\S #1}
+\newcommand\hilight[2]{\color{#1}#2\color{black}}
+\definecolor{olivegreen}{RGB}{0,127,0}
+\definecolor{brickred}{RGB}{192,0,0}
+\definecolor{commentblue}{RGB}{0,0,255}
+
+%\title{Soundness Proof for Eliminating Malloc-Recycle Data Races in Stateless Model Checking}
+\title{Source Code of Test Cases for Iterative Deepening}
+\authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
+
+\maketitle
+\begin{abstract}
+In our paper we show the effectiveness of combining dynamic data-race detection \cite{eraser,hybriddatarace} with stateless model checking \cite{verisoft,dpor}.
+Our approach involves adding new state spaces to explore each time a new data-race candidate is found.
+This document presents the source code of the 9 test cases we used, as supplemental material to our main paper.
+\end{abstract}
+
+\section{``P2'' thread library tests}
+
+The following tests were used to test the user-space POSIX-like thread libraries implemented by students in CMU's undergrad OS class, 15-410.
+They use the thread library API defined in \cite{thrlib} and the kernel system-call API defined in \cite{kspec}.
+
+\begin{figure*}
+\begin{verbatim}
+#include <syscall.h>
+#include <stdlib.h>
+#include <thread.h>
+#include <mutex.h>
+#include <cond.h>
+#include "410_tests.h"
+#include <report.h>
+#include <test.h>
+
+#define STACK_SIZE 4096
+#define ERR REPORT_FAILOUT_ON_ERR
+
+mutex_t lock;
+cond_t cvar;
+static int ready = 0;
+
+void *waiter(void *dummy)
+{
+        mutex_lock(&lock);
+        while (ready == 0) {
+                cond_wait(&cvar, &lock);
+        }
+        mutex_unlock(&lock);
+        return NULL;
+}
+
+int main(void)
+{
+        report_start(START_CMPLT);
+
+        ERR(thr_init(STACK_SIZE));
+        ERR(mutex_init(&lock));
+        ERR(cond_init(&cvar));
+
+        ERR(thr_create(waiter, NULL));
+
+        mutex_lock(&lock);
+        ready = 1;
+        cond_broadcast(&cvar);
+        mutex_unlock(&lock);
+
+        return 0;
+}
+\end{verbatim}
+	\caption{{\tt broadcast\_test}, a test of {\tt cond\_signal}/{\tt cond\_broadcast} interaction.}
+	\label{fig:bct}
+\end{figure*}
+\begin{figure*}
+\begin{verbatim}
+#include <syscall.h>
+#include <stdlib.h>
+#include <thread.h>
+#include <mutex.h>
+#include <cond.h>
+#include <assert.h>
+#include "410_tests.h"
+#include <report.h>
+#include <test.h>
+
+#define STACK_SIZE 4096
+#define ERR REPORT_FAILOUT_ON_ERR
+
+mutex_t lock;
+static int num_in_section = 0;
+
+void critical_section()
+{
+        mutex_lock(&lock);
+        num_in_section++;
+        yield(-1);
+        assert(num_in_section == 1);
+        num_in_section--;
+        mutex_unlock(&lock);
+}
+
+void *contender(void *dummy)
+{
+        ERR(swexn(NULL, NULL, NULL, NULL));
+        critical_section();
+        // Do it again, in case lock is correct but unlock corrupts something.
+        critical_section();
+        vanish();
+        return NULL;
+}
+
+int main(void)
+{
+        ERR(thr_init(STACK_SIZE));
+        ERR(mutex_init(&lock));
+        ERR(thr_create(contender, NULL));
+        ERR(swexn(NULL, NULL, NULL, NULL));
+        critical_section();
+        vanish(); // bypass thr_exit
+        return 0;
+}
+\end{verbatim}
+	\caption{{\tt mutex\_test}, a test of {\tt mutex\_lock}/{\tt mutex\_unlock} correctness.
+	Used with the special mutex-testing mode of data-race detection, described in the main paper (Section 3.1).}
+	\label{fig:mx}
+\end{figure*}
+\begin{figure*}
+\begin{verbatim}
+#include <syscall.h>
+#include <stdlib.h>
+#include <thread.h>
+#include <mutex.h>
+#include <cond.h>
+#include <sem.h>
+#include <assert.h>
+#include "410_tests.h"
+#include <report.h>
+#include <test.h>
+
+#define STACK_SIZE 4096
+#define ERR REPORT_FAILOUT_ON_ERR
+
+mutex_t little_lock; /* used to avoid spurious data race reports */
+sem_t lock;
+int num_in_section = 0;
+
+// note: the mutex accesses in this function are ignored as PPs
+// by use of without_function; they are here to prevent
+// num_in_section acesses from being identified as data races.
+void __attribute__((noinline)) critical_section() {
+        mutex_lock(&little_lock);
+        num_in_section++;
+        mutex_unlock(&little_lock);
+        yield(-1);
+        mutex_lock(&little_lock);
+        assert(num_in_section == 1);
+        num_in_section--;
+        mutex_unlock(&little_lock);
+}
+void *consumer(void *dummy) {
+        ERR(swexn(NULL, NULL, NULL, NULL));
+        sem_wait(&lock);
+        critical_section();
+        sem_signal(&lock);
+        vanish();
+        return NULL;
+}
+void producer() {
+        ERR(mutex_init(&little_lock));
+        ERR(sem_init(&lock, 0));
+        ERR(thr_create(consumer, NULL));
+        ERR(thr_create(consumer, NULL));
+        sem_signal(&lock);
+}
+int main(void) {
+        ERR(thr_init(STACK_SIZE));
+        ERR(swexn(NULL, NULL, NULL, NULL));
+        producer();
+        vanish(); // bypass thr_exit
+        return 0;
+}
+\end{verbatim}
+	\caption{{\tt sem\_test},
+	%known to 15-410 students as {\tt paradise\_lost}, % TODO CAMREADY
+	a test of {\tt sem\_wait}/{\tt sem\_signal} interaction.}
+	\label{fig:paradise}
+\end{figure*}
+\begin{figure*}
+\begin{verbatim}
+#include <syscall.h>
+#include <stdlib.h>
+#include <thread.h>
+#include <mutex.h>
+#include <cond.h>
+#include "410_tests.h"
+#include <report.h>
+#include <test.h>
+
+#define STACK_SIZE 4096
+#define ERR REPORT_FAILOUT_ON_ERR
+
+mutex_t lock1, lock2;
+cond_t cvar1, cvar2;
+int slept1 = 0; /* Whether thread1 has gotten to sleep on cvar1 */
+int signaled1 = 0; /* Set right before main thread signals cvar1 */
+int slept2 = 0; /* Whether thread1 has gotten to sleep on cvar2 */
+int signaled2 = 0; /* Set right before main thread signals cvar2 */
+
+void *thread1(void *dummy) {
+        /* go to sleep on cvar1 */
+        mutex_lock(&lock1);
+        slept1 = 1;
+        cond_wait(&cvar1, &lock1);
+        if (!signaled1) {
+                report_end(END_FAIL);
+        }   
+        mutex_unlock(&lock1);
+
+        /* go to sleep on cvar1 */
+        mutex_lock(&lock2);
+        slept2 = 1;
+        cond_wait(&cvar2, &lock2);
+        if (!signaled2) {
+                report_end(END_FAIL);
+        }   
+        mutex_unlock(&lock2);
+        return NULL;
+}
+\end{verbatim}
+	\caption{{\tt signal\_test},
+	%known to 15-410 students as {\tt paraguay}, % TODO CAMREADY
+	a test for a deep bug in {\tt cond\_signal} (Part 1; see part 2 in Figure~\ref{fig:paraguay-pt2}).}
+	\label{fig:paraguay}
+\end{figure*}
+\begin{figure*}
+\begin{verbatim}
+int main(void) {
+        ERR(thr_init(STACK_SIZE));
+        ERR(mutex_init(&lock1));
+        ERR(mutex_init(&lock2));
+        ERR(cond_init(&cvar1));
+        ERR(cond_init(&cvar2));
+        ERR(thr_create(thread1, NULL));
+
+        /* Wait for thread1 to get to sleep on cvar1. */
+        mutex_lock(&lock1);
+        while (!slept1) {
+                mutex_unlock(&lock1);
+                thr_yield(-1);
+                mutex_lock(&lock1);
+        }
+        /* Indicate that we are about to signal */
+        signaled1 = 1;
+        mutex_unlock(&lock1);
+
+        /* Signal. Note that we know for sure that thread1 is asleep on
+         * cvar1 (assuming correct cond vars and mutexes...) */
+        cond_signal(&cvar1);
+
+        /* Now do it all again for the second set of things. */
+        /* Wait for thread1 to get to sleep on cvar2. */
+        mutex_lock(&lock2);
+        while (!slept2) {
+                mutex_unlock(&lock2);
+                thr_yield(-1);
+                mutex_lock(&lock2);
+        }
+        /* Indicate that we are about to signal */
+        signaled2 = 1;
+        mutex_unlock(&lock2);
+
+        /* Signal. Note that we know for sure that thread1 is asleep on
+         * cvar1 (assuming correct cond vars and mutexes...) */
+        cond_signal(&cvar2);
+
+        return 0;
+}
+\end{verbatim}
+	\caption{{\tt signal\_test},
+	%known to 15-410 students as {\tt paraguay}, % TODO CAMREADY
+	a test for a deep bug in {\tt cond\_signal}
+	(Part 2; see part 1 in Figure~\ref{fig:paraguay}).}
+	\label{fig:paraguay-pt2}
+\end{figure*}
+\begin{figure*}
+\begin{verbatim}
+#include <thread.h>
+#include <mutex.h>
+#include <cond.h>
+#include <rwlock.h>
+#include <syscall.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "410_tests.h"
+#include <test.h>
+#define STACK_SIZE 4096
+
+int read_count = 0;
+mutex_t read_count_lock;
+rwlock_t lock;
+int pass = -1; 
+
+void g() {
+        mutex_lock(&read_count_lock);
+        read_count++;
+        if (read_count == 2) {
+                pass = 0;
+        }   
+        mutex_unlock(&read_count_lock);
+}
+void *f(void *arg) {
+        rwlock_lock(&lock, RWLOCK_READ);
+        g();
+        return((void *)0);
+}
+int main() {
+        int tid1;
+        thr_init(STACK_SIZE);
+
+        REPORT_ON_ERR(rwlock_init(&lock));
+        REPORT_ON_ERR(mutex_init(&read_count_lock));
+        rwlock_lock(&lock, RWLOCK_WRITE);
+
+        if ((tid1 = thr_create(f, NULL)) < 0) {
+                REPORT_END_FAIL;
+                return -1; 
+        }   
+        rwlock_downgrade(&lock);
+        g();
+        if (thr_join(tid1, NULL) < 0) {
+                REPORT_END_FAIL;
+                return -1;
+        }
+        if (pass != 0)
+                REPORT_END_FAIL;
+        return pass;
+}
+\end{verbatim}
+	\caption{{\tt rwlock\_test},
+	%known to 15-410 students as {\tt rwlock\_downgrade\_read\_test}, % TODO CAMREADY
+	a test of all {\tt rwlock} functions.}
+	\label{fig:rwldgr}
+\end{figure*}
+\begin{figure*}
+\begin{verbatim}
+#include <stdio.h>
+#include <thread.h>
+#include <syscall.h> /* for PAGE_SIZE */
+
+void *waiter(void *p) {
+  int status;
+  thr_join((int)p, (void **)&status);
+  thr_exit((void *) 0); 
+}
+
+int main() {
+  thr_init(16 * PAGE_SIZE);
+  (void) thr_create(waiter, (void *) thr_getid());
+  thr_exit((void *)'!');
+}
+\end{verbatim}
+	\caption{{\tt join\_test},
+	% known to 15-410 students as {\tt thr\_exit\_join}, % TODO CAMREADY
+	a test of {\tt thr\_create}, {\tt thr\_exit}, and {\tt thr\_join}.}
+	\label{fig:tej}
+\end{figure*}
+
+\begin{enumerate}
+	\item {\tt broadcast\_test}: Figure \ref{fig:bct}
+	\item {\tt mutex\_test}: Figure \ref{fig:mx}
+	\item {\tt sem\_test}: Figure \ref{fig:paradise}
+	\item {\tt signal\_test}: Figures \ref{fig:paraguay} and \ref{fig:paraguay-pt2}
+	\item {\tt rwlock\_test}: Figure \ref{fig:rwldgr}
+	\item {\tt join\_test}: Figure \ref{fig:tej}
+\end{enumerate}
+
+\section{``Pintos'' kernel tests}
+
+The following tests were used to test the first two Pintos kernel projects, ``threads'' and ``userprog'',
+implemented by students in Berkeley's and the University of Chicago's undergrad OS classes,
+CS162 and CS230 respectively \cite{pintos}.
+They use the internal kernel API provided by the basecode, available online at \cite{pintos-github}.
+
+\begin{figure*}
+\begin{verbatim}
+#include <stdio.h>
+#include "tests/threads/tests.h"
+#include "threads/init.h"
+#include "threads/malloc.h"
+#include "threads/synch.h"
+#include "threads/thread.h"
+#include "devices/timer.h"
+
+static struct semaphore sema;
+
+static void priority_sema_thread (void *aux UNUSED) 
+{
+  sema_down (&sema);
+}
+
+void test_priority_sema (void) 
+{
+  int i;
+
+  sema_init (&sema, 0); 
+  thread_set_priority (PRI_DEFAULT);
+  for (i = 0; i < 2; i++)
+    {   
+      int priority = PRI_DEFAULT;
+      char name[16];
+      snprintf (name, sizeof name, "priority %d", priority);
+      thread_create (name, priority, priority_sema_thread, NULL);
+    }   
+
+  for (i = 0; i < 2; i++)
+    {   
+      sema_up (&sema);
+    }   
+}
+\end{verbatim}
+	\caption{{\tt sched\_test},
+	% known to CS162 and CS230 students as {\tt priority\_sema}, % TODO CAMREADY
+	a test of {\tt thread\_create}, {\tt sema\_up}, and {\tt sema\_down}.}
+	\label{fig:prisema}
+\end{figure*}
+\begin{figure*}
+\begin{verbatim}
+#include <stdio.h>
+#include "tests/threads/tests.h"
+#include "threads/init.h"
+#include "threads/synch.h"
+#include "threads/thread.h"
+#include "devices/timer.h"
+
+struct semaphore done_sema;
+
+// semaphore PPs here are ignored using without_function
+static __attribute__((noinline)) void child_done() {
+        sema_up(&done_sema);
+}
+// semaphore PPs here are ignored using without_function
+static __attribute__((noinline)) void parent_done() {
+        sema_down(&done_sema);
+        sema_down(&done_sema);
+}
+
+static void sleeper (void *hax) {
+        timer_sleep ((int)hax);
+        child_done();
+        thread_yield();
+}
+void test_alarm_simultaneous() {
+        sema_init(&done_sema, 0); 
+        thread_create ("Patrice Godefroid", PRI_DEFAULT, sleeper, (void *)3);
+        thread_create ("Cormac Flanagan", PRI_DEFAULT, sleeper, (void *)4);
+        thread_yield();
+        timer_sleep (2);
+        parent_done();
+        thread_yield();
+}
+\end{verbatim}
+	\caption{{\tt alarm\_test},
+	% known to CS162 and CS230 students as {\tt alarm\_simultaneous}, % TODO CAMREADY
+	a test of {\tt timer\_sleep}.}
+	\label{fig:alarm}
+\end{figure*}
+\begin{figure*}
+\begin{verbatim}
+#include <syscall.h>
+#include "tests/lib.h"
+#include "tests/main.h"
+
+void test_main (void) 
+{
+  msg ("wait(exec()) = %d", wait (exec ("child-simple")));
+}
+\end{verbatim}
+	\caption{{\tt wait\_test},
+	% known to CS162 and CS230 students as {\tt wait\_simple}, % TODO CAMREADY
+	a test of {\tt exec} and of {\tt wait}/{\tt exit} interaction.}
+	\label{fig:waitsimple}
+\end{figure*}
+\begin{figure*}
+\begin{verbatim}
+#include <stdio.h>
+#include "tests/lib.h"
+
+int main (void) 
+{
+  msg ("run");
+  return 81; 
+}
+\end{verbatim}
+	\caption{{\tt child\_simple}, a helper program used by {\tt wait\_test} (Figure~\ref{fig:waitsimple}).}
+	\label{fig:childsimple}
+\end{figure*}
+
+\begin{enumerate}
+	\item {\tt sched\_test}: Figure \ref{fig:prisema}
+	\item {\tt alarm\_test}: Figure \ref{fig:alarm}
+	\item {\tt wait\_test}: Figures \ref{fig:waitsimple} and \ref{fig:childsimple}
+\end{enumerate}
+
+
+
+
+\bibliographystyle{abbrvnat}
+\bibliography{../citations}{}
+\end{document}
