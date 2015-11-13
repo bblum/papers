@@ -38,16 +38,17 @@ It estimates the size of each state space to decide when long-running instances 
 %In fact, if given enough time to fully test all discovered data-race preemption points,
 %Iterative Deepening provides a full verification of all thread schedules that could arise from preempting anywhere.
 In fact, Iterative Deepening is fully general:
-we have proved that if it completes all state spaces resulting from data-race preemption points,
+we prove that if it completes all state spaces resulting from data-race preemption points,
 that serves as a total verification of all possible thread interleavings of the given test program.
 
-We evaluated \quicksand~by testing \numstudence~student thread libraries and kernels from the undergraduate OS classes at Carnegie Mellon, Berkeley, and the University of Chicago.
-We show that \quicksand~finds more bugs than the conventional stateless model checking approach given the same CPU budget,
-and furthermore that adding data-race preemption points quickly exposes bugs missed by even the ``maximal'' state space of the conventional approach.
+We evaluate \quicksand~by testing \numstudence~student thread libraries and kernels from the undergraduate OS classes at Carnegie Mellon, Berkeley, and the University of Chicago.
+\quicksand~finds more bugs than the conventional stateless model checking approach given the same CPU budget,
+% joshua wants me to say "conventional approachES" here
+and furthermore, adding data-race preemption points quickly exposes bugs missed by even the ``maximal'' state space of the conventional approach.
 
 This paper's contributions are as follows:
 \begin{enumerate}
-	\item Iterative Deepening, a new technique for combining data-race analysis with stateless model checking, and \quicksand, an open source implementation of the technique;
+	\item Iterative Deepening, a new technique for combining data-race analysis with stateless model checking, and \quicksand, an open-source implementation of the technique;
 	\item A proof of convergence, which shows that should it be possible in the given CPU budget,
 		fully testing every discovered data-race preemption point is equivalent to testing all possible thread schedules;
 	\item A new tactic for eliminating one class of false-positive data races,

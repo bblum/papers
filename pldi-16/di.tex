@@ -5,7 +5,7 @@
 	%\includegraphics[width=0.25\textwidth]{tree2.pdf}
 	%\includegraphics[width=0.35\textwidth]{tree3.pdf}
 	\caption{Iterative Deepening example.
-		The minimal state space (top) includes only voluntary thread switches, such as {\tt yield()} or {\tt cond\_wait()}.
+		The minimal state space (top) includes only voluntary thread switches, such as {\tt yield()}. %or {\tt cond\_wait()}.
 		Multiple further tests can be run: preempting on calls to {\tt mutex\_lock} alone (left), {\tt mutex\_unlock} alone (right), or both together (bottom).
 Each option increases the state space size by an unpredictable factor, so multiple state spaces should be tested in parallel.
 Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
@@ -17,7 +17,7 @@ Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
 
 Motivated by state-of-the-art tools' inflexibility to change their preemption points,
 Iterative Deepening searches among different combinations of such points during a test,
-deciding on-the-fly whether to pursue each resulting state space or abandon it in favour of smaller ones.
+deciding on-the-fly whether to pursue each resulting state space or, or to defer it in favour of smaller ones.
 Different state spaces are generated based on {\em subsets} of the preemption points which prior work would use; for example, ``preempt on all calls to {\tt mutex\_lock} but not on {\tt mutex\_unlock}''.
 We show a visualization in Figure~\ref{fig:id}.
 
@@ -39,7 +39,7 @@ In this paper we focus on dynamic data-race detection~\cite{tsan} as the mechani
 For the rest of the paper, we abbreviate {\em preemption point} (PP),
 %For the remainder of the paper, we will abbreviate {\em preemption point} (PP),
 {\em model checking} (MC),
-{\em single-state-space model checking} (SSS-MC),% (i.e., the approach of prior work),
+{\em single-state-space model checking} (SSS-MC), % (i.e., the approach of prior work),
 Dynamic Partial Order Reduction (DPOR), and {\em state space estimate} (ETA).
 
 SSS-MC indicates the approach of prior model checking tools:
@@ -48,11 +48,12 @@ the set of PPs is fixed in advance, and the tool commits to testing every interl
 Many techniques exist to skip equivalent interleavings and order the search to uncover bugs faster \cite{dpor,demeter,chess-icb,gambit},
 but new PPs cannot be added, nor ineffective ones removed, by any dynamic analysis.
 
-Please note the difference between data-race {\em candidates} and data-race {\em bugs}.
+We distinguish between data-race {\em candidates} and data-race {\em bugs}.
 Because data-race analysis is prone to false-positives,
 we classify unprotected access pairs separately from concrete observable failures, % "concrete"?
 calling such pairs {\em data race candidates}.
 Should a future interleaving, preempting during those accesses,
+% TODO: joshua wants 'failure' to be explicitly defined
 lead to a failure (e.g. assertion or deadlock), then we report a {\em data-race bug}.
 Otherwise, if the access pair can be reordered, but does not produce a failure under any interleaving, it is a {\em benign data race}.
 If they cannot be reordered at all, it is a {\em false positive}.
@@ -71,7 +72,7 @@ The {\em maximal state space} is simply the one explored by SSS-MC: all statical
 \newcommand\SuspendedJobs{\ensuremath{\mathcal{S}}}
 \newcommand\GetETA[1]{ETA(#1)}
 \newcommand\GetPPSet[1]{PPSet(#1)}
-With a limited CPU budget, we must avoid running tests that are likely to time out.
+With a limited CPU budget, we must avoid running tests that are likely to be fruitless.
 Hence, we separate the available PP sets into a set of {\em suspended} jobs (partially-explored state spaces with high ETAs),
 and a set of {\em pending} jobs (untested ones with unknown ETAs).
 When a MC instance reports an ETA too high,
@@ -144,6 +145,7 @@ to avoid repeatedly resuming larger jobs briefly while their ETAs only become wo
 (it lets us avoid thrashing in \quicksand).
 
 \subsection{Classifying data races as buggy or benign}
+\label{sec:classifying}
 
 Iterative Deepening must be seeded with some initial state spaces,
 which can be any number of subsets of the statically-available PPs that SSS-MC would use.
@@ -169,12 +171,23 @@ it is logical to re-execute the test and issue preemptions during those instruct
 \end{algorithm}
 
 With Iterative Deepening, this is a simple matter of creating a new state space with a PP enabled on the racing instructions by each thread, as shown in Algorithm~\ref{alg:handledatarace}.
-We take care to avoid duplicating any superset state spaces with PPs on multiple data races.
-The new space may expose a failure, in which case we report a data-race bug,
+Note that even though a data race may involve two different instructions, we add new state spaces with only one new PP at a time.
+Rather than adding a single state space configured to preempt on both involved instructions,
+i.e., $AB =$ \GetPPSet{$j_0$} $\cup$ $\alpha$ $\cup$ $\beta$,
+we prefer to add multiple smaller jobs which have a higher chance of completing in time. i.e.,
+$A =$ \GetPPSet{$j_0$} $\cup$ $\alpha$ and
+$B =$ \GetPPSet{$j_0$} $\cup$ $\beta$.
+If $A$ and $B$ bug-free, they will in turn add $AB$ later.
+%We take care to avoid duplicating any superset state spaces with PPs on multiple data races.
+The condition on line 1 ensures that we avoid duplicating any state spaces with multiple data-race PPs;
+for example, $AB$ is reachable by multiple paths through its different subsets, but should be added only once.
+
+The new spaces may expose a failure, in which case we report a data-race bug,
 or complete successfully, which indicates a benign or false-positive data race.
-It may also uncover a new data-race candidate in some alternate interleaving,
+They may also uncover a new data-race candidate entirely, %in some alternate interleaving,
 in which case we iteratively advance to a superset state space containing PPs for both racing access pairs.
-Because Iterative Deepening is constrained by a CPU budget,
+%Because Iterative Deepening is
+Being constrained by a CPU budget,
 we may time out before completing a data race's associated state space,
 in which case it remains a potential false positive that the user must handle.
 
@@ -240,17 +253,18 @@ discusses our assumptions explicitly and includes more formal definitions and st
 \label{sec:landslide}
 
 We chose \landslide~\cite{landslide} as our stateless model checker due to its ability to trace program execution at the granularity of individual instructions and memory accesses, which dynamic data-race detection requires.
-\landslide~implements DPOR,
+\landslide~implements DPOR \cite{dpor},
 %\cite{dpor},
-state space estimation, and a hybrid lockset/happens-before data-race analysis.
+state space estimation \cite{estimation}, and a hybrid lockset/happens-before data-race analysis \cite{hybriddatarace}.
 % TODO: \cite{fairstatelessmc} instead or in addition?
 It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield()} or even {\tt xchg} loops) with a heuristic similar to Fair-Bounded Search \cite{bpor}. % TODO: devote a paragraph to this, after talking about drs in locks
 % this line can be cut if space is needed
 It can test both user-level and kernel-level code, although is limited to timer-driven nondeterminism.
+% joshua wants "segfault" to be "memory access error (i.e., segmentation fault, or bus error)"
 Its bug-detection metrics include assertion failure, deadlock, segfault, heap checking (like Valgrind~\cite{valgrind}), and a heuristic infinite loop/livelock check.
 
 {\bf Restricting PPs with stack trace predicates.}
-Most MCs preempt indiscriminately on any sync API call, regardless of the call-site.
+Most model checkers (MCs) preempt indiscriminately on any sync API call, regardless of the call-site.
 However, when testing a particular module in a large codebase,
 the user is likely uninterested in PPs arising from other modules.
 \landslide~provides the {\tt within\_function} configuration command for a user to identify which call-sites matter most.
@@ -262,8 +276,10 @@ Multiple invocations can be used; later ones take precedence.
 
 {\bf Data races in lock implementations.}
 Data race tools in prior work \cite{tsan,portend} recognize the implementations of sync primitives to avoid spuriously flagging memory accesses resulting from the lock implementation itself.
-Assuming the locks are already correct enables productive data-race analysis on the rest of the codebase.
-With testing limited to one execution, even if you wished to test for lock bugs, data-race analysis would still uselessly flag every single access pair in the lock implementation, requiring human attention to verify.
+The assumption that the locks are already correct enables productive data-race analysis on the rest of the codebase.
+Otherwise, with testing limited to one execution,
+%even if one wishes to test for lock bugs,
+data-race analysis would flag every access pair in the lock implementation, requiring human attention to verify.
 However, Iterative Deepening can automatically verify a large quantity of data-race candidates as benign.
 Hence, we extended \landslide~with a custom option to change the lock-set tracking to include accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()} in the analysis. (Accesses from other sync functions, such as {\tt cond\_wait()}, would either be included already, or be protected by an internal mutex.)
 % TODO: Add a code sample showing how the lockset boundaries change? If there's room?
@@ -277,7 +293,7 @@ sorting such jobs according to their status among a running queue, pending queue
 Jobs are further prioritized by number of PPs, ETA, and whether they include data-race PPs.
 
 {\bf Initial PPs.}
-For testing user-space code, we seed the exploration with the four subsets of ``hard-coded'' locking API PPs shown in Figure~\ref{fig:id}:
+For testing user-space code, we seed the exploration with the four subsets of ``hard-coded'' locking API PPs that we showed in Figure~\ref{fig:id}:
 $\{yield\}$,
 $\{yield,lock\}$,
 $\{yield,unlock\}$,
@@ -288,11 +304,13 @@ Preempting on voluntary switches such as {\tt yield} is always necessary to main
 %so the {\tt yield} PP is always implicitly enabled.
 
 For kernel-level testing, we consider interrupt-disabling to be analogous to locking,
-so we also preempt just before {\tt cli} and just after {\tt sti} (to appropriate the names of the x86 instructions)\footnote{
-During data-race detection, {\tt cli}/{\tt sti} are treated as a single global lock,
-as {\tt cli}'d memory accesses can still race with others that have interrupts on.
+so we also preempt just before a disable-interrupt opcode ({\tt cli}) and just after interrupts are re-enabled ({\tt sti})\footnote{
+%(to appropriate the names of the x86 instructions)
+During data-race detection, {\tt cli}/{\tt sti} are treated as a single global lock.
+%as {\tt cli}'d memory accesses can still race with others that have interrupts on.
 Some kernels disable preemption without disabling interrupts,
-which can be modelled the same way using manual annotations of that API.}.
+which can be modelled the same way using manual annotations. %of that API.
+This also assumes uni-processor scheduling; for SMP kernels, replace {\tt cli}/{\tt sti} with spinlocks.}.
 \quicksand~is configured to begin with the subsets
 $\{yield\}$,
 $\{yield,lock\}$,
@@ -309,10 +327,14 @@ First, when starting each job, \quicksand~creates a configuration file declaring
 % can lose this line due to space
 among other options such as mutex-testing mode,
 passed as an argument to \landslide.
-Then, a dedicated \quicksand~thread communicates with the \landslide~process via message-passing.%on a FIFO pipe.
+Then, a dedicated \quicksand~thread communicates with the \landslide~process via message-passing. %on a FIFO pipe.
 \landslide~messages \quicksand~after testing each new interleaving to report updated progress and ETA,
 whenever a new data-race candidate is found, and whenever a bug is found.
 \quicksand~in turn replies whether the test should suspend/resume due to too high ETA, or quit due to timeout.
+We implement suspending jobs simply by making \landslide~wait on a message-passing call.
+Should \quicksand~later resume a suspended job, we send a message to continue,
+causing the \landslide~instance to resume exploring where it left off;
+otherwise, we send a message only after time runs out, causing it to exit.
 
 {\bf Heuristics.}
 % List of all heuristix:
@@ -329,16 +351,16 @@ We also include a heuristic to
 %ignore ETAs entirely
 never suspend jobs before they pass a certain threshold of interleavings tested,
 for which we choose 32,
-so their ETAs have some time to stabilize.
+so that their ETAs have some time to stabilize.
 
 We classify data-race candidates as {\em single-order} or {\em both-order} \cite{portend}
-based on whether the MC observed the access pair ordered one or both ways while testing the original state space,
-We prioritize jobs with both-order data-race PPs,
-because single-order candidates are much more likely to be false-positives
+based on whether the MC observed the racing instructions ordered one or both ways in the original state space,
+Jobs with both-order data-race PPs are prioritized higher,
+because single-order candidates are more likely to be false-positives
 (though before preempting during the access itself, we cannot say for sure, hence the heuristic).
 %so we prioritize jobs with both-order data-race PPs.
-For single-order races, we do not add PPs for the later access at all;
-should they be needed, preempting on the first access will suffice to upgrade it to both-order.
+For single-order races, we do not add a PP for the later access at all;
+should it be needed, preempting on the first access will suffice to upgrade the race to both-order.
 
 % If there's room, mention the cant_swap mechanism for killing the top half of deferred jobs.
 
@@ -372,15 +394,13 @@ When \quicksand~receives a data race report, it adds two new jobs to its workque
 a ``small'' job to preempt on the racing instruction only,
 and a ``big'' job to preempt on that instruction as well as each PP used by the reporting job.
 %
-Hence each {\em pair} of racing accesses will spawn four new jobs, as shown in Figure~\ref{fig:new-dr-jobs}.
-Rather than adding a maximal job with both new PPs at once, we prefer to add smaller jobs which have a higher chance of completing in time.
-If those state spaces are bug-free, they will in turn add the maximal job later.
+Hence, together with the logic in \sect{\ref{sec:classifying}}, each {\em pair} of racing accesses will spawn four new jobs, as shown in Figure~\ref{fig:new-dr-jobs}.
 %
 The rationale of spawning multiple jobs is that which will be more fruitful cannot be known in advance:
 while the big job risks not completing in time,
 the small job risks missing the data race entirely if the original PPs were required to expose it.
 In practice, we observed some bugs found quickly by these small jobs, and other bugs missed by the small jobs found eventually by the big jobs,
-which motivates the need for Iterative Deepening to decide at runtime which jobs to prioritize.
+which motivates the need for Iterative Deepening to prioritize the jobs at runtime.
 % TODO: Put numbers here.
 
 \subsection{Suppressing ``malloc-recycle'' false positives}
