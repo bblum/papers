@@ -95,26 +95,34 @@ and that our test suite's size allows for a more statistically significant compa
 \newcommand\bct{\texttt{bcast\_test}}
 \newcommand\paraguay{\texttt{signal\_test}}
 \newcommand\paradise{\texttt{sem\_test}}
-\newcommand\rwl{\texttt{rwl\_test}}
+\newcommand\rwldgr{\texttt{rwlock\_test}}
 We tested P2s with 6 multithreaded programs:
 % from the 410 test suite % XXX: I would like to say this but this is a lie; figure out what else i can say instead
 % each tailored to exercise a different part of the P2 project
 \mxtest, for locking algorithm correctness,
 \tej, a test of thread lifecycle,
-\bct~and \paraguay~for condvars,
+\bct~and \paraguay~for cvars,
 \paradise~for semaphores,
-and \rwl~for r/w locks.
+and \rwldgr~for r/w locks.
 For \mxtest, \paradise, and \paraguay, we used {\tt without\_function} to blacklist {\tt thr\_create}, {\tt thr\_exit}, and {\tt thr\_join},
 and for \mxtest~we enabled \landslide's mutex-testing option
 (see \sect{\ref{sec:landslide}}).
 \newcommand\prisema{\texttt{sched\_test}}
 \newcommand\waitsimple{\texttt{wait\_test}}
+\newcommand\alarmsimul{\texttt{alarm\_test}}
 % TODO: Add more test cases
-We tested the Pintoses with 2 programs from the class test suite: \prisema, a test of the kernel scheduling algorithm, and \waitsimple, a test of process lifecycle system calls.
+We tested the Pintoses with 3 programs from the class test suite: \prisema, a test of the kernel scheduling algorithm,
+\alarmsimul, for the timer sleep routine,
+and \waitsimple, for process lifecycle system calls\footnote{
+	Some of the Pintoses were partially implemented, so each test could only be run on a subset of the 78 submissions; see Table~\ref{tab:drbugs}.
+}
+The source code of all 9 tests is available at
+{\em [submitted as supplementary material]}.
 For all tests, we used {\tt without\_function} to blacklist PPs on the {\tt malloc} lock.
 Finally, all tests were run on 12-core 3.2 GHz Xeon machines with 12GB of RAM.
-% XXX: Some pintoses can't run all the tests. So this number is too high.
-In total, the test suite comprises 632 unique state spaces, at least 106 of which contain bugs.
+In total, the test suite comprises 629 unique state spaces,
+% TODO: Add number of pintos bugs.
+at least 106 of which contain bugs.
 
 %\begin{table}[t]
 %	\begin{tabular}{l|l|l}
@@ -220,26 +228,28 @@ Intuitively, this line shows that for programs with only benign data races,
 \begin{table*}[t]
 	\begin{center}
 		%\small
-	\begin{tabular}{r||c|c|c||c|c|c|c}
-		& {\bf SSS-MC} & {\bf QS} & {\bf DR-only} & {\bf Total} & {\bf Malloc-} & {\bf Nondet.} & {\bf Nondet.} \\
-		{\bf Test name} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR PPs} & {\bf recycle FPs} & {\bf DR PPs} & {\bf DR bugs} \\
+	\begin{tabular}{r|c||c|c|c||c|c|c|c|c}
+		% TODO: Make the "bugs" left half of this graph into a bar graph.
+		& {\bf Num.} & {\bf SSS-MC} & {\bf QS} & {\bf DR-only} & {\bf Total} & {\bf Untested} & {\bf Malloc-} & {\bf Nondet.} & {\bf Nondet.} \\
+		{\bf Test name} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR PPs} & {\bf DR PPs} & {\bf recycle DRs} & {\bf DR PPs} & {\bf DR bugs} \\
 		\hline
-		{\bct		} & 7	& 11	& 4	&	& 65	&	& 4	\\
-		{\tej		} & 14 	& 25	& 11	&	& 471	&	& 6	\\
-		{\mxtest	} & 1	& 10	& 9	&	& 7	&	& 1	\\
-		{\paradise	} & 10	& 17	& 7	&	& 268	&	& 3	\\
-		{\paraguay	} & 4	& 12	& 9	&	& 188	&	& 0	\\
-		{\rwl		} & 26	& 30	& 3	&	& 157	&	& 3	\\
+		{\bct		} & 79	& 7	& 11	& 4	&	&	& 65	&	& 4	\\
+		{\tej		} & 79	& 14 	& 25	& 11	&	&	& 471	&	& 6	\\
+		{\mxtest	} & 79	& 1	& 10	& 9	&	&	& 7	&	& 1	\\
+		{\paradise	} & 79	& 10	& 17	& 7	&	&	& 268	&	& 3	\\
+		{\paraguay	} & 79	& 4	& 12	& 9	&	&	& 188	&	& 0	\\
+		{\rwldgr	} & 79	& 26	& 30	& 3	&	&	& 157	&	& 3	\\
 		\hline
-		{\prisema	} &	&	&	&	&	&	&	\\
-		{\waitsimple	} &	&	&	&	&	&	&	\\
+		{\prisema	} & 59	&	&	&	&	&	&	&	&	\\
+		{\waitsimple	} & 52	&	&	&	&	&	&	&	&	\\
+		{\alarmsimul	} & 44	&	&	&	&	&	&	&	&	\\
 		\hline
-		{\bf Total}	&	&	&	&	&	&	&
+		{\bf Total}	& 629	&	&	&	&	&	&	&	&
 	\end{tabular}
 	\end{center}
-	\caption{Breakdown of number and types of bugs found by test case.
+	\caption{Summary of number and types of bugs found by each test case.
 		SSS-MC is the control; QS is \quicksand.
-		``DR-only'' counts among \quicksand's bugs how many required data-race PPs to expose.
+		``DR-only'' counts among \quicksand's bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}}).
 	``Nondeterministic DRs'' counts among the DR-only bugs how many candidates required MC integration to identify (\sect{\ref{sec:eval-falseneg}}).
 		TODO: more explanation}
 	\label{tab:drbugs}
@@ -261,7 +271,6 @@ Though it suffices for many applications of MC to assume correctly-implemented l
 we consider this strong evidence that any verification of low-level synchronization code must incorporate data-race PPs.
 
 {\bf Partial verification.}
-% TODO: But what about state space estimation? Does that count as probability? I don't think it does. But can you mention it?
 When a state space times out, the user may prefer a brief summary of what parts of the test were verified, rather than writing off all the CPU time as a waste.
 Beyond using the state space estimator to guess the percent coverage,
 we know of no approach to quantify the probability
@@ -291,6 +300,9 @@ it would only be found by a new data-race PP not discovered yet, or by a superse
 
 We also counted the number of malloc-recycle false positives that \landslide~suppressed.
 
+TODO
+
+{\bf Full verification.}
 TODO
 
 % TODO: Make a CDF graph of how many tests got total verification here.
@@ -326,8 +338,9 @@ Running a data-race tool repeatedly for 10 CPU-hours could potentially uncover s
 but stress testing's comparative problem with achieving reliable coverage is already well-understood
 % TODO: 1 more good citation here
 \cite{chess-icb,gambit}.
-%Prior work data-race tools \cite{portend} could be configured to have the same sort of feedback loop as Iterative Deepening,
-%i.e., discovering transitively-reachable data races while testing initial ones,
+This experiment also suggests that
+other replay-based data-race tools \cite{racefuzzer,portend} should be configured to use the same sort of feedback loop as Iterative Deepening (\sect{\ref{sec:related-dr}}).
+%i.e., discovering transitively-reachable data races while testing initial ones.
 %although that would still not simultaneously be able to provide total verifications.
 % TODO: read gambit paper
 
@@ -369,8 +382,8 @@ the superset state spaces we run later will always repeat each branch of their a
 We measured the proportion of repeated work among completed state spaces across our test suite;
 on average, {\bf \large 999\%} of the interleavings in each test were repeated, with some tests as high as {\bf \large 9999\%}.
 
-In some cases, this repeated work can cause Iterative Deepening to be slower than SSS-MC to find certain bugs,
-for example, if both {\tt mutex\_lock} and {\tt mutex\_lock} preemptions together would expose a bug, but not either alone.
+This repeated work can cause Iterative Deepening to be slower than SSS-MC to find certain bugs,
+for example, if both {\tt mutex\_lock} and {\tt mutex\_unlock} preemptions together would expose a bug, but not either alone.
 Similarly, when pursuing total verification (\sect{\ref{sec:totalverif}}),
 if the state space resulting from preempting on every instruction could be completed,
 an SSS-MC tool such as \cite{spin} might achieve that verification faster,
@@ -383,7 +396,7 @@ to prune some or all of this repeated work.
 % TODO: update these numbers
 \quicksand~was able to partially guarantee safety in 97\% of tests with large maximal state spaces.
 However, in 2 tests, no more than the minimal state space could be verified,
-and in 2 other tests, not even that much.
+and in 3 other tests, not even that much.
 Larger state spaces often result from finer-grained locking,
 which can indicate a more intricate concurrent algorithm or an unnecessarily complicated design.
 Such programs may require even more rigorous verification than a program with a single global lock.
