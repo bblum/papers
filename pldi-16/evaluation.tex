@@ -239,11 +239,11 @@ Intuitively, this line shows that for programs with only benign data races,
 		{\paraguay	} & 79	& 4	& 12	& 9	&	&	& 188	&	& 0	\\
 		{\rwldgr	} & 79	& 26	& 30	& 3	&	&	& 157	&	& 3	\\
 		\hline
-		{\prisema	} & 59	&	&	&	&	&	&	&	&	\\
-		{\waitsimple	} & 52	&	&	&	&	&	&	&	&	\\
-		{\alarmsimul	} & 44	&	&	&	&	&	&	&	&	\\
+		{\prisema	} & 59	&	&	&	&	&	& 0	&	&	\\
+		{\alarmsimul	} & 44	&	&	&	&	&	& 37	&	&	\\
+		{\waitsimple	} & 52	&	&	&	&	&	& 57	&	&	\\
 		\hline
-		{\bf Total}	& 629	&	&	&	&	&	&	&	&
+		{\bf Total}	& 629	&	&	&	&	&	& 1250	&	&
 	\end{tabular}
 	\end{center}
 	\caption{Summary of number and types of bugs found by each test case.
@@ -254,7 +254,15 @@ Intuitively, this line shows that for programs with only benign data races,
 	\label{tab:drbugs}
 \end{table*}
 
-The left half of Table~\ref{tab:drbugs} breaks down the number and types of bugs found by each test case.
+\begin{figure}[t]
+	\includegraphics[width=0.48\textwidth]{bargraph.pdf}
+	\caption{{\bf TODO:} Is this graph productive to include in the paper? Or should I just leave the numbers in table format (the left half of Table~\ref{tab:drbugs})?}
+	\label{fig:bargraph}
+\end{figure}
+
+%Figure~\ref{fig:bargraph}
+The left half of Table~\ref{tab:drbugs}
+breaks down the number and types of bugs found by each test case.
 % The astute observer will note that the sum of all types of failures observed is more than the total number of data-race bugs...
 %TODO: Run a mutex expt where "all atomic instrs" are PPs. See how many bugs are missed anyway.
 % Wwe re-ran the \mxtest control experiment with \landslide~hard-coded to preempt on any atomic instruction
@@ -297,12 +305,42 @@ it would only be found by a new data-race PP not discovered yet, or by a superse
 \label{sec:eval-falsepos}
 % Though we mechanically verify whether each data race candidate leads to a bug, each new PP can increase combinatorially..... obviously wish to avoid...
 
-We also counted the number of malloc-recycle false positives that \landslide~suppressed.
+Beyond finding new bugs with data-race PPs, we evaluated \quicksand's performance in classifying data-race candidates in two ways.
 
-TODO
+{\bf Suppressing ``malloc-recycle'' false positives.}
+In \sect{\ref{sec:recycle}} we showed the soundness of suppressing data race reports between two heap accesses when the surrounding memory was re-allocated in between.
+In Table~\ref{tab:drbugs}, the column ``Malloc-recycle DRs'' shows the total number of such data-race candidates for each test case.
+In total, 1250 data-races fit the malloc-recycle pattern across all tests,
+only 69 of which were observed to avoid the re-allocation in an alternate interleaving.
+Our proof in \sect{\ref{sec:recycle}} guarantees the safety of pruning all 1181 other state spaces.
+
+Among the 69 true data-races which initially fit the malloc-recycle pattern,
+none of them exposed a new bug when used as a PP.
+This shows that for other data-race tools,
+suppressing malloc-recycle candidates may be a productive heuristic,
+even if unsound without Iterative Deepening.
+However, \quicksand~was able to correctly identify 69 violations of the heuristic among 30 tests,
+and fall back to classifying them with DPOR,
+which we consider a much stronger verification.
 
 {\bf Full verification.}
-TODO
+For 153 of our 629 tests, \quicksand~was able to provide the total verification guarantee described in \sect{\ref{sec:totalverif}}.
+In Figure~\ref{fig:totalverif} we plot the cumulative distribution of \quicksand's total verifications before a given elapsed CPU-time.
+Among these, 36 tests contained no data-race candidates whatsoever, 
+so the same verification could be provided by SSS-MC.
+We plot these for comparison,
+according to the time taken by that test's SSS-MC control experiment,.
+When a test can be totally verified without any data-race PPs,
+\quicksand~will be slower than SSS-MC due to redundant work (\sect{\ref{sec:future}}).
+Of course, using data-race PPs increases our capacity for total verification by 4.25x.
+
+\begin{figure}[t]
+	\includegraphics[width=0.48\textwidth]{totalverifs.pdf}
+	\caption{Cumulative distribution of tests \quicksand~fully verified (\sect{\ref{sec:totalverif}}).
+	Some tests had no data-race candidates, and hence could also be verified by SSS-MC.}
+	\label{fig:totalverif}
+\end{figure}
+
 
 % TODO: Make a CDF graph of how many tests got total verification here.
 
@@ -371,15 +409,15 @@ other replay-based data-race tools \cite{racefuzzer,portend} should be configure
 
 In this section, we discuss \quicksand's limitations and opportunities for future improvement.
 
-% TODO: Measure how much subset overlap there is.
+% TODO CAMREADY: Measure how much subset overlap there is.
 {\bf Avoiding redundant work.}
 When we extend a small state space with more PPs, the new state space is guaranteed to test a superset of thread interleavings compared to the old one.
 Any interleaving which does not preempt threads on any of the new PPs will be repeated work.
 Because we prioritize completing small state spaces before extending them with more PPs,
-the superset state spaces we run later will always repeat each branch of their already-completed subsets.
+the superset state spaces we run later will repeat each branch of their already-completed subsets.
 %
-We measured the proportion of repeated work among completed state spaces across our test suite;
-on average, {\bf \large 999\%} of the interleavings in each test were repeated, with some tests as high as {\bf \large 9999\%}.
+%We measured the proportion of repeated work among completed state spaces across our test suite;
+%on average, {\bf \large 999\%} of the interleavings in each test were repeated, with some tests as high as {\bf \large 9999\%}.
 
 This repeated work can cause Iterative Deepening to be slower than SSS-MC to find certain bugs,
 for example, if both {\tt mutex\_lock} and {\tt mutex\_unlock} preemptions together would expose a bug, but not either alone.
@@ -422,4 +460,11 @@ One benefit of our technique is that {\tt within\_function}-based Iterative Deep
 would enable expert developers to configure custom subsets of PPs they are most interested in verifying,
 according to which modules of a codebase they wish to test.
 
+Likewise, for test cases where full verification is not computationally feasible,
+the state spaces associated with many data-race candidates will time out.
+We cannot guarantee that those races are false positives or benign, even though no bug was found.
+% FIXME: You need a separate table counting only the state spaces WITHOUT BUGES.
+In the ``Untested DR PPs'' column of Table~\ref{tab:drbugs}, we count the number of such unverified candidates from each test case.
+For a more formal treatment of these cases, we refer the reader to the {\em k-witness harmless} metric introduced by \cite{portend},
+which could be combined with Iterative Deepening in future work.
 % Future work: Add parallel DPOR so you can fill your spare CPUs when there are fewer than the max number of jobs.
