@@ -166,6 +166,7 @@ We tested several configurations of \quicksand~to compare against SSS-MC from mu
 which we explain presently.
 
 \begin{figure}[t]
+	% TODO: update this with pintos buges
 	\includegraphics[width=0.48\textwidth]{dowefindbugsfaster.pdf}
 	\caption{Comparison of bug-finding performance
 	by several configurations of \quicksand~and the SSS-MC control.
@@ -270,14 +271,14 @@ Beyond using the state space estimator to guess the percent coverage,
 we know of no approach to quantify the probability
 that a bug would be exposed by an untested interleaving.
 \quicksand~does not attempt any such quantitative guarantee,
-but can at least report which subsets of PPs produced state spaces that completed in time.
+but can at least report which subsets of PPs produced state spaces that did complete in time.
 
 The SSS-MC control experiment timed out in 10 hours on 77 tests.
 Among these, \quicksand~found data-race bugs in 15.
 For the other 62, we counted the number of state spaces \quicksand~was able to complete and the number of unique PPs among them.
-In two cases, \quicksand~also failed to complete anything; beyond these,
+In three cases, \quicksand~also failed to complete anything; beyond these,
 between 1 and 253 state spaces were completed, with a mean of 58.9 and median of 29.
-Between 0 and 233 unique PPs were verified among some subsets, with a mean of 27.2 and median of 7.5.
+Between 0 and 233 unique PPs were tested among some completed subsets, with a mean of 27.2 and median of 7.5.
 These completions guarantee that, if the test case could expose a bug,
 % Justify implicit hypothesis: Sync PPs + DR PPs = all possible relevant PPs.
 it would only be found by a new data-race PP not discovered yet, or by a superset combination of PPs not reached.
@@ -306,7 +307,7 @@ none of them exposed a new bug when used as a PP.
 This shows that for other data-race tools,
 suppressing malloc-recycle candidates may be a productive heuristic,
 even if unsound without Iterative Deepening.
-However, \quicksand~was able to correctly identify 69 violations of the heuristic among 30 distinct tests,
+However, \quicksand~was able to correctly identify the 69 violations of that heuristic among 30 distinct tests,
 and fall back to classifying them with DPOR,
 which we consider a much stronger verification.
 

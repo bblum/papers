@@ -173,7 +173,7 @@ With Iterative Deepening, this is a simple matter of creating a new state space 
 Note that even though a data race may involve two different instructions, we add new state spaces with only one new PP at a time.
 Rather than adding a single state space configured to preempt on both involved instructions,
 i.e., $AB =$ \GetPPSet{$j_0$} $\cup$ $\alpha$ $\cup$ $\beta$,
-we prefer to add multiple smaller jobs which have a higher chance of completing in time. i.e.,
+we prefer to add multiple smaller jobs which have a higher chance of completing in time, i.e.,
 $A =$ \GetPPSet{$j_0$} $\cup$ $\alpha$ and
 $B =$ \GetPPSet{$j_0$} $\cup$ $\beta$.
 If $A$ and $B$ are bug-free, they will in turn add $AB$ later.
