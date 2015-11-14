@@ -17,7 +17,7 @@ Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
 
 Motivated by state-of-the-art tools' inflexibility to change their preemption points,
 Iterative Deepening searches among different combinations of such points during a test,
-deciding on-the-fly whether to pursue each resulting state space or, or to defer it in favour of smaller ones.
+deciding on-the-fly whether to pursue each resulting state space, or to defer it in favour of smaller ones.
 Different state spaces are generated based on {\em subsets} of the preemption points which prior work would use; for example, ``preempt on all calls to {\tt mutex\_lock} but not on {\tt mutex\_unlock}''.
 We show a visualization in Figure~\ref{fig:id}.
 
@@ -36,7 +36,7 @@ In this paper we focus on dynamic data-race detection~\cite{tsan} as the mechani
 
 \subsection{Terminology}
 
-For the rest of the paper, we abbreviate {\em preemption point} (PP),
+For the rest of the paper, we will abbreviate {\em preemption point} (PP),
 %For the remainder of the paper, we will abbreviate {\em preemption point} (PP),
 {\em model checking} (MC),
 {\em single-state-space model checking} (SSS-MC), % (i.e., the approach of prior work),
@@ -177,7 +177,7 @@ i.e., $AB =$ \GetPPSet{$j_0$} $\cup$ $\alpha$ $\cup$ $\beta$,
 we prefer to add multiple smaller jobs which have a higher chance of completing in time. i.e.,
 $A =$ \GetPPSet{$j_0$} $\cup$ $\alpha$ and
 $B =$ \GetPPSet{$j_0$} $\cup$ $\beta$.
-If $A$ and $B$ bug-free, they will in turn add $AB$ later.
+If $A$ and $B$ are bug-free, they will in turn add $AB$ later.
 %We take care to avoid duplicating any superset state spaces with PPs on multiple data races.
 The condition on line 1 ensures that we avoid duplicating any state spaces with multiple data-race PPs;
 for example, $AB$ is reachable by multiple paths through its different subsets, but should be added only once.
@@ -437,9 +437,9 @@ Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to rac
 	& Thread 1 & Thread 2 \\
 	1 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
 	2 & \texttt{\hilight{olivegreen}{free}(x);} \\
-	3 & & \texttt{// x's memory recycled} \\
+	3 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
 	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
-	5 & & \texttt{// ...initialize...}\\
+	5 & & \texttt{\hilight{commentblue}{// ...initialize...}}\\
 	6 & & \texttt{publish(y);} \\
 	7 & & \texttt{\hilight{brickred}{y->bar = ...;}} \\
 \end{tabular}
@@ -454,7 +454,7 @@ Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to rac
 	2 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
 	3 & \texttt{\hilight{olivegreen}{free}(x);} \\
 	4 & & \texttt{x2 = get\_published\_x();} \\
-	5 & & \texttt{// x's memory recycled} \\
+	5 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
 	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
 \end{tabular}
