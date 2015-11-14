@@ -91,7 +91,6 @@ Hence we should avoid testing $j_2$ unless $j_1$'s ETA improves over time.
 %reveals that it might finish in time after all.
 Similarly, when some job finds a bug, we cancel all pending superset jobs, as they would find the same bug.
 
-% TODO: put colour in this code
 \begin{algorithm}[t]
 	\SetKwInOut{Input}{Input}
 	%\textbf{Function} GetBestJob($j_0$, PendingJobs, SuspendedJobs): \\
@@ -229,7 +228,6 @@ Initially, the statically-available sync API PPs are reachable. Reachability of 
 	Given any interleaving comprising only data-race PPs and sync API PPs, all such PPs are reachable.
 	\label{lem:saturation}
 \end{lemma}
-% TODO: Put a figure here giving an example of where a data race is only transitively reachable, not initially reachable.
 
 TODO: sketch the proof of this lemma % TODO
 \\
@@ -257,7 +255,7 @@ We chose \landslide~\cite{landslide} as our stateless model checker due to its a
 %\cite{dpor},
 state space estimation \cite{estimation}, and a hybrid lockset/happens-before data-race analysis \cite{hybriddatarace}.
 % TODO: \cite{fairstatelessmc} instead or in addition?
-It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield()} or even {\tt xchg} loops) with a heuristic similar to Fair-Bounded Search \cite{bpor}. % TODO: devote a paragraph to this, after talking about drs in locks
+It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield()} or even {\tt xchg} loops) with a heuristic similar to Fair-Bounded Search \cite{bpor}.
 % this line can be cut if space is needed
 It can test both user-level and kernel-level code, although is limited to timer-driven nondeterminism.
 % joshua wants "segfault" to be "memory access error (i.e., segmentation fault, or bus error)"
@@ -282,7 +280,6 @@ Otherwise, with testing limited to one execution,
 data-race analysis would flag every access pair in the lock implementation, requiring human attention to verify.
 However, Iterative Deepening can automatically verify a large quantity of data-race candidates as benign.
 Hence, we extended \landslide~with a custom option to change the lock-set tracking to include accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()} in the analysis. (Accesses from other sync functions, such as {\tt cond\_wait()}, would either be included already, or be protected by an internal mutex.)
-% TODO: Add a code sample showing how the lockset boundaries change? If there's room?
 
 \subsection{Quicksand}
 
@@ -405,9 +402,6 @@ which motivates the need for Iterative Deepening to prioritize the jobs at runti
 
 \subsection{Suppressing ``malloc-recycle'' false positives}
 \label{sec:recycle}
-
-% TODO: Understand what prior work means by 'happens before'. It's different from our MUST happen before relation.
-% TODO: Understand how it relates to this. Would it scoop us? Or are we outside their model?
 
 We identify a particular class of false positive data-race candidate in which the associated memory is recycled by {\tt malloc} between the two accesses.
 Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can expose such behavior.

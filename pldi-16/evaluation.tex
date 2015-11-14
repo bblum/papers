@@ -1,5 +1,3 @@
-% TODO: Abbreviate SMC, and fixed-PP approach.
-
 \section{Evaluation}
 \label{sec:eval}
 
@@ -30,23 +28,16 @@ Our evaluation answers the following questions:
 				% But to be fair, you have to count how many DRs are reported as "couldn't test these, check yourself" at the end.
 				% Also Include:
 				% How many false positives does the free-re-malloc technique suppress?
-				% TODO: If you have time, re-run all of the dr-only bug tests, with DR_FALSE_NEG enabled, and see how much fewer bugs get found (how many bugs get pushed past the time limit?)
-			% TODO: This one's optional. You can give up on it.
+				% to do (done) If you have time, re-run all of the dr-only bug tests, with DR_FALSE_NEG enabled, and see how much fewer bugs get found (how many bugs get pushed past the time limit?)
+				% Answer: Just 1. (for p2s at least; as of time of writing, pintos dr-falsenegs not run yet)
 			\item Do we find data-race bugs that would be false-negatives during a single-execution analysis?%Do we avoid false negatives compared to single-pass?
-				%TODO: for this experiment, set EXPLORE_BACKWARDS=0
-				% TODO: And disable false-neg malloc-free technique
-				% TODO: And also disable the confirmed/suspected thing
-				% (where mem.c waits for reorder observed before
-				% messaging the latter half of the DR to QS)
 		\end{enumerate}
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Test Suite}
-% TODO: Maybe say how many lines of code total? How many lines on average per P2/pintos? (careful with pintos; lots of basecode)
 Our test suite consists of \numthrlibs~``P2'' student thread libraries, from CMU's 15-410 OS class,
-%across the Spring and Fall 2014 and Spring 2015 semesters;
 and \numpintoses~``Pintos'' student kernels, from Berkeley's CS162 and U. Chicago's CS230 OS classes.
 %
 The P2 thread library comprises \texttt{thr\_create()}, \texttt{thr\_exit()}, \texttt{thr\_join()}, mutexes, condition variables, semaphores, and r/w locks;
@@ -110,7 +101,7 @@ and for \mxtest~we enabled \landslide's mutex-testing option
 \newcommand\prisema{\texttt{sched\_test}}
 \newcommand\waitsimple{\texttt{wait\_test}}
 \newcommand\alarmsimul{\texttt{alarm\_test}}
-% TODO: Add more test cases
+% TODO CAMREADY: Add another test case
 We tested the Pintoses with 3 programs from the class test suite: \prisema, a test of the kernel scheduling algorithm,
 \alarmsimul, for the timer sleep routine,
 and \waitsimple, for process lifecycle system calls\footnote{
@@ -157,8 +148,6 @@ at least 165 of which contain bugs.
 
 \subsection{Comparing Iterative Deepening to SSS-MC}
 \label{sec:eval-sssmc}
-
-% TODO: If you have time, rerun all the quicksand experiments JUST running the 4 base state spaces. Give it 10/4 hours of cpu budget on 4 cores. John's expt.
 
 % mention exactly which state spaces we are comparing here
 % mention partial verification in terms of state space completion, when SSSMC times out.
@@ -222,8 +211,6 @@ Intuitively, this line shows that for programs with only benign data races,
 %\footnote{The initial perfect overlap between QS-DRs and QS-no-DR-bugs indicates how long it takes before the first data-race bug is found.}
 %even after the extra overhead of verifying them, \quicksand~still slightly edges out SSS-MC
 
-% TODO: Make a table with a breakdown by test case.
-
 \begin{table*}[t]
 	\begin{center}
 		%\small
@@ -264,7 +251,7 @@ Intuitively, this line shows that for programs with only benign data races,
 The left half of Table~\ref{tab:drbugs}
 breaks down the number and types of bugs found by each test case.
 % The astute observer will note that the sum of all types of failures observed is more than the total number of data-race bugs...
-%TODO: Run a mutex expt where "all atomic instrs" are PPs. See how many bugs are missed anyway.
+%TODO CAMREADY: Run a mutex expt where "all atomic instrs" are PPs. See how many bugs are missed anyway.
 % Wwe re-ran the \mxtest control experiment with \landslide~hard-coded to preempt on any atomic instruction
 % (as well as on the mutex API boundaries).
 % Still, this smarter configuration for SSS-MC found only 99999999999 bugs of \quicksand's 13.
@@ -319,7 +306,7 @@ none of them exposed a new bug when used as a PP.
 This shows that for other data-race tools,
 suppressing malloc-recycle candidates may be a productive heuristic,
 even if unsound without Iterative Deepening.
-However, \quicksand~was able to correctly identify 69 violations of the heuristic among 30 tests,
+However, \quicksand~was able to correctly identify 69 violations of the heuristic among 30 distinct tests,
 and fall back to classifying them with DPOR,
 which we consider a much stronger verification.
 
@@ -341,14 +328,10 @@ Of course, using data-race PPs increases our capacity for total verification by 
 	\label{fig:totalverif}
 \end{figure}
 
-
-% TODO: Make a CDF graph of how many tests got total verification here.
-
 % TODO: Figure out how to visualize how many unique data race PPs were verified, and how many remained as unclassified false positives
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% TODO: You should introduce this in the narrative as a key contribution way earlier.
 \subsection{Finding nondeterministic data-race candidates}
 \label{sec:eval-falseneg}
 Some memory accesses may be hidden in a control flow path that requires a nondeterministic preemption to be executed.
@@ -373,7 +356,6 @@ We argue this comparison is meaningful because prior work data-race tools %, bei
 are not intended to discover new data race candidates under subsequent runs. %before discovering any initial candidates.
 Running a data-race tool repeatedly for 10 CPU-hours could potentially uncover some of these false negatives at random,
 but stress testing's comparative problem with achieving reliable coverage is already well-understood
-% TODO: 1 more good citation here
 \cite{chess-icb,gambit}.
 This experiment also suggests that
 other replay-based data-race tools \cite{racefuzzer,portend} should be configured to use the same sort of feedback loop as Iterative Deepening (\sect{\ref{sec:related-dr}}).

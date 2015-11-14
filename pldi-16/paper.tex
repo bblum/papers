@@ -99,10 +99,10 @@ Our evaluation shows that \quicksand~achieves better bug-finding results than ei
 %We dramatically reduce false-positive data race reports,
 %%by verifying the absence of bugs in their associated state spaces
 %and find bugs caused by nondeterministic data-races in alternate thread interleavings missed entirely by single-pass analysis.
-% TODO: Not true; Replace instead with a claim about partial verification.
-Compared to SSS-MC, we find bugs faster in smaller subset state spaces,
+Compared to SSS-MC,
+%, we find bugs faster in smaller subset state spaces, %% not true, or at least, not by very much
 %when the maximal state space is too large to explore
-and find new bugs with data-race PPs that the maximal state space would not expose at all.
+we find new bugs with data-race PPs that the maximal state space would not expose at all.
 Moreover, for tests where all state spaces with data-race PPs can be completed, we provide an equally strong verification as if every single instruction had been used as a PP.
 
 %Although \landslide~itself is not publicly available due to its dependency on the non-free simulator \simics, \quicksand~is open-source and its interface can be adapted to fit any similar tool.

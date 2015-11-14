@@ -1,8 +1,6 @@
 \section{Related Work}
 \label{sec:related}
 
-% TODO: ", and related data race analyses based on ????"
-
 \subsection{Model Checking}
 
 \landslide~uses many established model-checking techniques, dating back
@@ -54,10 +52,6 @@ DroidRacer \cite{droidracer} and CAFA \cite{cafa} extend the analysis to event-d
 % No, IDGAF about pure happens before.
 %FastTrack \cite{fasttrack} optimizes the performance of pure happens-
 
-% TODO: Figure out why they claim "Happens before produces NO false positives, only benign races".
-% It seems impossible.
-% But if true, it means either (a) they can somehow identify FRM DRs on the 1st pass, not needing to replay,
-% or (b) reuse of memory by malloc is somehow outside their concurrency model.
 Closer to our work, replay analysis \cite{recordreplaydrs} also suppresses false positives by testing multiple thread interleavings.
 %after finding data race candidates.
 This work compares the immediately resulting program states for differences,
@@ -84,7 +78,7 @@ which is necessary to expose certain bugs (\sect{\ref{sec:eval-falseneg}}) or to
 It also assumes the POSIX synchronization API, so cannot verify arbitrary synchronization algorithms such as we do with \mxtest.
 Future work could combine the two approaches, using MC to produce new data-race traces for Portend to classify, or using Portend's analysis to inform \quicksand's state space priorities.
 
-% \subsection{Other Concurrency Testing Approaches} % TODO: Well?
+% \subsection{Other Concurrency Testing Approaches}
 %
 % blah blah pldi'15 symbiosis DSP
 

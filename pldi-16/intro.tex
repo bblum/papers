@@ -28,8 +28,6 @@ is able to preempt threads around any shared memory access. Such fine granularit
 Configuring a model checker is a tradeoff between schedule coverage and feasibility of completion.
 This work shows how to avoid making that tradeoff decision in advance.
 
-% TODO: ttuttle says this is too much of a jump -- that exactly what "subsets" means is not well defined (i.e, lock vs unlock, while NOT addressing the within/without_function problem)
-
 We present \quicksand, a framework for {\em Iterative Deepening} of preemption points during stateless model checking.
 Named after the analogous technique in chess AI \cite{iterative-deepening-chess-ai}, our approach likewise makes progressively deeper searches of the state space until a given CPU budget is exhausted.
 Rather than attempting to search a single state space with every available preemption point enabled (e.g., preempting on every pthread API call),
@@ -55,7 +53,6 @@ This paper's contributions are as follows:
 		which cannot soundly be used in a single-pass analysis,
 		but which we prove correct when used with Iterative Deepening;
 		%, unsound in single-pass analysis but which we prove sound when used with Iterative Deepening;
-	%\item Techniques for detecting and flattening cyclic state spaces resulting from ad-hoc while-loop synchronization % TODO: is there actually room for this in the paper?
 	\item A large evaluation in which \quicksand~compares favorably to stand-alone data-race detection and stateless model checking approaches.
 \end{enumerate}
 
