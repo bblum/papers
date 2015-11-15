@@ -241,11 +241,11 @@ Intuitively, this line shows that for programs with only benign data races,
 	\label{tab:drbugs}
 \end{table*}
 
-\begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{bargraph.pdf}
-	\caption{{\bf TODO:} Is this graph productive to include in the paper? Or should I just leave the numbers in table format (the left half of Table~\ref{tab:drbugs})?}
-	\label{fig:bargraph}
-\end{figure}
+%\begin{figure}[t]
+%	\includegraphics[width=0.48\textwidth]{bargraph.pdf}
+%	\caption{{\bf TODO:} Is this graph productive to include in the paper? Or should I just leave the numbers in table format (the left half of Table~\ref{tab:drbugs})?}
+%	\label{fig:bargraph}
+%\end{figure}
 
 %Figure~\ref{fig:bargraph}
 The left half of Table~\ref{tab:drbugs}
@@ -342,23 +342,41 @@ to identify a racing access pair as a candidate to begin with.
 %
 We counted how many such data-races, used as PPs, led to \quicksand~finding new bugs,
 thereby making them {\em false negatives} of the single-pass approach.
-We classified each data-race candidate according to whether \landslide~had reported them during the first interleaving, before any backtracking or preempting: if so, they were {\em deterministic data races} (hence could be found by single-pass).
+We classified each data-race candidate according to whether \landslide~reported them during the first interleaving,
+before any backtracking or preempting:
+if so, they were {\em single-pass data races}; otherwise, {\em nondeterministic}.
 
 To ensure a fair comparison, we disabled \landslide's {\em false-positive}-avoidance techniques during this experiment.
-For example, we reported malloc-recycle data races during the first interleaving as {\em deterministic}, as a single-pass analysis must,
-rather than waiting until future interleavings to confirm them (as explained in \sect{\ref{sec:recycle}}).
+For example, we reported malloc-recycle data races during the first interleaving, as a single-pass analysis must,
+rather than waiting until future interleavings to witness them without the malloc-recycle pattern
+(\sect{\ref{sec:recycle}}).
 
-TODO: Present results.
+\begin{figure}[t]
+	\includegraphics[width=0.48\textwidth]{nondet-drs-1-v2.pdf}
+	\caption{Some data-race candidates may not be identified during a single program execution.
+		Using nondeterministic data races as PPs,
+		\quicksand~found 189\% as many bugs compared to the approach of prior work \cite{portend}.
+	}
+	\label{fig:dr-falsenegs}
+\end{figure}
+Figure~\ref{fig:dr-falsenegs} compares the types of data-race candidates necessary to expose each data-race bug in our test suite.
+The first series represents the bugs found using PPs from single-pass data-race candidates,
+% TODO: re read racefuzzer/portend paper to confirm this is true.
+i.e., the state-of-the-art approach used by \cite{racefuzzer,portend}.
+The second series shows all the data-race bugs \quicksand~found,
+which includes the former type as well as new bugs involving nondeterministic data-races.
+In total, among \quicksand's 68 total data-race bugs, just 36 could be found with single-pass data-race candidates alone.
+%In total, we found 189\% as many bugs by using nondeterministic data-race candidates as PPs.
 
 At first, it might seem unfair to compare the data race bugs \quicksand~finds (10 CPU-hours)
 against the candidates found by a prior work's single execution (less than a minute).
 We argue this comparison is meaningful because prior work data-race tools %, being not integrated with a MC,
-are not intended to discover new data race candidates under subsequent runs. %before discovering any initial candidates.
+are not intended to discover new candidates under subsequent runs. %before discovering any initial candidates.
 Running a data-race tool repeatedly for 10 CPU-hours could potentially uncover some of these false negatives at random,
 but stress testing's comparative problem with achieving reliable coverage is already well-understood
 \cite{chess-icb,gambit}.
-This experiment also suggests that
-other replay-based data-race tools \cite{racefuzzer,portend} should be configured to use the same sort of feedback loop as Iterative Deepening (\sect{\ref{sec:related-dr}}).
+This result suggests that
+other replay-based data-race tools \cite{racefuzzer,portend} should be configured to use a similar feedback loop as Iterative Deepening (\sect{\ref{sec:related-dr}}).
 %i.e., discovering transitively-reachable data races while testing initial ones.
 %although that would still not simultaneously be able to provide total verifications.
 % TODO: read gambit paper
