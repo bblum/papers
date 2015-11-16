@@ -1,0 +1,176 @@
+\section{Proofs (TODO: need better name)}
+\label{sec:soundness}
+
+In this section we present two theorems concerning Iterative Deepening's correctness.
+Our full proofs
+{\em [submitted as supplementary material; will be cited as a tech report in the final version of the paper]}
+discuss our assumptions explicitly and include more formal definitions and structure.
+
+\renewcommand\proofname{Proof Sketch}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Convergence to total verification}
+\label{sec:totalverif}
+
+Although Iterative Deepening's main purpose is to heuristically choose the most effective PP subsets to test
+when the maximal state space is too large,
+some tests may be small enough that even their maximal state spaces could be completed in time.
+For such tests, a SSS-MC tool configured to preempt on every shared memory access \cite{spin} would provide a total verification of all possible thread schedules, if it could complete in time.
+In this section, we show that Iterative Deepening provides a verification of the same strength if it completes the state spaces associated with every discovered data-race PP.
+%In other words, contrapositively,
+%if it is possible to find a bug with any sequence of preemptions on any instruction whatsoever,
+%an equivalent thread interleaving will be reachable using only data-race PPs and synchronization API PPs.
+A proof sketch of the contrapositive statement follows.
+
+\begin{theorem}
+If a bug can be exposed by any thread interleaving possible by preempting on any instruction,
+Iterative Deepening will eventually test an equivalent interleaving which exposes the same bug.
+\end{theorem}
+\begin{proof}
+The proof has two parts:
+first, we show that preempting on data-racing instructions and synchronization API boundaries suffices to test all possible program behavior;
+second, we show that Iterative Deepening will eventually detect all such data races.
+
+\begin{lemma}[Equivalence of non-data-race PPs]
+For any thread interleaving possible by preempting on any instruction,
+there exists an equivalent interleaving which uses only data-race PPs and sync API PPs.
+	\label{lem:relevant}
+\end{lemma}
+
+TODO: sketch the proof of this lemma % TODO
+
+\begin{definition}[Reachable data race]
+A data race candidate (or associated PP) is reachable if it will be identified by an MC configured to preempt only on already-reachable PPs.
+\end{definition}
+Initially, the statically-available sync API PPs are reachable. Reachability of data-race PPs is transitive.
+\begin{lemma}[Saturation of data-race PPs]
+	Given any interleaving comprising only data-race PPs and sync API PPs, all such PPs are reachable.
+	\label{lem:saturation}
+\end{lemma}
+
+TODO: sketch the proof of this lemma % TODO
+\\
+
+To conclude,
+for any possible interleaving, Lemma \ref{lem:relevant} provides an equivalent one with only data-race and sync API PPs,
+and Lemma \ref{lem:saturation} proves all involved PPs are reachable.
+Hence, Iterative Deepening will eventually test a state space containing the equivalent buggy interleaving.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Suppressing ``malloc-recycle'' false positives}
+\label{sec:recycle}
+
+We identify a particular class of false positive data-race candidate in which the associated memory is recycled by {\tt malloc} between the two accesses.
+Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can expose such behavior.
+If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 7 will be flagged as a data race.
+We term this a {\em malloc-recycle data race}.
+To the human eye, this is obviously a false positive: reordering lines 4-7 before lines 1-2 will change {\tt malloc}'s return value, causing {\tt x} and {\tt y} to no longer collide.
+Here, Thread 2's logic usually corresponds to the initialization pattern \cite{eraser}, but for generality we have added a {\tt publish} action on line 6.
+
+% This class of false positive is unique to heap-allocated memory, among all ways threads could communicate. By contrast, global memory has unlimited lifetime, and message-passing primitives enforce a must-happens-before relationship which precludes the race.
+
+It is quite simple to mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address.
+We implemented this check by adding a generation counter to \landslide's heap tracking:
+each allocation is given a unique ID,
+and when evaluating whether two heap accesses can race,
+the IDs of their containing blocks must match.
+However, when limited to a single execution, suppressing any data race matching this pattern is unsound.
+Consider the more unusual program in Figure~\ref{fig:recycle-bug}:
+Now, the memory is recycled the same way, but the racing access's address is not tied to {\tt malloc}'s return value.
+Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to race.
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \} *x;}} \\
+	& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \} *y;~~~~~~~~~~}} \\
+	\\
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
+	2 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	3 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
+	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	5 & & \texttt{\hilight{commentblue}{// ...initialize...}}\\
+	6 & & \texttt{publish(y);} \\
+	7 & & \texttt{\hilight{brickred}{y->bar = ...;}} \\
+\end{tabular}
+\caption{A common execution pattern with {\tt malloc()} that produces false positive data race candidates.}
+\label{fig:recycle}
+\end{figure}
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{publish(x);} & \\
+	2 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
+	3 & \texttt{\hilight{olivegreen}{free}(x);} \\
+	4 & & \texttt{x2 = get\_published\_x();} \\
+	5 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
+	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+\end{tabular}
+\caption{If a single-pass data race detector discarded candidates matching the malloc-recycle pattern,
+it would miss the bug in this adversarial program.}
+\label{fig:recycle-bug}
+\end{figure}
+
+%%Because concurrent {\tt malloc} is often implemented with an internal lock, under a {\em pure} happens-before analysis,
+%Note that under a {\em pure happens-before} analysis,
+%these accesses are not considered concurrent % at all
+%because of {\tt malloc}'s internal locking events,
+%and would not result in such false positives.
+%However, pure happens-before can miss many real bugs \cite{hybriddatarace,tsan},
+%so in our context it is more appropriate to use the
+%{\em limited happens-before} relation in a hybrid approach with lockset tracking.
+%the hybrid approach combining lockset tracking and the {\em limited} happens-before relation is not vulnerable to false negatives,
+
+Fortunately, when data-race detection is combined with DPOR and Iterative Deepening, pruning these false positives is sound even when such adversarial programs are considered.
+This makes it unnecessary to verify such data races by actively adding more preemptions,
+achieving a potentially combinatorial reduction in how many state spaces we generate.
+%Intuitively, we need not worry about cases such as Figure~\ref{fig:recycle-bug} because,
+%should they be true races,
+%DPOR will reorder threads sufficiently for the malloc-recycle pattern to disappear.
+We provide a proof sketch below.
+
+\begin{theorem}[Soundness of eliminating malloc-recycle races]
+If a malloc-recycle data race is not a false positive,
+%DPOR will reorder threads such that
+DPOR will test an alternate thread interleaving in which
+%either
+the accesses still race without fitting the malloc-recycle pattern.
+%, or a use-after-free bug will be reported immediately.
+\end{theorem}
+
+\begin{proof}
+By definition of the malloc-recycle pattern,
+any such program must contain an access {\tt x1} by one thread T1,
+followed by a {\tt free} and a {\tt malloc} possibly by either thread,
+followed by an access {\tt x2} by the other thread T2. % not depending on the result of the middle malloc.
+For brevity we say that T1 performs the {\tt free} and T2 the subsequent {\tt malloc}; the other cases are similar.
+We also assume the only way for the program to get pointers to heap memory is through {\tt malloc};
+hence, there must also be some ``publish'' action {\tt p} by T1 which communicates the address to T2.
+Because this is a true data race, {\tt p} must occur before {\tt x1}, as {\tt x2} cannot be reordered before {\tt p}.
+
+We now show that a PP will be identified during T1 between {\tt p} and {\tt x1}.
+The publish action must involve some thread communication, whether through a shared data structure or message-passing API.
+If locking or message-passing is used, our set of hard-coded PPs suffices.
+Otherwise, {\tt p} (and the corresponding read by T2) will be a data race, although it may itself be a malloc-recycle race.
+In this case we use induction on the pointer chain leading to {\tt x}:
+in the base case, {\tt p} is global or obtained via message-passing,
+and in the inductive step, DPOR will reorder threads sufficiently to identify the PP on {\tt p}.
+Hence there will be a PP between {\tt p} and {\tt x1} no matter the mode of communication.
+
+By definition of DPOR, this PP causes {\tt x2} to be reordered before {\tt x1} while not changing {\tt x2}'s location.
+As T2's {\tt malloc} now occurs before T1's {\tt free}, it will allocate different memory.
+Hence {\tt x1} and {\tt x2} will be in the same allocation;
+hence the accesses can race without fitting the malloc-recycle pattern.
+% Mario-man is very very hunger from not having enough plumming jobs, so his Quest for Eat and Dollars.
+% This spells QED so we are done.
+\end{proof}
+\renewcommand\proofname{Proof}
+
+Note especially that our reasoning does not require PPs on the internal locking of {\tt malloc} or {\tt free},
+which are ideal candidates to ignore via {\tt without\_function} (\sect{\ref{sec:landslide}}) to reduce state space size.
