@@ -134,7 +134,7 @@ which can change based on different interleavings of previous code
 %Figure~\ref{fig:dont-filter-dr-by-address} shows example code where qualifying by memory address will miss the bug.
 
 \begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{dr-jobs.pdf}
+	\includegraphics[width=0.48\textwidth]{dr-jobs-v2.pdf}
 	\caption{\quicksand~manages the exploration of multiple state spaces, communicating with each MC instance to receive ETAs, data race candidates, and bug reports.
 		When an access pair is reported as a data race, we generate a new PP for each access and add new jobs corresponding to different combinations of those with the existing PPs.}
 	\label{fig:new-dr-jobs}

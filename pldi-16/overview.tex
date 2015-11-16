@@ -14,10 +14,9 @@ We review the background in stateless model checking and data-race analysis usin
 	4 & & \texttt{\hilight{olivegreen}{yield();}} \\
 	5 & & \texttt{atomic\_xadd(\&x, 1);} \\
 	6 & \texttt{x = tmp + 1;} & \\
-	7 & \texttt{\hilight{olivegreen}{yield();}} & \\
-	8 & \texttt{\hilight{commentblue}{mutex\_unlock(\&mx);}} & \\
-	9 & \texttt{assert(x >= 1);}  & \\
-	10 & & \texttt{assert(x >= 2);} \\
+	7 & \texttt{\hilight{commentblue}{mutex\_unlock(\&mx);}} & \\
+	8 & \texttt{assert(x >= 1);}  & \\
+	9 & & \texttt{assert(x >= 2);} \\
 	%1 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
 	%2 & \texttt{\hilight{olivegreen}{free}(x);} \\
 	%3 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
@@ -26,7 +25,7 @@ We review the background in stateless model checking and data-race analysis usin
 	%6 & & \texttt{publish(y);} \\
 	%7 & & \texttt{\hilight{brickred}{y->bar = ...;}} \\
 \end{tabular}
-\caption{Example program with a data-race bug. In this interleaving, the assertion on line 10 will fail. Two data-race preemptions are required to expose the bug: one just before thread 1's line 6, and one just before thread 2's line 10.}
+\caption{Example program with a data-race bug. In this interleaving, the assertion on line 9 will fail. Two data-race preemptions are required to expose the bug: one just before thread 1's line 6, and one just before thread 2's line 9.}
 \label{fig:example}
 \end{figure}
 
@@ -37,9 +36,8 @@ Rather than identifying suspicious conditions which may include false alarms, th
 stateless model checkers focus on concrete observable failures such as assertions, deadlocks, and segfaults.
 A stateless model checker executes the program repeatedly, each time according to a new thread interleaving, until the state space (or the CPU budget) is exhausted.
 
-% TODO: Fix picture.
 \begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{trees.pdf}
+	\includegraphics[width=0.48\textwidth]{trees-v2.pdf}
 	\caption{Iterative Deepening example.
 		The minimal state space (top) includes only voluntary thread switches, such as {\tt yield()}. %or {\tt cond\_wait()}.
 		Multiple further tests can be run: preempting on calls to {\tt mutex\_lock} alone (left), {\tt mutex\_unlock} alone (right), or both together (bottom).
@@ -51,7 +49,7 @@ Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
 
 The checker defins the granularity of thread interleavings by which {\em preemption points} it uses to switch threads.
 Most model checkers \cite{chess} choose synchronization/thread library API boundaries for these points;
-in our example program, these would be lines 1, 4, 7, and 8.
+in our example program, these would be lines 1, 4, and 7.
 Figure~\ref{fig:id} shows several possible resulting state spaces.
 The approach of prior work is to enable all preemption points simultaneously, i.e., to test only the bottom state space.
 
@@ -76,13 +74,14 @@ they both access the same memory address,
 at least one is a write,
 the threads do not hold the same lock,
 and no synchronization enforces the order of the thread transitions.
-In Figure~\ref{fig:example}, lines 3 and 5 each race with 2, 6, and 9, and line 6 further races with 10.
+In Figure~\ref{fig:example}, lines 3 and 5 each race with 2, 6, and 8, and line 6 further races with 9.
 
 Though state-of-the-art MCs preempt only on synchronization events,
 many serious concurrency bugs are caused by data races leading to corrupted shared state.
 Figure~\ref{fig:example}'s thread interleaving is possible only with {\em data-race preemption points}:
 preempting a thread just before an instruction identified as part of a data race.
-None of the state spaces in Figure~\ref{fig:id} contain this interleaving.
+None of the state spaces in Figure~\ref{fig:id} contain this interleaving,
+as none of the mutex/yield preemptions split lines 2 and 6 across different transitions.
 
 \subsection{Terminology}
 
