@@ -198,7 +198,6 @@ Iterative Deepening is likely to find bugs SSS-MC will miss.
 %Note that even users willing to spend 10 CPU-hours should find this ``early advantage'' compelling:
 
 {\bf Finding new data-race bugs.}
-Though state-of-the-art MCs preempt only on synchronization events, many serious concurrency bugs are caused by data races leading to corrupted shared state.
 The line QS-DRs represents our ``no holds barred'' \quicksand~tests,
 with dynamically-discovered data-race PPs enabled:
 we quickly pull ahead of SSS-MC, and ultimately conclude with 179\% as many bugs in total.
