@@ -15,45 +15,39 @@ and search ordering strategies such as Iterative Context Bounding \cite{chess-ic
 
 % Can I even make a claim this broad to begin with?
 However, all stateless model checkers to date are bound by a fixed set of {\em preemption points}: code locations that define the granularity at which threads interleave.
-% TODO: You repeat the following 1.5 sentence in the related work section; maybe you can eliminate this redundancy to save space?
+Choosing these preemption points is a tradeoff between schedule coverage and feasibility of completion.
 For example, \textsc{CHESS} \cite{chess} preempts only on synchronization operations and library calls, which can miss lock-free shared memory races.
-It provides an additional data-race analysis to report any violations of this model;
-however, data-race analyses are prone to report false positives
-%and benign races
-which require annotations or imprecise heuristics to suppress \cite{racerx,tsan,datacollider}.
 %
 On the other hand, SPIN \cite{spin}
 is able to preempt threads around any shared memory access. Such fine granularity would automatically check if each data race is a real bug, but makes full state space completion intractable for even modestly-sized tests.
 %
-Configuring a model checker is a tradeoff between schedule coverage and feasibility of completion.
 This work shows how to avoid making that tradeoff decision in advance.
 
-We present \quicksand, a framework for {\em Iterative Deepening} of preemption points during stateless model checking.
-Named after the analogous technique in chess AI \cite{iterative-deepening-chess-ai}, our approach likewise makes progressively deeper searches of the state space until a given CPU budget is exhausted.
-Rather than attempting to search a single state space with every available preemption point enabled (e.g., preempting on every pthread API call),
-\quicksand~tests many different state spaces corresponding to subsets of those points, managing a model checker instance to explore each one.
-It estimates the size of each state space to decide when long-running instances should be suspended, and dynamically generates new state spaces based on data race analysis.
-%In fact, if given enough time to fully test all discovered data-race preemption points,
-%Iterative Deepening provides a full verification of all thread schedules that could arise from preempting anywhere.
-In fact, Iterative Deepening is fully general:
-we prove that if it completes all state spaces resulting from data-race preemption points,
-that serves as a total verification of all possible thread interleavings of the given test program.
+We present \quicksand,
+a model checking framework for deciding at runtime which preemption points to test,
+according to which resulting state spaces are most likely to fit a prescribed CPU budget.
+It uses data-race analysis to dynamically find new preemption points which expose bugs not reachable by preempting on API calls alone.
+When prior work would time out on large tests by trying several preemption points simultaneously,
+\quicksand~tests smaller state spaces based on subsets of those points, which often finds the same bugs sooner.
+On the other hand, when the CPU budget is large enough to fully test all data-race preemption points,
+we prove that this constitutes a total verification of all possible thread schedules.
+Short of deciding in advance to preempt on every single instruction \cite{spin}, this was not previously possible without data-race preemption points.
 
 We evaluate \quicksand~by testing \numstudence~student thread libraries and kernels from the undergraduate OS classes at Carnegie Mellon, Berkeley, and the University of Chicago.
-\quicksand~finds more bugs than the conventional stateless model checking approach given the same CPU budget,
-% joshua wants me to say "conventional approachES" here
-and furthermore, adding data-race preemption points quickly exposes bugs missed by even the ``maximal'' state space of the conventional approach.
+We show many advantages over both conventional stateless model checking and single-pass data-race analysis.
+We find that many of the bugs found by the conventional approach can be found faster using subsets of preemption points,
+and that data-race preemption points quickly expose many new bugs that prior model checkers could not find at all.
 
-This paper's contributions are as follows:
+Our contributions are as follows:
 \begin{enumerate}
-	\item Iterative Deepening, a new technique for combining data-race analysis with stateless model checking, and \quicksand, an open-source implementation of the technique;
-	\item A proof of convergence, which shows that should it be possible in the given CPU budget,
+	\item {\em Iterative Deepening}, a new technique for combining data-race analysis with stateless model checking, and \quicksand, an open-source implementation of the technique;
+	\item A proof of convergence, showing that should it be possible in the given CPU budget,
 		fully testing every discovered data-race preemption point is equivalent to testing all possible thread schedules;
 	\item A new tactic for eliminating one class of false-positive data races,
 		which cannot soundly be used in a single-pass analysis,
 		but which we prove correct when used with Iterative Deepening;
 		%, unsound in single-pass analysis but which we prove sound when used with Iterative Deepening;
-	\item A large evaluation in which \quicksand~compares favorably to stand-alone data-race detection and stateless model checking approaches.
+	\item A large evaluation in which \quicksand~compares favorably to stand-alone data-race detection and stateless model checking approaches, finding new bugs that would be missed by either alone.
 \end{enumerate}
 
 The remainder of the paper is organized as follows.

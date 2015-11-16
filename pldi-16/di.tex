@@ -1,3 +1,17 @@
+\section{Design}
+\label{sec:design}
+
+Motivated by state-of-the-art tools' inflexibility to change their preemption points,
+we introduce a new technique called {\em Iterative Deepening} for adjusting the preemption points at runtime.
+Named after the analogous technique in chess artificial intelligence \cite{iterative-deepening-chess-ai},
+this approach likewise makes progressively deeper searches of the state space until a given CPU budget is exhausted.
+Rather than attempting to search a single state space with every available preemption point enabled
+(e.g., preempting on every pthread API call),
+Iterative Deepening searches among different combinations of such points during the test,
+deciding on-the-fly whether to pursue each resulting state space, or to defer it in favour of smaller ones.
+Different state spaces are generated based on {\em subsets} of the preemption points which prior work would use; for example, ``preempt on all calls to {\tt mutex\_lock} but not on {\tt mutex\_unlock}''.
+We show a visualization in Figure~\ref{fig:id}.
+
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{trees.pdf}
 	%\includegraphics[width=0.15\textwidth]{tree0.pdf}
@@ -12,16 +26,8 @@ Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
 }
 	\label{fig:id}
 \end{figure}
-\section{Design}
-\label{sec:design}
 
-Motivated by state-of-the-art tools' inflexibility to change their preemption points,
-Iterative Deepening searches among different combinations of such points during a test,
-deciding on-the-fly whether to pursue each resulting state space, or to defer it in favour of smaller ones.
-Different state spaces are generated based on {\em subsets} of the preemption points which prior work would use; for example, ``preempt on all calls to {\tt mutex\_lock} but not on {\tt mutex\_unlock}''.
-We show a visualization in Figure~\ref{fig:id}.
-
-Iterative Deepening depends heavily on state-space estimation \cite{estimation}
+Iterative Deepening relies on state-space estimation \cite{estimation}
 to understand which state spaces are likely to complete on time,
 in advance of actually testing each interleaving within.
 The purpose is to make decisions automatically about when to defer exploration of a state space,
