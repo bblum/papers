@@ -56,7 +56,7 @@ using provided bare-bones mutex, context-switch, and virtual memory implementati
 % 1926 1946 1994 2022 2043 2066 2077 2088 2099 2131 2164 2172 2190 2215 2227 2277 2282
 % 2384 2387 2483 2486 2503 2514 2551 2597 2610 2665 4114
 Though not ``real world'' programs, both projects are quite complex:
-the P2s average 1807 lines of code,%C and x86 assembly (stddev 489.5),
+the P2s average 1807 lines of code, %C and x86 assembly (stddev 489.5),
 % Pintos SLOC stats: 718.1923077 avg; 643 median; range 68-1821
 % Obtained with:
 %function getloc {
@@ -101,18 +101,17 @@ and for \mxtest~we enabled \landslide's mutex-testing option
 \newcommand\prisema{\texttt{sched\_test}}
 \newcommand\waitsimple{\texttt{wait\_test}}
 \newcommand\alarmsimul{\texttt{alarm\_test}}
-% TODO CAMREADY: Add another test case
 We tested the Pintoses with 3 programs from the class test suite: \prisema, a test of the kernel scheduling algorithm,
 \alarmsimul, for the timer sleep routine,
 and \waitsimple, for process lifecycle system calls\footnote{
-	Some of the Pintoses were partially implemented, so each test could only be run on a subset of the 78 submissions; see Table~\ref{tab:drbugs}.
+	Some of the Pintoses were partially implemented, so each test program could only be run on a subset of the 78 submissions; see Table~\ref{tab:drbugs}.
 }
-The source code of all 9 tests is available at
+The source code of all 9 test cases is available at
 {\em [submitted as supplementary material]}.
 For all tests, we used {\tt without\_function} to blacklist PPs on the {\tt malloc} lock.
-Finally, all tests were run on 12-core 3.2 GHz Xeon machines with 12GB of RAM.
-In total, the test suite comprises 629 unique state spaces,
-at least 165 of which contain bugs.
+We ran all tests on 12-core 3.2 GHz Xeon machines with 12GB of RAM.
+In total, our evaluation comprises 629 tests (pairs of a test program and a Pintos or P2),
+at least 163 of which could expose bugs.
 
 %\begin{table}[t]
 %	\begin{tabular}{l|l|l}
@@ -176,18 +175,19 @@ which we explain presently.
 {\bf Finding the same bugs faster.}
 To show that Iterative Deepening is effective even for MC domains without data races, such as message-passing distributed systems,
 we ran the test suite with \quicksand~configured to explore only subsets of the hard-coded mutex PPs
-(i.e., ignoring all data-race candidates)\footnote{
-Because \quicksand~is not yet instrumented to subset hard-coded PPs beyond the 4 ways shown in Figure~\ref{fig:id},
-we ran these tests for 2.5 hours on 4 CPUs each.
-Future work could parallelize QS-no-DR-PPs further; see \sect{\ref{sec:future}}.}.
+(i.e., ignoring all data-race candidates).
+%\footnote{
+%Because \quicksand~is not yet instrumented to subset hard-coded PPs beyond the 4 ways shown in Figure~\ref{fig:id},
+%we ran these tests for 2.5 hours on 4 CPUs each.
+%Future work could parallelize QS-no-DR-PPs further; see \sect{\ref{sec:future}}.}.
 %
 The line QS-no-DR-PPs represents this experiment.
 Even though SSS-MC mostly catches up to it by the end of the 10-hour budget,
 QS-no-DR-PPs finds many more of the bugs much sooner.
-From this we conclude that for smaller arbitrary CPU budgets,
-Iterative Deepening is likely to find bugs SSS-MC will miss,
-and for more ambitiously-sized tests,
-programmers can be more confident in the verification provided when \quicksand~times out with no bug found.
+Hence, for smaller arbitrary CPU budgets,
+Iterative Deepening is likely to find bugs SSS-MC will miss.
+%and for more ambitiously-sized tests,
+%programmers can be more confident in the verification provided when \quicksand~times out with no bug found.
 %We conclude that for smaller arbitrary CPU budgets, especially less than 1 hour,
 %Iterative Deepening is likely to find bugs SSS-MC will miss.
 %Moreover, it is also easy to imagine scaling up the size of each test case to test ,
@@ -233,7 +233,7 @@ Intuitively, this line shows that for programs with only benign data races,
 		{\bf Total}	& 629	&	&	&	&	&	& 1250	&	&
 	\end{tabular}
 	\end{center}
-	\caption{Summary of number and types of bugs found by each test case.
+	\caption{Summary of number and types of bugs found by each test program.
 		SSS-MC is the control; QS is \quicksand.
 		``DR-only'' counts among \quicksand's bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}}).
 	``Nondeterministic DRs'' counts among the DR-only bugs how many candidates required MC integration to identify (\sect{\ref{sec:eval-falseneg}}).
@@ -249,21 +249,21 @@ Intuitively, this line shows that for programs with only benign data races,
 
 %Figure~\ref{fig:bargraph}
 The left half of Table~\ref{tab:drbugs}
-breaks down the number and types of bugs found by each test case.
+breaks down the number and types of bugs found by each test program.
 % The astute observer will note that the sum of all types of failures observed is more than the total number of data-race bugs...
 %TODO CAMREADY: Run a mutex expt where "all atomic instrs" are PPs. See how many bugs are missed anyway.
 % Wwe re-ran the \mxtest control experiment with \landslide~hard-coded to preempt on any atomic instruction
 % (as well as on the mutex API boundaries).
 % Still, this smarter configuration for SSS-MC found only 99999999999 bugs of \quicksand's 13.
 In \mxtest~in particular, the control experiment found dramatically fewer bugs (just 1),
-even compared to the other test cases\footnote{
-% "Aren't all lock impls assembly?" "Yes, but this one was ALL assembly."
+even compared to the other test programs\footnote{
 	The one bug SSS-MC found was in a fully-assembly lock implementation. {\tt yield()}'s return value clobbered a value stored in {\tt \%eax}, which could lead to a failure after two repeated contentions. Preempting only on {\tt yield()} (in the contention loop) was sufficient.}.
 %Intuitively, this is due to our control experiment being able to preempt only on the boundaries of the API which
 %Though for many applications of MC, assuming a correct lock implementation is sufficient,
 Though it suffices for many applications of MC to assume correctly-implemented locks,
-we consider this strong evidence that any verification of low-level synchronization code must incorporate data-race PPs.
+we consider this strong evidence that low-level synchronization code must be verified with data-race PPs.
 
+% TODO: maybe the whole story about partial verification can be cut
 {\bf Partial verification.}
 When a state space times out, the user may prefer a brief summary of what parts of the test were verified, rather than writing off all the CPU time as a waste.
 Beyond using the state space estimator to guess the percent coverage,
@@ -272,13 +272,13 @@ that a bug would be exposed by an untested interleaving.
 \quicksand~does not attempt any such quantitative guarantee,
 but can at least report which subsets of PPs produced state spaces that did complete in time.
 
-The SSS-MC control experiment timed out in 10 hours on 77 tests.
+On 77 tests, the SSS-MC control experiment timed out in 10 hours with no bugs found.
 Among these, \quicksand~found data-race bugs in 15.
 For the other 62, we counted the number of state spaces \quicksand~was able to complete and the number of unique PPs among them.
 In three cases, \quicksand~also failed to complete anything; beyond these,
 between 1 and 253 state spaces were completed, with a mean of 58.9 and median of 29.
 Between 0 and 233 unique PPs were tested among some completed subsets, with a mean of 27.2 and median of 7.5.
-These completions guarantee that, if the test case could expose a bug,
+These completions guarantee that, if the test program could expose a bug,
 % Justify implicit hypothesis: Sync PPs + DR PPs = all possible relevant PPs.
 it would only be found by a new data-race PP not discovered yet, or by a superset combination of PPs not reached.
 
@@ -296,7 +296,7 @@ Beyond finding new bugs with data-race PPs, we evaluated \quicksand's performanc
 
 {\bf Suppressing ``malloc-recycle'' false positives.}
 In \sect{\ref{sec:recycle}} we showed the soundness of suppressing data race reports between two heap accesses when the surrounding memory was re-allocated in between.
-In Table~\ref{tab:drbugs}, the column ``Malloc-recycle DRs'' shows the total number of such data-race candidates for each test case.
+In Table~\ref{tab:drbugs}, the column ``Malloc-recycle DRs'' shows the total number of such data-race candidates for each test program.
 In total, 1250 data-races fit the malloc-recycle pattern across all tests,
 only 69 of which were observed to avoid the re-allocation in an alternate interleaving.
 Our proof in \sect{\ref{sec:recycle}} guarantees the safety of pruning all 1181 other state spaces.
@@ -306,9 +306,9 @@ none of them exposed a new bug when used as a PP.
 This shows that for other data-race tools,
 suppressing malloc-recycle candidates may be a productive heuristic,
 even if unsound without Iterative Deepening.
-However, \quicksand~was able to correctly identify the 69 violations of that heuristic among 30 distinct tests,
-and fall back to classifying them with DPOR,
-which we consider a much stronger verification.
+However, \quicksand~was able to correctly identify the 69 violations of that heuristic (among 30 distinct tests),
+and fall back to classifying them with DPOR.
+%which we consider a much stronger verification.
 
 {\bf Full verification.}
 For 153 of our 629 tests, \quicksand~was able to provide the total verification guarantee described in \sect{\ref{sec:totalverif}}.
@@ -318,7 +318,7 @@ so the same verification could be provided by SSS-MC.
 We plot these for comparison,
 according to the time taken by that test's SSS-MC control experiment,.
 When a test can be totally verified without any data-race PPs,
-\quicksand~will be slower than SSS-MC due to redundant work (\sect{\ref{sec:future}}).
+\quicksand~may be slower than SSS-MC due to redundant work (\sect{\ref{sec:future}}).
 Of course, using data-race PPs increases our capacity for total verification by 4.25x.
 
 \begin{figure}[t]
@@ -334,6 +334,7 @@ Of course, using data-race PPs increases our capacity for total verification by 
 
 \subsection{Finding nondeterministic data-race candidates}
 \label{sec:eval-falseneg}
+
 Some memory accesses may be hidden in a control flow path that requires a nondeterministic preemption to be executed.
 In such cases, a single-pass dynamic data-race detector
 %could not achieve the coverage necessary
@@ -355,7 +356,7 @@ rather than waiting until future interleavings to witness them without the mallo
 	\includegraphics[width=0.48\textwidth]{nondet-drs-1-v2.pdf}
 	\caption{Some data-race candidates may not be identified during a single program execution.
 		Using nondeterministic data races as PPs,
-		\quicksand~found 189\% as many bugs compared to the approach of prior work \cite{portend}.
+		\quicksand~found 189\% as many bugs as could be found using single-pass data races alone.
 	}
 	\label{fig:dr-falsenegs}
 \end{figure}
@@ -363,20 +364,22 @@ Figure~\ref{fig:dr-falsenegs} compares the types of data-race candidates necessa
 The first series represents the bugs found using PPs from single-pass data-race candidates,
 % TODO: re read racefuzzer/portend paper to confirm this is true.
 i.e., the state-of-the-art approach used by \cite{racefuzzer,portend}.
-The second series shows all the data-race bugs \quicksand~found,
+The second series shows all data-race bugs \quicksand~found,
 which includes the former type as well as new bugs involving nondeterministic data-races.
-In total, among \quicksand's 68 total data-race bugs, just 36 could be found with single-pass data-race candidates alone.
+\quicksand~found 68 data-race bugs in total, only 36 of which could be found with single-pass data-race candidates alone.
 %In total, we found 189\% as many bugs by using nondeterministic data-race candidates as PPs.
 
-At first, it might seem unfair to compare the data race bugs \quicksand~finds (10 CPU-hours)
-against the candidates found by a prior work's single execution (less than a minute).
-We argue this comparison is meaningful because prior work data-race tools %, being not integrated with a MC,
-are not intended to discover new candidates under subsequent runs. %before discovering any initial candidates.
-Running a data-race tool repeatedly for 10 CPU-hours could potentially uncover some of these false negatives at random,
+Note that we are not comparing how much testing time is required before identifying the data-race candidates involved in each bug.
+Single-pass data races can all be found after a single program execution,
+while \quicksand~may potentially take up to all 10 CPU-hours before identifying a nondeterministic data race.
+However, prior work data-race tools \cite{tsan}, being not integrated with a MC,
+are not intended to discover new candidates under subsequent runs.
+Running a single-pass data-race tool repeatedly for 10 CPU-hours could potentially uncover some nondeterministic candidates,
 but stress testing's comparative problem with achieving reliable coverage is already well-understood
 \cite{chess-icb,gambit}.
-This result suggests that
-other replay-based data-race tools \cite{racefuzzer,portend} should be configured to use a similar feedback loop as Iterative Deepening (\sect{\ref{sec:related-dr}}).
+Likewise, replay-based tools \cite{portend} are dependent upon the data-race detector to provide an execution trace leading to each candidate.
+This experiment suggests that
+such tools should be configured to use a similar feedback loop as Iterative Deepening.
 %i.e., discovering transitively-reachable data races while testing initial ones.
 %although that would still not simultaneously be able to provide total verifications.
 % TODO: read gambit paper
@@ -433,7 +436,7 @@ to prune some or all of this repeated work.
 % TODO: update these numbers
 \quicksand~was able to partially guarantee safety in 97\% of tests with large maximal state spaces.
 However, in 2 tests, no more than the minimal state space could be verified,
-and in 3 other tests, not even that much.
+and in 3 other tests, no state spaces could be completed at all.
 Larger state spaces often result from finer-grained locking,
 which can indicate a more intricate concurrent algorithm or an unnecessarily complicated design.
 Such programs may require even more rigorous verification than a program with a single global lock.
@@ -460,11 +463,11 @@ One benefit of our technique is that {\tt within\_function}-based Iterative Deep
 would enable expert developers to configure custom subsets of PPs they are most interested in verifying,
 according to which modules of a codebase they wish to test.
 
-Likewise, for test cases where full verification is not computationally feasible,
+Likewise, for tests where full verification is not computationally feasible,
 the state spaces associated with many data-race candidates will time out.
 We cannot guarantee that those races are false positives or benign, even though no bug was found.
 % FIXME: You need a separate table counting only the state spaces WITHOUT BUGES.
-In the ``Untested DR PPs'' column of Table~\ref{tab:drbugs}, we count the number of such unverified candidates from each test case.
+In the ``Untested DR PPs'' column of Table~\ref{tab:drbugs}, we count the number of such unverified candidates from each test program.
 For a more formal treatment of these cases, we refer the reader to the {\em k-witness harmless} metric introduced by \cite{portend},
 which could be combined with Iterative Deepening in future work.
 % Future work: Add parallel DPOR so you can fill your spare CPUs when there are fewer than the max number of jobs.

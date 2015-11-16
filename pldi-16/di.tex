@@ -170,8 +170,8 @@ it is logical to re-execute the test and issue preemptions during those instruct
 \end{algorithm}
 
 With Iterative Deepening, this is a simple matter of creating a new state space with a PP enabled on the racing instructions by each thread, as shown in Algorithm~\ref{alg:handledatarace}.
-Note that even though a data race may involve two different instructions, we add new state spaces with only one new PP at a time.
-Rather than adding a single state space configured to preempt on both involved instructions,
+Note that even though a data race may involve two different instructions, $\alpha$ and $\beta$, we add new state spaces with only one new PP at a time.
+Rather than adding a single large state space, %configured to preempt on both involved instructions,
 i.e., $AB =$ \GetPPSet{$j_0$} $\cup$ $\alpha$ $\cup$ $\beta$,
 we prefer to add multiple smaller jobs which have a higher chance of completing in time, i.e.,
 $A =$ \GetPPSet{$j_0$} $\cup$ $\alpha$ and
@@ -457,14 +457,14 @@ it would miss the bug in this adversarial program.}
 \label{fig:recycle-bug}
 \end{figure}
 
-%Because concurrent {\tt malloc} is often implemented with an internal lock, under a {\em pure} happens-before analysis,
-Note that under a {\em pure happens-before} analysis,
-these accesses are not considered concurrent % at all
-because of {\tt malloc}'s internal locking events,
-and would not result in such false positives.
-However, pure happens-before can miss many real bugs \cite{hybriddatarace,tsan},
-so in our context it is more appropriate to use the
-{\em limited happens-before} relation in a hybrid approach with lockset tracking.
+%%Because concurrent {\tt malloc} is often implemented with an internal lock, under a {\em pure} happens-before analysis,
+%Note that under a {\em pure happens-before} analysis,
+%these accesses are not considered concurrent % at all
+%because of {\tt malloc}'s internal locking events,
+%and would not result in such false positives.
+%However, pure happens-before can miss many real bugs \cite{hybriddatarace,tsan},
+%so in our context it is more appropriate to use the
+%{\em limited happens-before} relation in a hybrid approach with lockset tracking.
 %the hybrid approach combining lockset tracking and the {\em limited} happens-before relation is not vulnerable to false negatives,
 
 Fortunately, when data-race detection is combined with DPOR and Iterative Deepening, pruning these false positives is sound even when such adversarial programs are considered.

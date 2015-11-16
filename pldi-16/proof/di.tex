@@ -69,6 +69,11 @@ changes some variable values when the threads are reordered, such that the memor
 Figures~\ref{fig:recycle} and \ref{fig:recycle-bug} show an example.
 In the case of malloc-recycle false positives, the allocation heap is the ``other shared state'' mentioned in the previous definition, and malloc's return value is the variable value that changed.
 
+Recent work \cite{sparc-ssm} has proposed hardware techniques for detecting many classes of stale heap pointer accesses, including the one shown in Figure \ref{fig:recycle-bug}.
+This approach could be combined with stateless model checking in future work to identify such bugs immediately,
+rather than requiring Iterative Deepening to explore new state spaces corresponding to the data race.
+However, if the {\tt malloc} call were in thread 1 instead of thread 2, the bug would still be nondeterministic, requiring stateless model checking to expose.
+
 \begin{definition}[Use after free]
 	Any read or write to heap memory which was once allocated, but no longer is.
 \end{definition}
@@ -133,8 +138,8 @@ These can immediately be identified as failures by a MC which tracks allocation 
 
 \section{Intuition}
 
-In this section we provide (hopefully) intuitive summaries of both our proof goals,
-for readers who might be satisfied without necessarily double-checking the proofs' internal structure.
+In this section we provide (hopefully) intuitive summaries of both our proof goals.
+%for readers not interested in double-checking the proofs' internal structure.
 
 {\bf Intuition for Iterative Deepening convergence.}
 In summary, we are proving that when Iterative Deepening finishes saturating the set of available data-race PPs,
