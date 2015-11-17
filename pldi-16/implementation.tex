@@ -26,14 +26,15 @@ Multiple invocations can be used; later ones take precedence.
 %\cite{landslide} provides further detail on this feature.
 
 {\bf Data races in lock implementations.}
-Data race tools in prior work \cite{tsan,portend} recognize the implementations of sync primitives to avoid spuriously flagging memory accesses resulting from the lock implementation itself.
+Data race tools in prior work \cite{tsan,portend} recognize the implementations of sync primitives to avoid spuriously flagging memory accesses therein. %resulting from the lock implementation itself.
 The assumption that the locks are already correct enables productive data-race analysis on the rest of the codebase.
 Otherwise, with testing limited to one execution,
 %even if one wishes to test for lock bugs,
 data-race analysis would flag every access pair in the lock implementation. %, requiring human attention to verify.
 However, Iterative Deepening removes the need for human attention to verify them. %can automatically verify a large quantity of data-race candidates as benign.
-Hence, we extended \landslide~with a custom option to change the lock-set tracking to include accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()} in the data race analysis.
-(Accesses from other sync functions, such as {\tt cond\_wait()}, would either be included already, or be protected by an internal mutex.)
+Hence, we extended \landslide~with an option to make its data race analysis consider accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()},
+which we use in \sect{\ref{sec:testsuite}}.
+%(Accesses from other sync functions, such as {\tt cond\_wait()}, would either be included already, or be protected by an internal mutex.)
 
 \subsection{Quicksand}
 

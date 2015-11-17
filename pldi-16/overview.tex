@@ -37,7 +37,7 @@ Rather than identifying suspicious conditions which may include false alarms, th
 stateless model checkers focus on concrete observable failures such as assertions, deadlocks, and segfaults.
 
 \begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{trees-v2.pdf}
+	\includegraphics[width=0.48\textwidth]{trees-v2-squashed.pdf}
 	\caption{Iterative Deepening example.
 		The minimal state space (top) includes only voluntary thread switches, such as {\tt yield()}. %or {\tt cond\_wait()}.
 		Multiple further tests can be run: preempting on calls to {\tt mutex\_lock} alone (left), {\tt mutex\_unlock} alone (right), or both together (bottom).

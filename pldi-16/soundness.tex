@@ -201,7 +201,7 @@ in the base case, {\tt p} is global or obtained via message-passing,
 and in the inductive step, DPOR will reorder threads sufficiently to identify the PP on {\tt p}.
 Hence there will be a PP between {\tt p} and {\tt x1} no matter the mode of communication.
 
-By definition of DPOR, this PP causes {\tt x2} to be reordered before {\tt x1} while not changing {\tt x2}'s location.
+With this PP, DPOR will reorder {\tt x2} before {\tt x1}, while not changing {\tt x2}'s location.
 As T2's {\tt malloc} now occurs before T1's {\tt free}, it will allocate different memory.
 Hence {\tt x1} and {\tt x2} will be in the same allocation;
 hence the accesses can race without fitting the malloc-recycle pattern.
@@ -210,5 +210,5 @@ hence the accesses can race without fitting the malloc-recycle pattern.
 \end{proof}
 \renewcommand\proofname{Proof}
 
-Note especially that our reasoning does not require PPs on the internal locking of {\tt malloc} or {\tt free},
+Note that we do not require PPs on the internal locking of {\tt malloc} or {\tt free},
 which are ideal candidates to ignore via {\tt without\_function} (\sect{\ref{sec:landslide}}) to reduce state space size.
