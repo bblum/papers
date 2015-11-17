@@ -32,9 +32,9 @@ We review the background in stateless model checking and data-race analysis usin
 \subsection{Stateless Model Checking}
 
 Stateless model checking \cite{verisoft} is a testing technique for systematically exploring the possible thread interleavings of a concurrent program.
+A stateless model checker executes the program repeatedly, each time according to a new thread interleaving, until the state space (or the CPU budget) is exhausted.
 Rather than identifying suspicious conditions which may include false alarms, the approach of many static analyses \cite{racerx,coverity},
 stateless model checkers focus on concrete observable failures such as assertions, deadlocks, and segfaults.
-A stateless model checker executes the program repeatedly, each time according to a new thread interleaving, until the state space (or the CPU budget) is exhausted.
 
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{trees-v2.pdf}

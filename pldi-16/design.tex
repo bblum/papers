@@ -176,7 +176,7 @@ If $A$ and $B$ are bug-free, they will in turn add $AB$ later.
 The condition on line 1 ensures that we avoid duplicating any state spaces with multiple data-race PPs;
 for example, $AB$ is reachable by multiple paths through its different subsets, but should be added only once.
 
-Furthermore, we do not always increase the number of PPs when we find a new data race.
+Furthermore, we do not always strictly increase the number of PPs when we find a new data race.
 %When \quicksand~receives a data race report, it adds two new jobs to its workqueue:
 For each instruction involved in a data race, \quicksand~adds two new jobs:
 a ``small'' job to preempt on that instruction only,

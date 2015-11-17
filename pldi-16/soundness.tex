@@ -87,8 +87,7 @@ Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to rac
 \begin{tabular}{rll}
 	& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \} *x;}} \\
 	& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \} *y;~~~~~~~~~~}} \\
-	\\
-	& Thread 1 & Thread 2 \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
 	1 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
 	2 & \texttt{\hilight{olivegreen}{free}(x);} \\
 	3 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
@@ -103,7 +102,7 @@ Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to rac
 \begin{figure}[t]
 	\small
 \begin{tabular}{rll}
-	& Thread 1 & Thread 2 \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
 	1 & \texttt{publish(x);} & \\
 	2 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
 	3 & \texttt{\hilight{olivegreen}{free}(x);} \\

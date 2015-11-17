@@ -173,7 +173,7 @@ which we explain presently.
 \end{figure}
 
 {\bf Finding the same bugs faster.}
-To show that Iterative Deepening is effective even for MC domains without data races, such as message-passing distributed systems,
+To show that Iterative Deepening is effective even for MC domains without data races, %such as message-passing distributed systems,
 we ran the test suite with \quicksand~configured to explore only subsets of the hard-coded mutex PPs
 (i.e., ignoring all data-race candidates).
 %\footnote{
@@ -198,9 +198,9 @@ Iterative Deepening is likely to find bugs SSS-MC will miss.
 %Note that even users willing to spend 10 CPU-hours should find this ``early advantage'' compelling:
 
 {\bf Finding new data-race bugs.}
-The line QS-DRs represents our ``no holds barred'' \quicksand~tests,
-with dynamically-discovered data-race PPs enabled:
-we quickly pull ahead of SSS-MC, and ultimately conclude with 179\% as many bugs in total.
+The line QS-DRs represents \quicksand's bug-finding performance
+with data-race PPs enabled.
+We quickly pull ahead of SSS-MC, and ultimately conclude with 179\% as many bugs in total.
 The break-even point is at a negligible 90 seconds.
 
 Furthermore, we plotted another line from this dataset, QS-no-DR-bugs,
@@ -212,7 +212,7 @@ Intuitively, this line shows that for programs with only benign data races,
 
 \begin{table*}[t]
 	\begin{center}
-		%\small
+		\small
 	\begin{tabular}{r|c||c|c|c||c|c|c|c|c}
 		% TODO: Make the "bugs" left half of this graph into a bar graph.
 		& {\bf Num.} & {\bf SSS-MC} & {\bf QS} & {\bf DR-only} & {\bf Total} & {\bf Untested} & {\bf Malloc-} & {\bf Nondet.} & {\bf Nondet.} \\
@@ -240,13 +240,8 @@ Intuitively, this line shows that for programs with only benign data races,
 	\label{tab:drbugs}
 \end{table*}
 
-%\begin{figure}[t]
-%	\includegraphics[width=0.48\textwidth]{bargraph.pdf}
-%	\caption{{\bf TODO:} Is this graph productive to include in the paper? Or should I just leave the numbers in table format (the left half of Table~\ref{tab:drbugs})?}
-%	\label{fig:bargraph}
-%\end{figure}
-
 %Figure~\ref{fig:bargraph}
+% TODO: deal with the table
 The left half of Table~\ref{tab:drbugs}
 breaks down the number and types of bugs found by each test program.
 % The astute observer will note that the sum of all types of failures observed is more than the total number of data-race bugs...
@@ -355,7 +350,7 @@ rather than waiting until future interleavings to witness them without the mallo
 	\includegraphics[width=0.48\textwidth]{nondet-drs-1-v2.pdf}
 	\caption{Some data-race candidates may not be identified during a single program execution.
 		Using nondeterministic data races as PPs,
-		\quicksand~found 189\% as many bugs as could be found using single-pass data races alone.
+		\quicksand~found 189\% as many data-race bugs compared to using single-pass candidates alone.
 	}
 	\label{fig:dr-falsenegs}
 \end{figure}
