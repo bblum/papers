@@ -16,7 +16,7 @@ discuss our assumptions explicitly and include more formal definitions and struc
 Although Iterative Deepening's main purpose is to heuristically choose the most effective PP subsets to test
 when the maximal state space is too large,
 some tests may be small enough that even their maximal state spaces could be completed in time.
-For such tests, a SSS-MC tool configured to preempt on every shared memory access \cite{spin,inspect} would provide a total verification of all possible thread schedules, if it could complete in time.
+For such tests, preempting on every shared memory access \cite{spin,inspect} would provide a total verification of all possible thread schedules, if it could complete in time.
 In this section, we show that Iterative Deepening provides a verification of the same strength if it completes the state spaces associated with every discovered data-race PP.
 %In other words, contrapositively,
 %if it is possible to find a bug with any sequence of preemptions on any instruction whatsoever,
@@ -83,7 +83,8 @@ it will be tested in the containing state space.
 By contrapositive, to expose this behaviour, one or more preemptions must occur in the middle of some transition, rather than at the boundaries.
 
 We now show by contradiction there cannot be {\em multiple} data-race PPs which must both be enabled before either data race can be identified.
-Assume there does not exist a single transition $t_1 \in \mathcal{S}$ which alone can be split into $\{t_1',t_1''\}$ by a PP $q$ such that another thread's concurrent transition $t_2$ conflicts with $t_1''$.
+Assume there does not exist a single transition $t_1 \in \mathcal{S}$ which alone can be split into $\{t_1',t_1''\}$ by a PP $q$,
+such that another thread's concurrent transition $t_2$ conflicts with $t_1''$.
 By the soundness of DPOR, because all $t_2$s are independent with $t_1''$, $\mathcal{S} \equiv \mathcal{S} \cup q$.
 Replacing $\mathcal{S}$ with $\mathcal{S} \cup q$ in the above assumption shows that no {\em pair} of new $q$s would expose new program behaviour, and inductively, no set of $q$s of any size, which contradicts the previous paragraph.
 
@@ -101,7 +102,7 @@ Hence, Iterative Deepening will eventually test a state space containing the equ
 \subsection{Suppressing ``malloc-recycle'' false positives}
 \label{sec:recycle}
 
-We identify a particular class of false positive data-race candidate in which the associated memory is recycled by {\tt malloc} between the two accesses.
+We identify a particular class of false positive data-race candidate in which the memory is recycled by {\tt malloc} between the two accesses.
 Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can expose such behavior.
 If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 7 will be flagged as a data race.
 We term this a {\em malloc-recycle data race}.

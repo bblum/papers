@@ -68,12 +68,13 @@ and decide on-the-fly whether to pursue each test, or to defer it in favour of s
 
 \subsection{Data Race Detection}
 
-Data race detection \cite{eraser} is an analysis which identifies pairs of unsynchronized memory accesses between threads.
+Data race analysis \cite{eraser} identifies pairs of unsynchronized memory accesses between threads.
 Two instructions are said to race if
 they both access the same memory address,
 at least one is a write,
 the threads do not hold the same lock,
 and no synchronization enforces the order of the thread transitions.
+Data races are not necessarily bugs, but represent suspicious violations of the locking discipline.
 In Figure~\ref{fig:example}, lines 3 and 5 each race with 2, 6, and 8, and line 6 races with 9.
 
 Though state-of-the-art MCs preempt only on synchronization events,

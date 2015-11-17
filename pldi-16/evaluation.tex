@@ -44,8 +44,8 @@ The P2 thread library comprises \texttt{thr\_create()}, \texttt{thr\_exit()}, \t
 all implemented from scratch in userspace with a UNIX-like system call interface \cite{kspec,thrlib}.
 %
 The Pintos kernel project
-involves implementing priority scheduling, \texttt{sleep()}, and user-space process management (\texttt{wait()} and \texttt{exit()})
-using provided bare-bones mutex, context-switch, and virtual memory implementations
+involves priority scheduling, \texttt{sleep()}, and user-space process management (\texttt{wait()} and \texttt{exit()})
+using provided mutex, context-switch, and virtual memory implementations
 \cite{pintos}.
 % P2 SLOC stats: 1807 avg; 1723 median; range 1181-4114.
 % All numbers, obtained with:
@@ -165,7 +165,7 @@ We tested several configurations of \quicksand~to compare against SSS-MC from mu
 which we explain presently.
 
 \begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{dowefindbugsfaster.pdf}
+	\includegraphics[width=0.48\textwidth]{dowefindbugsfaster-squashed.pdf}
 	\caption{Comparison of bug-finding performance
 	by several configurations of \quicksand~and the SSS-MC control.
 	\quicksand~finds 179\% as many bugs with data-race PPs.}
@@ -254,7 +254,7 @@ even compared to the other test programs\footnote{
 	The one bug SSS-MC found was in a fully-assembly lock implementation. {\tt yield()}'s return value clobbered a value stored in {\tt \%eax}, which could lead to a failure after two repeated contentions. Preempting only on {\tt yield()} (in the contention loop) was sufficient.}.
 %Intuitively, this is due to our control experiment being able to preempt only on the boundaries of the API which
 %Though for many applications of MC, assuming a correct lock implementation is sufficient,
-Though it suffices for many applications of MC to assume correctly-implemented locks,
+Though it often suffices to assume correctly-implemented locks,
 we consider this strong evidence that low-level synchronization code must be verified with data-race PPs.
 
 % TODO: maybe the whole story about partial verification can be cut
@@ -316,7 +316,7 @@ When a test can be totally verified without any data-race PPs,
 Of course, using data-race PPs increases our capacity for total verification by 4.25x.
 
 \begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{totalverifs.pdf}
+	\includegraphics[width=0.48\textwidth]{totalverifs-squashed.pdf}
 	\caption{Cumulative distribution of tests \quicksand~fully verified (\sect{\ref{sec:totalverif}}).
 	Some tests had no data-race candidates, and hence could also be verified by SSS-MC.}
 	\label{fig:totalverif}
@@ -446,6 +446,7 @@ making partial verification of such large tests possible.
 %{\bf Small test cases.}
 
 {\bf Partial verification.}
+% TODO: Figure out how to cut this paragrph.
 We are not the first to provide a partial verification guarantee when timing out on too-large state spaces (\sect{\ref{sec:eval-sssmc}}).
 While we guarantee safety when preempted on certain combinations of PPs,
 CHESS
@@ -457,9 +458,11 @@ One benefit of our technique is that {\tt within\_function}-based Iterative Deep
 would enable expert developers to configure custom subsets of PPs they are most interested in verifying,
 according to which modules of a codebase they wish to test.
 
-Likewise, for tests where full verification is not computationally feasible,
+Likewise, when full verification is not computationally feasible,
 the state spaces associated with many data-race candidates will time out.
-We cannot guarantee that those races are false positives or benign, even though no bug was found.
+We cannot guarantee that those races are
+%false positives or
+benign, even though no bug was found.
 % FIXME: You need a separate table counting only the state spaces WITHOUT BUGES.
 In the ``Untested DR PPs'' column of Table~\ref{tab:drbugs}, we count the number of such unverified candidates from each test program.
 For a more formal treatment of these cases, we refer the reader to the {\em k-witness harmless} metric introduced by \cite{portend},

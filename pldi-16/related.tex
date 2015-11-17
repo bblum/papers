@@ -26,7 +26,7 @@ However, the resulting state space explosion demands that any such tool either
 choose a small subset of instructions to consider as PPs
 or be limited to very small test inputs.
 %However, every such prior tool we know of has serious drawbacks.
-SKI \cite{ski} approaches kernel code by choosing in advance a random set of instruction offsets from the start of the test,
+SKI \cite{ski} approaches kernel code by choosing a random set of instructions in advance, %offsets from the start of the test,
 which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
 %
 SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our \mxtest~experiment,
@@ -81,8 +81,8 @@ different program output, which is orthogonal to our technique.
 However, Portend does not test alternate interleavings {\em in advance} of knowing data races,
 which is necessary to expose certain bugs (\sect{\ref{sec:eval-falseneg}}) or to provide full verification (\sect{\ref{sec:totalverif}}).
 % XXX: Is this true??
-It also assumes the POSIX synchronization API, so cannot verify arbitrary synchronization algorithms such as we do with \mxtest.
-Future work could combine the two approaches, using MC to produce new data-race traces for Portend to classify, or using Portend's analysis to inform \quicksand's state space priorities.
+%It also assumes the POSIX synchronization API, so cannot verify arbitrary synchronization algorithms such as we do with \mxtest.
+Future work could combine the two approaches, using MC to produce new data-race traces for Portend to classify, or using Portend's analysis to inform \quicksand's heuristic priorities.
 
 % \subsection{Other Concurrency Testing Approaches}
 %

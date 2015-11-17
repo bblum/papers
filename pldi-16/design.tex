@@ -20,7 +20,7 @@ Note that Iterative Deepening is a {\em wrapper} algorithm around stateless MC.
 A MC tool is still used to test each state space, and other reduction techniques are still applicable.
 Moreover, because Iterative Deepening treats the set of preemption points as mutable,
 it can add new ones reactively based on any runtime analysis.
-We focus on dynamic data-race detection~\cite{tsan} as the mechanism for finding new preemption candidates.
+We focus on dynamic data-race detection~\cite{hybriddatarace,tsan} as the mechanism for finding new preemption candidates.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
