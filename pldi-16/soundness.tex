@@ -23,6 +23,9 @@ In this section, we show that Iterative Deepening provides a verification of the
 %an equivalent thread interleaving will be reachable using only data-race PPs and synchronization API PPs.
 A proof sketch of the contrapositive statement follows.
 
+\newcommand\ppnext[1]{\ensuremath{\mathsf{next}(#1)}}
+\newcommand\ppinstr[1]{\ensuremath{\mathsf{instr}(#1)}}
+\newcommand\ppothers[1]{\ensuremath{\mathsf{others}(#1)}}
 \begin{theorem}
 If a bug can be exposed by any thread interleaving possible by preempting on any instruction,
 Iterative Deepening will eventually test an equivalent interleaving which exposes the same bug.
@@ -31,9 +34,6 @@ Iterative Deepening will eventually test an equivalent interleaving which expose
 The proof has two parts:
 first, we show that preempting on data-racing instructions and synchronization API boundaries suffices to test all possible program behavior;
 second, we show that Iterative Deepening will eventually detect all such data races.
-\newcommand\ppnext[1]{\ensuremath{\mathsf{next}(#1)}}
-\newcommand\ppinstr[1]{\ensuremath{\mathsf{instr}(#1)}}
-\newcommand\ppothers[1]{\ensuremath{\mathsf{others}(#1)}}
 Given a PP $p$, let $\ppnext{p}$ denote the next transition after $p$ executed by the thread which ran immediately before $p$,
 let $\ppinstr{p}$ denote the first instruction of $\ppnext{p}$,
 and let $\ppothers{p}$ denote the transitions by other threads between $p$ and $\ppnext{p}$.
