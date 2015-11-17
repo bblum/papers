@@ -30,9 +30,10 @@ Data race tools in prior work \cite{tsan,portend} recognize the implementations 
 The assumption that the locks are already correct enables productive data-race analysis on the rest of the codebase.
 Otherwise, with testing limited to one execution,
 %even if one wishes to test for lock bugs,
-data-race analysis would flag every access pair in the lock implementation, requiring human attention to verify.
-However, Iterative Deepening can automatically verify a large quantity of data-race candidates as benign.
-Hence, we extended \landslide~with a custom option to change the lock-set tracking to include accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()} in the analysis. (Accesses from other sync functions, such as {\tt cond\_wait()}, would either be included already, or be protected by an internal mutex.)
+data-race analysis would flag every access pair in the lock implementation. %, requiring human attention to verify.
+However, Iterative Deepening removes the need for human attention to verify them. %can automatically verify a large quantity of data-race candidates as benign.
+Hence, we extended \landslide~with a custom option to change the lock-set tracking to include accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()} in the data race analysis.
+(Accesses from other sync functions, such as {\tt cond\_wait()}, would either be included already, or be protected by an internal mutex.)
 
 \subsection{Quicksand}
 
@@ -48,10 +49,10 @@ among other options such as mutex-testing mode,
 passed as an argument to \landslide.
 Then, a dedicated \quicksand~thread communicates with the \landslide~process via message-passing. %on a FIFO pipe.
 \landslide~messages \quicksand~after testing each new interleaving to report updated progress and ETA,
-whenever a new data-race candidate is found, and whenever a bug is found.
-\quicksand~in turn replies whether the test should suspend/resume due to too high ETA, or quit due to timeout.
-We implement suspending jobs simply by making \landslide~wait on a message-passing call.
+and whenever it finds a new data-race candidate or bug.
+\quicksand~in turn replies whether to suspend/resume due to too high ETA, or quit due to timeout.
+We suspend jobs simply by making \landslide~wait on a message-passing call.
 Should \quicksand~later resume a suspended job, we send a message to continue,
-resuming the \landslide~instance where it left off;
-otherwise, we resume it only after time runs out, causing it to exit.
+resuming the \landslide~instance where it left off.
+%otherwise, we resume it only after time runs out, causing it to exit.
 
