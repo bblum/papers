@@ -1,0 +1,71 @@
+\section{Discussion}
+\label{sec:future}
+
+In this section, we discuss \quicksand's limitations and opportunities for future improvement.
+
+% TODO CAMREADY: Measure how much subset overlap there is.
+{\bf Avoiding redundant work.}
+When we extend a small state space with more PPs, the new state space is guaranteed to test a superset of thread interleavings compared to the old one.
+Any interleaving which does not preempt threads on any of the new PPs will be repeated work.
+%Because we prioritize completing small state spaces before extending them with more PPs,
+%the superset state spaces we run later will repeat each branch of their already-completed subsets.
+%
+%We measured the proportion of repeated work among completed state spaces across our test suite;
+%on average, {\bf \large 999\%} of the interleavings in each test were repeated, with some tests as high as {\bf \large 9999\%}.
+This may make Iterative Deepening slower than SSS-MC to find certain bugs,
+for example, if both {\tt mutex\_lock} and {\tt mutex\_unlock} PPs together expose a bug, but not either alone.
+%Similarly, when pursuing total verification (\sect{\ref{sec:totalverif}}),
+%if the state space resulting from preempting on every instruction could be completed,
+%an SSS-MC tool such as \cite{spin} might achieve that verification faster,
+%as Iterative Deepening will test many subsets of data-race PPs first.
+Predicting whether each future interleaving has been tested before is not straightforward,
+but we believe future implementations of Iterative Deepening could incorporate cross-job memoization
+to prune some or all such repeated work.
+
+{\bf Finer-grained PP subsets.}
+% TODO: update these numbers
+\quicksand~was able to partially guarantee safety in 97\% of tests with large maximal state spaces.
+However, in 2 tests, no more than the minimal state space could be verified,
+and in 3 other tests, no state spaces could be completed at all.
+%Larger state spaces often result from finer-grained locking,
+%which can indicate a more intricate concurrent algorithm or an unnecessarily complicated design.
+%Such programs may require even more rigorous verification than a program with a single global lock.
+%Hence these corner cases are important to consider for future work.
+While we used {\tt within\_function} (\sect{\ref{sec:landslide}}) {\em statically} to restrict where PPs could arise in advance of the test,
+%we envision
+future
+%Iterative Deepening
+implementations could use this mechanism to {\em dynamically} subset PPs further,
+making partial verification of such large tests possible.
+%enabling partial verification of such large tests. % if need space
+%Because our current implementation does not avoid repeated interleavings across state spaces,
+%as discussed above,
+%we were limited to a small number of very basic PP subsets to statically seed the exploration
+
+%{\bf Small test cases.}
+
+{\bf Partial verification.}
+%We are not the first to provide a partial verification guarantee when timing out on too-large state spaces (\sect{\ref{sec:eval-sssmc}}).
+While we guarantee safety when preempted on certain combinations of PPs (\sect{\ref{sec:eval-sssmc}}),
+CHESS
+guarantees safety under no more than a certain number of preemptions \cite{chess-icb}.
+%according to the maximum bound reached in the time limit.
+%We imagine
+These two guarantees could be each be useful to developers in different scenarios,
+and future work could combine the two approaches to provide both at once.
+One benefit of our technique is that {\tt within\_function} %-based Iterative Deepening (discussed above)
+would enable expert developers to
+%configure custom subsets of PPs they are most interested in verifying,
+%according to which modules of a codebase they wish to test.
+restrict Iterative Deepening to only the modules of a codebase they wish to test.
+
+Likewise, when full verification is not computationally feasible,
+some jobs with data-race PPs will time out.
+We cannot guarantee that those races are
+%false positives or
+benign, even though no bug was found.
+% FIXME: You need a separate table counting only the state spaces WITHOUT BUGES.
+In the ``Untested DR PPs'' column of Table~\ref{tab:drbugs}, we count the number of such unverified candidates from each test program.
+For a more formal treatment of these cases, we refer the reader to the {\em k-witness harmless} metric introduced by \cite{portend},
+which could be combined with Iterative Deepening in future work.
+% Future work: Add parallel DPOR so you can fill your spare CPUs when there are fewer than the max number of jobs.
