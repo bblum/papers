@@ -1,4 +1,4 @@
-\section{Proofs (TODO: need better name)}
+\section{Soundness}
 \label{sec:soundness}
 
 In this section we present two theorems concerning Iterative Deepening's correctness.
@@ -16,7 +16,7 @@ discuss our assumptions explicitly and include more formal definitions and struc
 Although Iterative Deepening's main purpose is to heuristically choose the most effective PP subsets to test
 when the maximal state space is too large,
 some tests may be small enough that even their maximal state spaces could be completed in time.
-For such tests, a SSS-MC tool configured to preempt on every shared memory access \cite{spin} would provide a total verification of all possible thread schedules, if it could complete in time.
+For such tests, a SSS-MC tool configured to preempt on every shared memory access \cite{spin,inspect} would provide a total verification of all possible thread schedules, if it could complete in time.
 In this section, we show that Iterative Deepening provides a verification of the same strength if it completes the state spaces associated with every discovered data-race PP.
 %In other words, contrapositively,
 %if it is possible to find a bug with any sequence of preemptions on any instruction whatsoever,
@@ -31,6 +31,12 @@ Iterative Deepening will eventually test an equivalent interleaving which expose
 The proof has two parts:
 first, we show that preempting on data-racing instructions and synchronization API boundaries suffices to test all possible program behavior;
 second, we show that Iterative Deepening will eventually detect all such data races.
+\newcommand\ppnext[1]{\ensuremath{\mathsf{next}(#1)}}
+\newcommand\ppinstr[1]{\ensuremath{\mathsf{instr}(#1)}}
+\newcommand\ppothers[1]{\ensuremath{\mathsf{others}(#1)}}
+Given a PP $p$, let $\ppnext{p}$ denote the next transition after $p$ executed by the thread which ran immediately before $p$,
+let $\ppinstr{p}$ denote the first instruction of $\ppnext{p}$,
+and let $\ppothers{p}$ denote the transitions by other threads between $p$ and $\ppnext{p}$.
 
 \begin{lemma}[Equivalence of non-data-race PPs]
 For any thread interleaving possible by preempting on any instruction,
@@ -38,7 +44,16 @@ there exists an equivalent interleaving which uses only data-race PPs and sync A
 	\label{lem:relevant}
 \end{lemma}
 
-TODO: sketch the proof of this lemma % TODO
+Let $p$ be the first PP in the given interleaving such that $\ppinstr{p}$ is not a data race with $\ppothers{p}$ nor is a sync API boundary.
+Because $\ppinstr{p}$ is not a sync API boundary,
+no lock can be held during $\ppothers{p}$ that was also held by the first thread across $p$.
+Hence, because $\ppinstr{p}$ is not a data race, it cannot be a shared memory conflict with $\ppothers{p}$ at all.
+Let $i$ be the first instruction among $\ppnext{p}$ which is such a conflict, or a sync API boundary.
+If $i$ is a shared memory conflict, it must be a data race, for the same reasoning as above.
+We modify the input interleaving by reordering $\ppinstr{p}$ until $i$, not including $i$, to before $\ppothers{p}$.
+By the soundness of DPOR \cite{dpor}, this is equivalent to the input interleaving.
+In other words, we have transformed $p$ into $p'$ such that $\ppnext{p'} = i$, which is a data race or sync API boundary.
+All PPs in the input trace can be inductively converted in the same manner.
 
 \begin{definition}[Reachable data race]
 A data race candidate (or associated PP) is reachable if it will be identified by an MC configured to preempt only on already-reachable PPs.
@@ -49,7 +64,30 @@ Initially, the statically-available sync API PPs are reachable. Reachability of 
 	\label{lem:saturation}
 \end{lemma}
 
-TODO: sketch the proof of this lemma % TODO
+We induct on the PPs according to the order of their preemptions.
+Given that the interleaving prefix preceding some PP $p$ is reachable,
+we will show that either $p$ is reachable, or a new data race among $\ppothers{p}$, not previously reachable, is now reachable.
+The latter condition suffices because in a finitely-sized program, there must be finitely many unique racing instruction pairs, so induction on the number of new data-race PPs among $\ppothers{p}$ will make $p$ itself reachable.
+
+First, we must ``coalesce'' away $p$, as well as any other not-yet-reachable PPs in $\ppothers{p}$.
+Consider the alternate interleaving in which the first thread executes past $p$ until the first already-reachable PP,
+then the other threads among $\ppothers{p}$ execute the same way.
+This interleaving's PPs are all reachable, so a state space $\mathcal{S}$ containing it will be tested.
+
+If $p$ is a not-yet-reachable data-race PP,
+it must be possible for some other thread to execute a data-racing instruction with $\ppinstr{p}$.
+If this conflict was observed in the state space containing our coalesced interleaving, we have reached $p$.
+Otherwise, we appeal to the soundness of DPOR:
+If a program behaviour is possible by interleaving threads at the boundaries of the given transitions,
+it will be tested in the containing state space.
+By contrapositive, to expose this behaviour, one or more preemptions must occur in the middle of some transition, rather than at the boundaries.
+
+We now show by contradiction there cannot be {\em multiple} data-race PPs which must both be enabled before either data race can be identified.
+Assume there does not exist a single transition $t_1 \in \mathcal{S}$ which alone can be split into $\{t_1',t_1''\}$ by a PP $q$ such that another thread's concurrent transition $t_2$ conflicts with $t_1''$.
+By the soundness of DPOR, because all $t_2$s are independent with $t_1''$, $\mathcal{S} \equiv \mathcal{S} \cup q$.
+Replacing $\mathcal{S}$ with $\mathcal{S} \cup q$ in the above assumption shows that no {\em pair} of new $q$s would expose new program behaviour, and inductively, no set of $q$s of any size, which contradicts the previous paragraph.
+
+Hence, a single new not-yet-reachable data race is reachable in $\mathcal{S}$. Hence $p$ will be reached.
 \\
 
 To conclude,
