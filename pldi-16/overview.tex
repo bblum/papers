@@ -74,7 +74,7 @@ they both access the same memory address,
 at least one is a write,
 the threads do not hold the same lock,
 and no synchronization enforces the order of the thread transitions.
-In Figure~\ref{fig:example}, lines 3 and 5 each race with 2, 6, and 8, and line 6 further races with 9.
+In Figure~\ref{fig:example}, lines 3 and 5 each race with 2, 6, and 8, and line 6 races with 9.
 
 Though state-of-the-art MCs preempt only on synchronization events,
 many serious concurrency bugs are caused by data races leading to corrupted shared state.

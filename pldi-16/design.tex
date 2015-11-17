@@ -9,7 +9,6 @@ In this context, the depth is the number of PPs used.
 Hence, our tool \quicksand~schedules multiple MC instances in parallel to simultaneously test many different subsets of the available PPs
 , which we refer to as {\em jobs}.
 It prioritizes jobs based on number of PPs, ETA, and whether they include data-race PPs.
-
 We rely on state-space estimation \cite{estimation}
 to understand which jobs are likely to complete on time,
 before actually testing each interleaving within.
@@ -29,7 +28,7 @@ We focus on dynamic data-race detection~\cite{tsan} as the mechanism for finding
 
 Iterative Deepening must be seeded with some initial state spaces,
 which can be any number of subsets of the statically-available PPs that SSS-MC would use.
-For testing user-space code, we begin with the four subsets of locking API PPs that we showed in Figure~\ref{fig:id}:
+For testing user-space code, we begin with the four PP sets from Figure~\ref{fig:id}:
 $\{yield\}$,
 $\{yield,lock\}$,
 $\{yield,unlock\}$,
