@@ -106,19 +106,19 @@ found 1.79x as many bugs and verified 4.25x as many tests compared to stateless 
 
 %We are great. Accept our paper.
 
-We have presented Iterative Deepening and \quicksand, a new technique and tool for automating the choice of PPs during stateless model checking.
+We have presented Iterative Deepening and \quicksand, a new technique and tool for automating the choice of preemption points (PPs) during stateless model checking.
 % , and \quicksand, a tool which implements this technique tailored to the \landslide~model checker.
 \quicksand~incorporates data-race analysis to create new PPs tailored specifically to the program under test,
 and manages multiple model checker instances to test many different PP subsets in a given CPU budget, even when the full state space of all PPs would be computationally intractable.
 
-Our evaluation shows that \quicksand~achieves better bug-finding results than either single-pass data-race detection or single-state-space model checking (SSS-MC) alone.
+Our evaluation shows that \quicksand~achieves better bug-finding results than either single-pass data-race detection or single-state-space model checking alone.
 %We dramatically reduce false-positive data race reports,
 %%by verifying the absence of bugs in their associated state spaces
 %and find bugs caused by nondeterministic data-races in alternate thread interleavings missed entirely by single-pass analysis.
-Compared to SSS-MC,
+%Compared to prior work,
 %, we find bugs faster in smaller subset state spaces, %% not true, or at least, not by very much
 %when the maximal state space is too large to explore
-we find new bugs with data-race PPs that the maximal state space would not expose at all.
+We find new bugs with data-race PPs that could not be exposed by preempting only on synchronization APIs.
 Moreover, when all data-race PPs can be fully tested within the CPU budget, we provide an equally strong verification as if every single instruction had been used as a PP.
 
 %Although \landslide~itself is not publicly available due to its dependency on the non-free simulator \simics, \quicksand~is open-source and its interface can be adapted to fit any similar tool.

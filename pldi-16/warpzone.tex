@@ -23,10 +23,9 @@ but we believe future implementations of Iterative Deepening could incorporate c
 to prune some or all such repeated work.
 
 {\bf Finer-grained PP subsets.}
-% TODO: update these numbers
-\quicksand~was able to partially guarantee safety in 97\% of tests with large maximal state spaces.
-However, in 2 tests, no more than the minimal state space could be verified,
-and in 3 other tests, no state spaces could be completed at all.
+\quicksand~was able to partially guarantee safety for some PPs in 89\% of tests with too-large maximal state spaces.
+However, in 4 tests, no more than the minimal state space could be verified,
+and in 6 other tests, no state spaces were completed at all.
 %Larger state spaces often result from finer-grained locking,
 %which can indicate a more intricate concurrent algorithm or an unnecessarily complicated design.
 %Such programs may require even more rigorous verification than a program with a single global lock.
@@ -46,12 +45,12 @@ making partial verification of such large tests possible.
 
 {\bf Partial verification.}
 %We are not the first to provide a partial verification guarantee when timing out on too-large state spaces (\sect{\ref{sec:eval-sssmc}}).
-While we guarantee safety when preempted on certain combinations of PPs (\sect{\ref{sec:eval-sssmc}}),
-CHESS
+While we guarantee safety when using certain combinations of PPs (\sect{\ref{sec:eval-sssmc}}),
+Iterative Context Bounding
 guarantees safety under no more than a certain number of preemptions \cite{chess-icb}.
 %according to the maximum bound reached in the time limit.
 %We imagine
-These two guarantees could be each be useful to developers in different scenarios,
+These guarantees could each be useful to developers in different scenarios,
 and future work could combine the two approaches to provide both at once.
 One benefit of our technique is that {\tt within\_function} %-based Iterative Deepening (discussed above)
 would enable expert developers to
@@ -65,7 +64,7 @@ We cannot guarantee that those races are
 %false positives or
 benign, even though no bug was found.
 % FIXME: You need a separate table counting only the state spaces WITHOUT BUGES.
-In the ``Untested DR PPs'' column of Table~\ref{tab:drbugs}, we count the number of such unverified candidates from each test program.
+In the ``Untested DR PPs'' column of Table~\ref{tab:drbugs}, we show how many such candidates we could not verify.
 For a more formal treatment of these cases, we refer the reader to the {\em k-witness harmless} metric introduced by \cite{portend},
 which could be combined with Iterative Deepening in future work.
 % Future work: Add parallel DPOR so you can fill your spare CPUs when there are fewer than the max number of jobs.

@@ -105,7 +105,8 @@ and for \mxtest~we enabled \landslide's mutex-testing option
 We tested the Pintoses with 3 programs from the class test suite: \prisema, a test of the kernel scheduling algorithm,
 \alarmsimul, for the timer sleep routine,
 and \waitsimple, for process lifecycle system calls\footnote{
-	Some of the Pintoses were partially implemented, so each test program could only be run on a subset of the 78 submissions; see Table~\ref{tab:drbugs}.
+	Some of the Pintoses were partially implemented,
+	so each test could only be run on a subset of the 78 submissions; see ``Number tested'' in Table~\ref{tab:drbugs}.
 }
 The source code of all 9 test cases is available at
 {\em [submitted as supplementary material]}.
@@ -214,29 +215,37 @@ Intuitively, this line shows that for programs with only benign data races,
 \begin{table*}[t]
 	\begin{center}
 		\small
-	\begin{tabular}{r|c||c|c|c||c|c|c|c|c}
-		& {\bf Num.} & {\bf SSS-MC} & {\bf QS} & {\bf DR-only} & {\bf Total} & {\bf Untested} & {\bf Malloc-} & {\bf Nondet.} & {\bf Nondet.} \\
-		{\bf Test name} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR PPs} & {\bf DR PPs} & {\bf recycle DRs} & {\bf DR PPs} & {\bf DR bugs} \\
+	\begin{tabular}{r|c||c|c|c|c|c||c|c||c|c}
+		& {\bf Num.} & {\bf SSS-MC} & {\bf QS} & {\bf DR-only} & {\bf Nondet.} & {\bf Malloc-} &
+		{\bf Mutual} & {\bf Avg. tested} & {\bf Total} & {\bf Untested} \\
+		{\bf Test name} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR bugs} & {\bf recycle DRs} &
+		{\bf time-outs} & {\bf subset SSes} & {\bf DR PPs} & {\bf DR PPs} \\
 		\hline
-		{\bct		} & 79	& 7	& 11	& 4	&	&	& 65	&	& 4	\\
-		{\tej		} & 79	& 14 	& 25	& 11	&	&	& 471	&	& 6	\\
-		{\mxtest	} & 79	& 1	& 10	& 9	&	&	& 7	&	& 1	\\
-		{\paradise	} & 79	& 10	& 17	& 7	&	&	& 268	&	& 3	\\
-		{\paraguay	} & 79	& 4	& 12	& 9	&	&	& 188	&	& 0	\\
-		{\rwldgr	} & 79	& 26	& 30	& 3	&	&	& 157	&	& 3	\\
+				% #test  sssmc   qs      dronly  nondets  FRMs   timeout comp.SSes DRPPs untested DRPPs
+		{\tt bcast}	& 79	& 7	& 11	& 4	& 4	& 65	& 0	& -	&	&	\\
+		{\tt join} 	& 79	& 14 	& 25	& 10	& 6	& 471	& 5	& 60.8	&	&	\\
+		{\tt mx} 	& 79	& 1	& 10	& 9	& 1	& 7	& 0	& -	&	&	\\
+		{\tt sem} 	& 79	& 10	& 17	& 6	& 5	& 268	& 29	& 73.3	&	&	\\
+		{\tt signal} 	& 79	& 4	& 12	& 7	& 6	& 188	& 10	& 54.2	&	&	\\
+		{\tt rwlock} 	& 79	& 26	& 30	& 2	& 2	& 157	& 19	& 29.6	&	&	\\
 		\hline
-		{\prisema	} & 59	& \multicolumn{5}{c}{TODO: finish this table} & 0	&	&	\\
-		{\alarmsimul	} & 44	& \multicolumn{5}{c}{haven't yet decided how to organize this data;} & 37	&	&	\\
-		{\waitsimple	} & 52	& \multicolumn{5}{c}{suggestions welcome} & 57	&	&	\\
+		{\tt sched} 	& 59	& 1	& 7	& 6	& 4	& 0	& 0	& -	&	&	\\
+		{\tt alarm} 	& 44	& 5	& 21	& 17	& 3	& 37	& 22	& 9.1	&	&	\\
+		{\tt wait} 	& 52	& 23	& 30	& 7	& 1	& 57	& 8	& 28.0	&	&	\\
 		\hline
-		{\bf Total}	& 629	&	&	&	&	&	& 1250	&	&
+		{\bf Total}	& 629	& 91	& 163	& 68	& 32	& 1250	& 93	& 42.6 	&	&	\\
 	\end{tabular}
 	\end{center}
-	\caption{Summary of number and types of bugs found by each test program.
+	\caption{Summary of bugs and data races found by each test program.
 		SSS-MC is the control; QS is \quicksand.
-		``DR-only'' counts among \quicksand's bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}}).
-	``Nondeterministic DRs'' counts among the DR-only bugs how many candidates required MC integration to identify (\sect{\ref{sec:eval-falseneg}}).
-		TODO: more explanation}
+		``DR-only bugs'' counts among \quicksand's bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}});
+	among those, ``Nondeterministic DR bugs'' counts how many candidates required MC integration to identify (\sect{\ref{sec:eval-falseneg}}).
+	``Malloc-recycle DRs'' counts how many false positives we suppressed (\sect{\ref{sec:eval-falsepos}}).
+	``Mutual time-outs'' counts how often both SSS-MC and \quicksand~timed out with no bug found;
+	among those, ``Average tested subset SSes'' counts how many partial verifications \quicksand~provided on average for each test (\sect{\ref{sec:eval-sssmc}}).
+	``Total DR PPs'' counts how many unique data-racing instructions we identified among tests with no bugs found;
+	among those, ``Untested DR PPs'' counts how many could not be checked in the time limit (\sect{\ref{sec:future}}).
+		}
 	\label{tab:drbugs}
 \end{table*}
 
@@ -259,18 +268,19 @@ we consider this strong evidence that low-level synchronization code must be ver
 
 {\bf Partial verification.}
 When a state space times out, the user may prefer a brief summary of what parts of the test were verified, rather than writing off all the CPU time as a waste.
-Beyond using the state space estimator to guess the percent coverage,
-we know of no approach to quantify the probability
-that a bug would be exposed by an untested interleaving.
-\quicksand~does not attempt any such quantitative guarantee,
-but can at least report which subsets of PPs produced state spaces that did complete in time.
-
-On 77 tests, the SSS-MC control experiment timed out in 10 hours with no bugs found.
-Among these, \quicksand~found data-race bugs in 15.
-For the other 62, we counted the number of state spaces \quicksand~was able to complete and the number of unique PPs among them.
-In three cases, \quicksand~also failed to complete anything; beyond these,
-between 1 and 253 state spaces were completed, with a mean of 58.9 and median of 29.
-Between 0 and 233 unique PPs were tested among some completed subsets, with a mean of 27.2 and median of 7.5.
+%Beyond using the state space estimator to guess the percent coverage,
+We know of no approach to quantify the probability
+that a bug would be exposed by an untested interleaving,
+but \quicksand~at least reports which subsets of PPs produced state spaces that did complete in time.
+%\quicksand~does not attempt any such quantitative guarantee,
+%but can at least report
+On 129 tests, the SSS-MC control experiment timed out in 10 hours with no bugs found.
+Among these, \quicksand~found bugs in 36.
+For the other 93, we show the number of state spaces \quicksand~was able to complete in the ``Average tested subset SSes'' column of Table~\ref{tab:drbugs}.
+%and the number of unique PPs among them.
+%In 6 cases, \quicksand~also failed to complete anything; beyond these,
+%between 1 and 253 state spaces were completed for each test
+%Between 0 and 233 unique PPs were tested among some completed subsets, with a mean of 27.2 and median of 7.5.
 These completions guarantee that, if the test program could expose a bug,
 % Justify implicit hypothesis: Sync PPs + DR PPs = all possible relevant PPs.
 it would only be found by a new data-race PP not discovered yet, or by a superset combination of PPs not reached.
@@ -294,7 +304,7 @@ In total, 1250 data-races fit the malloc-recycle pattern across all tests,
 only 69 of which were observed to avoid the re-allocation in an alternate interleaving.
 Our proof in \sect{\ref{sec:recycle}} guarantees the safety of pruning all 1181 other state spaces.
 
-Among the 69 true data-races which initially fit the malloc-recycle pattern,
+Among those 69 true data-races, %which initially fit the malloc-recycle pattern,
 none of them exposed a new bug when used as a PP.
 This shows that for other data-race tools,
 suppressing malloc-recycle candidates may be a productive heuristic,
@@ -306,7 +316,7 @@ and fall back to classifying them with DPOR.
 {\bf Full verification.}
 For 153 of our 629 tests, \quicksand~was able to provide the total verification guarantee described in \sect{\ref{sec:totalverif}}.
 In Figure~\ref{fig:totalverif} we plot the cumulative distribution of \quicksand's total verifications before a given elapsed CPU-time.
-Among these, 36 tests contained no data-race candidates whatsoever, 
+Among these, 36 tests contained no data-race candidates whatsoever,
 so the same verification could be provided by SSS-MC.
 We plot these for comparison,
 according to the time taken by that test's SSS-MC control experiment,.
