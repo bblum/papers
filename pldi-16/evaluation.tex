@@ -221,19 +221,20 @@ Intuitively, this line shows that for programs with only benign data races,
 		{\bf Test name} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR bugs} & {\bf recycle DRs} &
 		{\bf time-outs} & {\bf subset SSes} & {\bf DR PPs} & {\bf DR PPs} \\
 		\hline
+		% FIXME: update FRMs
 				% #test  sssmc   qs      dronly  nondets  FRMs   timeout comp.SSes DRPPs untested DRPPs
-		{\tt bcast}	& 79	& 7	& 11	& 4	& 4	& 65	& 0	& -	&	&	\\
-		{\tt join} 	& 79	& 14 	& 25	& 10	& 6	& 471	& 5	& 60.8	&	&	\\
-		{\tt mx} 	& 79	& 1	& 10	& 9	& 1	& 7	& 0	& -	&	&	\\
-		{\tt sem} 	& 79	& 10	& 17	& 6	& 5	& 268	& 29	& 73.3	&	&	\\
-		{\tt signal} 	& 79	& 4	& 12	& 7	& 6	& 188	& 10	& 54.2	&	&	\\
-		{\tt rwlock} 	& 79	& 26	& 30	& 2	& 2	& 157	& 19	& 29.6	&	&	\\
+		{\tt bcast}	& 79	& 7	& 11	& 4	& 4	& 51	& 0	& -	& 912	& 107	\\
+		{\tt join} 	& 79	& 14 	& 25	& 10	& 6	& 333	& 5	& 60.8	& 781	& 292	\\
+		{\tt mx} 	& 79	& 1	& 10	& 9	& 1	& 7	& 0	& -	& 829	& 1	\\
+		{\tt sem} 	& 79	& 10	& 17	& 6	& 5	& 140	& 29	& 73.3	& 753	& 279	\\
+		{\tt signal} 	& 79	& 4	& 12	& 7	& 6	& 180	& 10	& 54.2	& 1118	& 391	\\
+		{\tt rwlock} 	& 79	& 26	& 30	& 2	& 2	& 125	& 19	& 29.6	& 915	& 634	\\
 		\hline
-		{\tt sched} 	& 59	& 1	& 7	& 6	& 4	& 0	& 0	& -	&	&	\\
-		{\tt alarm} 	& 44	& 5	& 21	& 17	& 3	& 37	& 22	& 9.1	&	&	\\
-		{\tt wait} 	& 52	& 23	& 30	& 7	& 1	& 57	& 8	& 28.0	&	&	\\
+		{\tt sched} 	& 59	& 1	& 7	& 6	& 4	& 0	& 0	& -	& 144	& 3	\\
+		{\tt alarm} 	& 44	& 5	& 21	& 17	& 3	& 35 	& 22	& 9.1	& 115	& 89	\\
+		{\tt wait} 	& 52	& 23	& 30	& 7	& 1	& 31	& 8	& 28.0	& 142	& 31	\\
 		\hline
-		{\bf Total}	& 629	& 91	& 163	& 68	& 32	& 1250	& 93	& 42.6 	&	&	\\
+		{\bf Total}	& 629	& 91	& 163	& 68	& 32	& 902	& 93	& 42.6 	& 5709	& 1827	\\
 	\end{tabular}
 	\end{center}
 	\caption{Summary of bugs and data races found by each test program.
@@ -250,7 +251,6 @@ Intuitively, this line shows that for programs with only benign data races,
 \end{table*}
 
 %Figure~\ref{fig:bargraph}
-% TODO: deal with the table
 The left half of Table~\ref{tab:drbugs}
 breaks down the number and types of bugs found by each test program.
 % The astute observer will note that the sum of all types of failures observed is more than the total number of data-race bugs...
@@ -300,9 +300,9 @@ Beyond finding new bugs with data-race PPs, we evaluated \quicksand's performanc
 {\bf Suppressing ``malloc-recycle'' false positives.}
 In \sect{\ref{sec:recycle}} we showed the soundness of suppressing data race reports between two heap accesses when the surrounding memory was re-allocated in between.
 In Table~\ref{tab:drbugs}, the column ``Malloc-recycle DRs'' shows the total number of such data-race candidates for each test program.
-In total, 1250 data-races fit the malloc-recycle pattern across all tests,
+In total, 902 data-races fit the malloc-recycle pattern across all tests,
 only 69 of which were observed to avoid the re-allocation in an alternate interleaving.
-Our proof in \sect{\ref{sec:recycle}} guarantees the safety of pruning all 1181 other state spaces.
+Our proof in \sect{\ref{sec:recycle}} guarantees the safety of pruning all 833 other state spaces.
 
 Among those 69 true data-races, %which initially fit the malloc-recycle pattern,
 none of them exposed a new bug when used as a PP.

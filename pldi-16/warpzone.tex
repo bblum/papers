@@ -60,11 +60,10 @@ restrict Iterative Deepening to only the modules of a codebase they wish to test
 
 Likewise, when full verification is not computationally feasible,
 some jobs with data-race PPs will time out.
-We cannot guarantee that those races are
+We cannot guarantee those races are
 %false positives or
 benign, even though no bug was found.
-% FIXME: You need a separate table counting only the state spaces WITHOUT BUGES.
-In the ``Untested DR PPs'' column of Table~\ref{tab:drbugs}, we show how many such candidates we could not verify.
+In the ``Untested DR PPs'' column of Table~\ref{tab:drbugs}, we show how many such candidates we could not verify (32\%).
 For a more formal treatment of these cases, we refer the reader to the {\em k-witness harmless} metric introduced by \cite{portend},
-which could be combined with Iterative Deepening in future work.
+which could be combined with \quicksand~in future work.
 % Future work: Add parallel DPOR so you can fill your spare CPUs when there are fewer than the max number of jobs.

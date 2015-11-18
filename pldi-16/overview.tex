@@ -59,7 +59,7 @@ and tests at least one execution from each equivalence class.
 Intuitively, if two thread transitions between preemption points do not conflict on any shared resource access, reordering them produces an equivalent interleaving.
 Nevertheless, state spaces are still exponentially-sized in the number of conflicting transitions.
 
-This motivates {\em Iterative Deepening}, our new technique for adjusting the preemption points at runtime.
+This motivates {\em Iterative Deepening}, our new technique for heuristically adjusting the preemption points at runtime.
 Rather than committing to one state space with every available preemption point enabled,
 Iterative Deepening searches among different {\em subsets} of the points;
 for example, ``preempt on all calls to {\tt mutex\_lock} but not on {\tt mutex\_unlock}''.
