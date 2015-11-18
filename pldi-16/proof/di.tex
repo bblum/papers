@@ -2,6 +2,13 @@
 
 \subsection{Stateless model checking terms}
 
+\begin{definition}[Preemption point (PP)]
+	A PP is a code location between two instructions at which we may force threads to switch.
+\end{definition}
+
+In the main paper, we identified PPs by predicates on the instruction pointer and current thread ID. Hence, the ``same'' PP may occur multiple times during an execution; for example, {\tt mutex\_lock()} may be called from {\tt foo()} and later again from {\tt bar()}.
+For the sake of this proof, we separate such cases into multiple unique PPs: each PP is simply a label denoting the end of a single transition.
+
 \begin{definition}[Transition]
 A sequence of instructions executed by the program between two preemption points (PPs).
 \label{def:transition}
@@ -28,7 +35,18 @@ our malloc-recycle false positives are indistinguishable from such false negativ
 \begin{definition}[Shared memory conflict]
 A pair of memory accesses between two threads to the same address where at least one of them is a write.
 \end{definition}
+
+\begin{definition}[Independent transitions]
+Two transitions between different threads are independent if the intersection of their shared memory accesses contains no conflicts.
+\end{definition}
+
+\begin{definition}[Equivalent interleaving]
+Two interleavings are equivalent if one can be transformed into the other by permuting only independent transitions.
+\end{definition}
+
 Intuitively, the behaviour of a program could change by reordering two transitions only if they contain a memory conflict.
+All possible interleavings of a program can be partitioned into equivalence classes,
+so only one interleaving from each equivalence class need be tested to ensure total schedule coverage \cite{mazurkiewicz}.
 
 \begin{definition}[Dynamic Partial Order Reduction (DPOR)]
 	A state-space search algorithm for stateless model checkers,
