@@ -244,7 +244,7 @@ Intuitively, this line shows that for programs with only benign data races,
 	``Malloc-recycle DRs'' counts how many false positives we suppressed (\sect{\ref{sec:eval-falsepos}}).
 	``Mutual time-outs'' counts how often both SSS-MC and \quicksand~timed out with no bug found;
 	among those, ``Average tested subset SSes'' counts how many partial verifications \quicksand~provided on average for each test (\sect{\ref{sec:eval-sssmc}}).
-	``Total DR PPs'' counts how many unique data-racing instructions we identified among tests with no bugs found;
+	``Total DR PPs'' counts how many unique data-racing instructions we identified among tests where we found no bugs;
 	among those, ``Untested DR PPs'' counts how many could not be checked in the time limit (\sect{\ref{sec:future}}).
 		}
 	\label{tab:drbugs}
