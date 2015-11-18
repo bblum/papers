@@ -15,8 +15,7 @@ We review the background in stateless model checking and data-race analysis usin
 	5 & & \texttt{atomic\_xadd(\&x, 1);} \\
 	6 & \texttt{x = tmp + 1;} & \\
 	7 & \texttt{\hilight{commentblue}{mutex\_unlock(\&mx);}} & \\
-	8 & \texttt{assert(x >= 1);}  & \\
-	9 & & \texttt{assert(x >= 2);} \\
+	8 & & \texttt{assert(x >= 2);} \\
 	%1 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
 	%2 & \texttt{\hilight{olivegreen}{free}(x);} \\
 	%3 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
@@ -25,7 +24,7 @@ We review the background in stateless model checking and data-race analysis usin
 	%6 & & \texttt{publish(y);} \\
 	%7 & & \texttt{\hilight{brickred}{y->bar = ...;}} \\
 \end{tabular}
-\caption{Example program with a data-race bug. In this interleaving, the assertion on line 9 will fail. Two data-race preemptions are required to expose the bug: one just before thread 1's line 6, and one just before thread 2's line 9.}
+\caption{Example program with a data-race bug. In this interleaving, the assertion on line 8 will fail. Two data-race preemptions are required to expose the bug: one just before thread 1's line 6, and one just before thread 2's line 8.}
 \label{fig:example}
 \end{figure}
 
@@ -75,7 +74,7 @@ at least one is a write,
 the threads do not hold the same lock,
 and no synchronization enforces the order of the thread transitions.
 Data races are not necessarily bugs, but represent suspicious violations of the locking discipline.
-In Figure~\ref{fig:example}, lines 3 and 5 each race with 2, 6, and 8, and line 6 races with 9.
+In Figure~\ref{fig:example}, lines 3 and 5 each race with 2 and 6, and line 6 races with 8.
 
 Though state-of-the-art MCs preempt only on synchronization events,
 many serious concurrency bugs are caused by data races leading to corrupted shared state.
@@ -97,12 +96,12 @@ For the rest of the paper, we will abbreviate {\em preemption point} (PP),
 %For the remainder of the paper, we will abbreviate {\em preemption point} (PP),
 {\em model checking} (MC),
 {\em single-state-space model checking} (SSS-MC), % (i.e., the approach of prior work),
-Dynamic Partial Order Reduction (DPOR), and {\em state space estimate} (ETA).
+{\em Dynamic Partial Order Reduction} (DPOR), and {\em state space estimate} (ETA).
 
-SSS-MC indicates the approach of prior model checking tools:
+SSS-MC indicates the approach of prior tools:
 the set of PPs is fixed in advance, and the tool commits to testing every interleaving available with those PPs.
 %Reduction techniques are often used to skip equivalent interleavings \cite{dpor}, and search-ordering strategies
-Many techniques exist to skip equivalent interleavings and order the search to uncover bugs faster \cite{dpor,demeter,chess-icb,gambit,smc-empirical-study},
+Many techniques can skip equivalent interleavings or order the search to uncover bugs faster \cite{dpor,demeter,chess-icb,gambit,smc-empirical-study},
 but new PPs cannot be added, nor ineffective ones removed, by any dynamic analysis.
 
 Although all data races are undefined behaviour in C and C++ \cite{boehm-memorymodels},

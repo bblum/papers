@@ -8,10 +8,12 @@ Concurrency bugs are notoriously hard to find and reproduce because they only ap
 or verifying their absence,
 %by systematically executing a program along as many distinct interleavings as possible,
 by forcing a program to execute each distinct interleaving,
-capturing and controlling this nondeterminism using a finite state space.
+capturing
+%and controlling
+this nondeterminism in a finite state space.
 Unfortunately, these state spaces explode exponentially in the size of the input program.
 Reduction techniques such as Dynamic Partial Order Reduction \cite{dpor} and Maximal Causality Reduction \cite{mcr} expand the limits of feasible test completion,
-and search ordering strategies such as Iterative Context Bounding \cite{chess-icb} allow bugs to be found sooner in a given exploration should they exist.
+and search ordering strategies such as Iterative Context Bounding \cite{chess-icb} allow bugs to be found sooner in a given space should they exist.
 
 % Can I even make a claim this broad to begin with?
 However, all stateless model checkers to date are bound by a fixed set of {\em preemption points}: code locations that define the granularity at which threads interleave.
@@ -34,8 +36,8 @@ we prove that this constitutes a total verification of all possible thread sched
 Short of deciding in advance to preempt on every single instruction \cite{spin}, this was not previously possible without data-race preemption points.
 
 We evaluate \quicksand~by testing \numstudence~student thread libraries and kernels from the undergraduate OS classes at Carnegie Mellon, Berkeley, and the University of Chicago.
-We show many advantages over both conventional stateless model checking and single-pass data-race analysis.
-We find that many of the bugs found by the conventional approach can be found faster using subsets of preemption points,
+%We show many advantages over both conventional stateless model checking and single-pass data-race analysis.
+We find many of the same bugs found by the conventional approach faster using subsets of preemption points,
 and that data-race preemption points quickly expose many new bugs that prior model checkers could not find at all.
 
 Our contributions are as follows:

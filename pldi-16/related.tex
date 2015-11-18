@@ -36,7 +36,9 @@ although it requires code to be written in the PROMELA DSL.
 Inspect \cite{inspect} instruments source code by inserting wrapper calls around all accesses to potentially-shared data.
 It identifies such instructions in advance with an over-approximating alias analysis,
 while \landslide~\cite{landslide} traces the memory locations of accesses at runtime.
-Both SPIN and Inspect fix their set of PPs in advance, so could be combined with \quicksand~in future work.
+Both SPIN and Inspect fix their set of PPs in advance, so could be
+%combined with \quicksand~
+extended with Iterative Deepening in future work.
 %so cannot check implementations directly.
 
 {\bf Other techniques.} Various improvements or alternatives to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, DPOR for relaxed memory models \cite{tsopso}, and SAT-directed MC \cite{satcheck}.
