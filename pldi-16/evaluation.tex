@@ -335,6 +335,11 @@ Of course, using data-race PPs increases our capacity for total verification by 
 
 \subsection{Finding nondeterministic data-race candidates}
 \label{sec:eval-falseneg}
+%For the [NONDET] expt, you don't need to additionally count how many DRs
+%needed to be found in a DR-PP state space, because when EXPLORE_BACKWARDS=0,
+%you'll need to preempt on the DR PP to find the new DR anyway, hence they will
+%be nondet. Unless you want to separately count the subset of nondet drs that
+%are also dr-pp-ss-only (the reviewers may ask for this before cam-ready?).
 
 Some memory accesses may be hidden in a control flow path that requires a nondeterministic preemption to be executed.
 In such cases, a single-pass dynamic data-race detector
@@ -369,6 +374,11 @@ The second series shows all data-race bugs \quicksand~found,
 which includes the former type as well as new bugs involving nondeterministic data-races.
 \quicksand~found 68 data-race bugs in total, only 36 of which could be found with single-pass data-race candidates alone.
 %In total, we found 189\% as many bugs by using nondeterministic data-race candidates as PPs.
+
+%When proving that [NONDET] dr buges exist, make sure to mention that, although
+%their frequency varies depending on test case (mx test: almost none; bct:
+%almost all), they are still PRESENT in all (or almost all) test cases, meaning
+%it is not just a matter of writing better test cases.
 
 Note that we are not comparing how much testing time is required before identifying the data-race candidates involved in each bug.
 Single-pass data races can all be found after a single program execution,

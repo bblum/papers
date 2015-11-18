@@ -124,8 +124,8 @@ Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to rac
 \begin{figure}[t]
 	\small
 \begin{tabular}{rll}
-	& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \} *x;}} \\
-	& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \} *y;~~~~~~~~~~}} \\
+	%& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \} *x;}} \\
+	%& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \} *y;~~~~~~~~~~}} \\
 	& {\bf Thread 1} & {\bf Thread 2} \\
 	1 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
 	2 & \texttt{\hilight{olivegreen}{free}(x);} \\

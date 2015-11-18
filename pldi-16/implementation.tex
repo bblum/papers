@@ -10,9 +10,9 @@ We chose \landslide~\cite{landslide} as our stateless model checker due to its a
 state space estimation \cite{estimation}, and a hybrid lockset/happens-before data-race analysis \cite{hybriddatarace}.
 It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield} or even {\tt xchg} loops) with a heuristic similar to Fair-Bounded Search \cite{bpor}.
 % this line can be cut if space is needed
-%It can test both user-level and kernel-level code, although is limited to timer-driven nondeterminism.
+It can test both user-level and kernel-level code, although is limited to timer nondeterminism.
 % joshua wants "segfault" to be "memory access error (i.e., segmentation fault, or bus error)"
-Its bug-detection metrics include assertion failure, deadlock, segfault, heap checking (like Valgrind~\cite{valgrind}), and a heuristic infinite loop/livelock check.
+Its bug-detection metrics are assertion failure, deadlock, segfault, heap checking \cite{valgrind}, and a heuristic infinite loop check.
 
 {\bf Restricting PPs with stack trace predicates.}
 Most MC tools preempt indiscriminately on any sync API call, regardless of the call-site.

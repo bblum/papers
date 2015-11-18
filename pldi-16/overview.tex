@@ -48,7 +48,7 @@ Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
 \end{figure}
 
 The checker defins the granularity of thread interleavings by which {\em preemption points} it uses to switch threads.
-Most model checkers \cite{chess} choose synchronization/thread library API boundaries for these points;
+Most model checkers \cite{chess,dbug-ssv} choose synchronization/thread library API boundaries for these points;
 in our example program, these would be lines 1, 4, and 7.
 Figure~\ref{fig:id} shows several possible resulting state spaces.
 The approach of prior work is to enable all preemption points simultaneously, i.e., to test only the bottom state space.
@@ -84,6 +84,13 @@ preempting a thread just before an instruction identified as part of a data race
 None of the state spaces in Figure~\ref{fig:id} contain this interleaving,
 as none of the mutex/yield preemptions split lines 2 and 6 across different transitions.
 
+Prior work \cite{hybriddatarace} distinguishes between {\em pure happens-before} \cite{lamport-clocks},
+in which accesses with a lock release/acquire in between are not considered concurrent,
+and {\em limited happens-before},
+in which only blocking operations like {\tt cond\_wait} or {\tt join} enforce the order.
+Compared to the former, the latter may output false positives, but avoids false negatives \cite{tsan},
+which is more appropriate for this work (\sect{\ref{sec:totalverif}}).
+
 \subsection{Terminology}
 
 For the rest of the paper, we will abbreviate {\em preemption point} (PP),
@@ -95,10 +102,11 @@ Dynamic Partial Order Reduction (DPOR), and {\em state space estimate} (ETA).
 SSS-MC indicates the approach of prior model checking tools:
 the set of PPs is fixed in advance, and the tool commits to testing every interleaving available with those PPs.
 %Reduction techniques are often used to skip equivalent interleavings \cite{dpor}, and search-ordering strategies
-Many techniques exist to skip equivalent interleavings and order the search to uncover bugs faster \cite{dpor,demeter,chess-icb,gambit},
+Many techniques exist to skip equivalent interleavings and order the search to uncover bugs faster \cite{dpor,demeter,chess-icb,gambit,smc-empirical-study},
 but new PPs cannot be added, nor ineffective ones removed, by any dynamic analysis.
 
-We distinguish between data-race {\em candidates} and data-race {\em bugs}.
+Although all data races are undefined behaviour in C and C++ \cite{boehm-memorymodels},
+we distinguish between data-race {\em candidates} and data-race {\em bugs}.
 Because data-race analysis is prone to false-positives,
 we classify unprotected access pairs separately from bugs,
 calling such pairs {\em data race candidates}.

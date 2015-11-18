@@ -158,7 +158,10 @@ it is logical to re-execute the test and issue preemptions during those instruct
 	$\not\subseteq$
 	\GetPPSet{$j$}
 	}{
-		AddNewJob(\GetPPSet{$j_0$} $\cup$ $\alpha$, HeuristicPriority($\alpha$))
+		AddNewJob(\GetPPSet{$j_0$} $\cup$ $\alpha$, HeuristicPriority($\alpha$)) \\
+	}
+	\If{$\forall j \in \AllJobs,$ \GetPPSet{$j$} $\neq \{\alpha\}$}{
+		AddNewJob($\{\alpha\}$, HeuristicPriority($\alpha$))
 	}
 	\caption{Adding new jobs with data-race PPs.}
 	\label{alg:handledatarace}
@@ -179,8 +182,8 @@ for example, $AB$ is reachable by multiple paths through its different subsets, 
 Furthermore, we do not always strictly increase the number of PPs when we find a new data race.
 %When \quicksand~receives a data race report, it adds two new jobs to its workqueue:
 For each instruction involved in a data race, \quicksand~adds two new jobs:
-a ``small'' job to preempt on that instruction only,
-and a ``big'' job to preempt on that instruction as well as each PP used by the reporting job.
+a ``small'' job to preempt on that instruction only (line 5),
+and a ``big'' job to preempt on that instruction as well as each PP used by the reporting job (line 2).
 %
 Hence,
 %together with the logic in \sect{\ref{sec:classifying}},
@@ -200,7 +203,7 @@ which motivates the need for Iterative Deepening to prioritize the jobs at runti
 	\label{fig:new-dr-jobs}
 \end{figure}
 
-The new spaces may expose a failure, in which case we report a data-race bug,
+The new state spaces may expose a failure, in which case we report a data-race bug,
 or complete successfully, which indicates a benign or false-positive data race.
 They may also uncover a new data-race candidate entirely, %in some alternate interleaving,
 in which case we iteratively advance to a superset state space containing PPs for both racing access pairs.

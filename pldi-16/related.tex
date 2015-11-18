@@ -39,12 +39,14 @@ while \landslide~\cite{landslide} traces the memory locations of accesses at run
 Both SPIN and Inspect fix their set of PPs in advance, so could be combined with \quicksand~in future work.
 %so cannot check implementations directly.
 
-{\bf Other techniques.} Various improvements to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, and DPOR for TSO/PSO \cite{tsopso}.
+{\bf Other techniques.} Various improvements or alternatives to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, DPOR for relaxed memory models \cite{tsopso}, and SAT-directed MC \cite{satcheck}.
 These are all orthogonal to our technique.
 Parrot \cite{parrot} combines MC with a partially-determinizing runtime, but still, fewer than half the non-trivial state spaces in their evaluation could be completed.
 %providing a strong argument for \quicksand.
-Finally, Iterative Context Bounding (ICB) \cite{chess-icb} is most similar to Iterative Deepening,
-as both approaches provide a partial verification on some subset of interleavings when full completion is intractable (\sect{\ref{sec:future}}).
+Finally, Iterative Context Bounding (ICB) \cite{chess-icb} is most similar to our work,
+as both approaches provide a partial verification
+%on some subset of interleavings
+when full completion is intractable (\sect{\ref{sec:future}}).
 However, ICB is limited to a fixed set of PPs, and so far no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
 
 \subsection{Data Race Detection}
@@ -53,8 +55,14 @@ However, ICB is limited to a fixed set of PPs, and so far no algorithm has been 
 %Too many related projects to list have made contributions to the
 Many advances have been made on the false-positive data race problem since it was first introduced in \cite{eraser}.
 \cite{hybriddatarace} and \cite{tsan} combine the lockset and happens-before analyses into a hybrid technique, which we employ.
-% TODO: any more?
-DroidRacer \cite{droidracer} and CAFA \cite{cafa} extend the analysis to event-driven Android applications, using domain-specific heuristics (orthogonal to our method) to reduce false positives. % cut for space?
+DroidRacer \cite{droidracer} and CAFA \cite{cafa} target
+%event-driven
+Android applications, using domain-specific heuristics (orthogonal to our method) to reduce false positives. % cut for space?
+Like \landslide, DataCollider \cite{datacollider} offers data-race techniques for kernel code.
+IFRit \cite{ifrit}
+improves performance using an interference analysis,
+which would allow future work to avoid tracing every memory access.
+%although in our context, we cannot admit false negatives (\sect{\ref{sec:totalverif}}).
 % No, IDGAF about pure happens before.
 %FastTrack \cite{fasttrack} optimizes the performance of pure happens-
 
@@ -74,13 +82,13 @@ Our proof in \sect{\ref{sec:recycle}} allows eliminating this special case with 
 Portend \cite{portend} is the most closely related work we have found.
 Based on single-pass data race reports, it tests alternate program executions to classify candidates in a taxonomy of likely severity.
 It uses symbolic execution to test input nondeterminism as well as schedule nondeterminism,
-while we explore the latter only.
-Portend additionally reports non-failing races which nevertheless cause
+%while we explore the latter only.
+and additionally reports non-failing races which nevertheless cause
 %suspiciously
-different program output, which is orthogonal to our technique.
+different program output. %, which is orthogonal to our technique.
 However, Portend does not test alternate interleavings {\em in advance} of knowing data races,
 which is necessary to expose certain bugs (\sect{\ref{sec:eval-falseneg}}) or to provide full verification (\sect{\ref{sec:totalverif}}).
-% XXX: Is this true??
+% Not really true.
 %It also assumes the POSIX synchronization API, so cannot verify arbitrary synchronization algorithms such as we do with \mxtest.
 Future work could combine the two approaches, using MC to produce new data-race traces for Portend to classify, or using Portend's analysis to inform \quicksand's heuristic priorities.
 

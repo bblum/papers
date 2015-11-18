@@ -18,8 +18,8 @@ However, all stateless model checkers to date are bound by a fixed set of {\em p
 Choosing these preemption points is a tradeoff between schedule coverage and feasibility of completion.
 For example, \textsc{CHESS} \cite{chess} preempts only on synchronization operations and library calls, which can miss lock-free shared memory races.
 %
-On the other hand, Inspect \cite{inspect} %SPIN \cite{spin}
-is able to preempt threads around any shared memory access. Such fine granularity would automatically check if each data race is a real bug, but makes full state space completion intractable for even modestly-sized tests.
+On the other hand, SPIN \cite{spin} and Inspect \cite{inspect}
+are able to preempt threads around any shared memory access. Such fine granularity would automatically check if each data race is a real bug, but makes full state space completion intractable for even modestly-sized tests.
 %
 This work shows how to avoid making that tradeoff decision in advance.
 
