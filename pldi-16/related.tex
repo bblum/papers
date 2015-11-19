@@ -1,7 +1,7 @@
 \section{Related Work}
 \label{sec:related}
 
-\subsection{Model Checking}
+\subsection{Stateless Model Checking}
 
 We build upon many established model-checking techniques, dating back
 % of course
@@ -20,18 +20,20 @@ Hence, they will miss any bugs that require interleaving threads at instruction 
 {\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, MaceMC \cite{macemc}, MoDist \cite{modist}, ETA \cite{dbug-retreat}, and Concuerror \cite{optimal-dpor},
 limit thread communication to a message-passing API to more effectively test distributed systems.
 This eliminates the need for data-race analysis, but restricts the class of programs that can be tested.
-Nevertheless, Iterative Deepening is still applicable to these tools.
+Nevertheless, Iterative Deepening is applicable to these tools.
 
 {\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs.
 However, the resulting state space explosion demands that any such tool either
 choose a small subset of instructions to consider as PPs
-or be limited to very small test inputs.
+or be limited to very small test programs.
 %However, every such prior tool we know of has serious drawbacks.
-SKI \cite{ski} approaches kernel code by choosing a random set of instructions in advance, %offsets from the start of the test,
-which is more similar to stress testing or fuzzing than to exhaustive state space exploration.
+SKI \cite{ski} approaches kernel code by statically choosing a random set of instructions in advance, %offsets from the start of the test,
+which is perhaps more similar to
+%stress testing or
+schedule fuzzing \cite{randomized-scheduler} than to exhaustive state space exploration.
 %
-SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU, which is very similar to our \mxtest~experiment,
-although it requires code to be written in the PROMELA DSL.
+SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU \cite{rcu}, which is similar to our \mxtest~experiment,
+although it requires code to be written in the PROMELA language.
 %However, SPIN is stateful rather than stateless, and explicitly storing visited program states rather than using DPOR limits the size of programs that can be practically tested.
 %
 Inspect \cite{inspect} instruments source code by inserting wrapper calls around all accesses to potentially-shared data.
@@ -42,15 +44,19 @@ Both SPIN and Inspect fix their set of PPs in advance, so could be
 extended with Iterative Deepening in future work.
 %so cannot check implementations directly.
 
-{\bf Other techniques.} Various improvements or alternatives to DPOR have been proposed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr}, DPOR for relaxed memory models \cite{tsopso}, and SAT-directed MC \cite{satcheck}.
-These are all orthogonal to our technique.
-Parrot \cite{parrot} combines MC with a partially-determinizing runtime, but still, fewer than half the non-trivial state spaces in their evaluation could be completed.
+{\bf Other techniques.} Various improvements or alternatives to DPOR have been developed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr},
+%DPOR for relaxed memory models \cite{tsopso},
+and SAT-directed MC \cite{satcheck}.
+These are all compatible with our technique.
+Recent work \cite{tsopso} has extended DPOR for relaxed memory models \cite{memory-consistency-models},
+which we do not yet account for in our proofs (\sect{\ref{sec:soundness}}).
+Parrot \cite{parrot} combines MC with a partially-determinizing runtime for further reduction, but still, fewer than half the non-trivial state spaces in their evaluation could be completed.
 %providing a strong argument for \quicksand.
 Finally, Iterative Context Bounding (ICB) \cite{chess-icb} is most similar to our work,
 as both approaches provide a partial verification
 %on some subset of interleavings
 when full completion is intractable (\sect{\ref{sec:future}}).
-However, ICB is limited to a fixed set of PPs, and so far no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
+However, ICB is limited to a fixed set of PPs, and to our knowledge no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
 
 \subsection{Data Race Detection}
 \label{sec:related-dr}
@@ -73,14 +79,14 @@ Closer to our work, replay analysis \cite{recordreplaydrs} also suppresses false
 %after finding data race candidates.
 This work compares the immediately resulting program states for differences,
 preferring to err on the side of false positives.
-RaceFuzzer \cite{racefuzzer} avoids false positives by requiring an actual failure be exhibited,
-although it uses random schedule fuzzing rather than stateless model checking.
-Note while these techniques can also classify our malloc-recycle candidates as false positives (\sect{\ref{sec:recycle}}),
+RaceFuzzer \cite{racefuzzer} avoids false positives by requiring an actual failure be exhibited, as we do,
+although it uses random schedule fuzzing rather than stateless MC.
+While this technique can also classify malloc-recycle candidates as false positives (\sect{\ref{sec:recycle}}),
 they require replaying the threads in a new interleaving.
 Moreover, \cite{portend} argues that accurate classification may require many re-executions,
 %according to many pre- and post-race sequences,
 which is tantamount to adding a new state space in \quicksand.
-Our proof in \sect{\ref{sec:recycle}} allows eliminating this special case with no additional replay beyond what DPOR already requires.
+Our proof in \sect{\ref{sec:recycle}} allows us to eliminate this special case with no additional replay beyond what DPOR already requires.
 
 Portend \cite{portend} is the most closely related work we have found.
 Based on single-pass data race reports, it tests alternate program executions to classify candidates in a taxonomy of likely severity.
@@ -89,7 +95,7 @@ It uses symbolic execution to test input nondeterminism as well as schedule nond
 and additionally reports non-failing races which nevertheless cause
 %suspiciously
 different program output. %, which is orthogonal to our technique.
-However, Portend does not test alternate interleavings {\em in advance} of knowing data races,
+However, Portend does not test alternate interleavings {\em in advance} of knowing any specific data races,
 which is necessary to expose certain bugs (\sect{\ref{sec:eval-falseneg}}) or to provide full verification (\sect{\ref{sec:totalverif}}).
 % Not really true.
 %It also assumes the POSIX synchronization API, so cannot verify arbitrary synchronization algorithms such as we do with \mxtest.

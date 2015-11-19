@@ -55,8 +55,8 @@ By the soundness of DPOR \cite{dpor}, this is equivalent to the input interleavi
 In other words, we have transformed $p$ into $p'$ such that $\ppnext{p'} = i$, which is a data race or synchronization boundary.
 All PPs in the input trace can be inductively converted in the same manner.
 
-\begin{definition}[Reachable data race]
-A data race candidate (and associated PPs) is reachable if it will be identified by an MC configured to preempt only on already-reachable PPs.
+\begin{definition}[Reachability]
+A data race candidate, and its associated PPs, are reachable if it will be identified by an MC configured to preempt only on already-reachable PPs.
 \end{definition}
 Initially, the statically-available synchronization API PPs are reachable. Reachability of data-race PPs is transitive.
 \begin{lemma}[Saturation of data-race PPs]
@@ -66,8 +66,9 @@ Initially, the statically-available synchronization API PPs are reachable. Reach
 
 We induct on the PPs according to the order of their preemptions.
 Given that the interleaving prefix preceding some PP $p$ is reachable,
-we will show that either $p$ is reachable, or a new data race among $\ppothers{p}$, not previously reachable, is now reachable.
-The latter condition suffices because in a finitely-sized program, there must be finitely many unique racing instruction pairs, so induction on the number of new data-race PPs among $\ppothers{p}$ will make $p$ itself reachable.
+we require that either $p$ is reachable, or a new data race among $\ppothers{p}$ will be newly reachable. %, not previously reachable, is now reachable.
+The latter condition suffices because in a finitely-sized codebase, there must be finitely many unique racing instruction pairs.
+%, so induction on the number of new data-race PPs among $\ppothers{p}$ will make $p$ itself reachable.
 
 First, we must ``coalesce'' away $p$, as well as any other not-yet-reachable PPs in $\ppothers{p}$.
 Consider the alternate interleaving in which the first thread executes past $p$ until the first already-reachable PP,
@@ -111,12 +112,6 @@ Here, Thread 2's logic usually corresponds to an initialization pattern \cite{er
 
 % This class of false positive is unique to heap-allocated memory, among all ways threads could communicate. By contrast, global memory has unlimited lifetime, and message-passing primitives enforce a must-happens-before relationship which precludes the race.
 
-We mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address,
-%We implemented this check
-by adding a generation counter to \landslide's heap tracking:
-each allocation is given a unique ID,
-and when evaluating whether two heap accesses can race,
-the IDs of their containing blocks must match.
 %However,
 When limited to a single test execution, suppressing any data race matching this pattern is unsound.
 Consider the more unusual program in Figure~\ref{fig:recycle-bug},
@@ -185,8 +180,8 @@ the accesses still race without fitting the malloc-recycle pattern.
 \end{theorem}
 
 \begin{proof}
-By definition of the malloc-recycle pattern,
-any such program must contain an access $a_1$ by one thread T1,
+%By definition of the malloc-recycle pattern,
+Any such program must contain an access $a_1$ by one thread T1,
 followed by a {\tt free} and a {\tt malloc} possibly by either thread,
 followed by an access $a_2$ by the other thread T2. % not depending on the result of the middle malloc.
 Without loss of generality, we say that T1 performs the {\tt free} and T2 the subsequent {\tt malloc}. %; the other cases are similar.
@@ -194,7 +189,7 @@ We also assume the only way for the program to get pointers to heap memory is th
 hence, there must also be some ``publish'' action $p$ by T1 which communicates the address to T2.
 Because this is a true data race, $p$ must occur before $a_1$, as $a_2$ cannot be reordered before $p$.
 
-We now show that a PP will be identified during T1 between $p$ and $a_1$.
+We require that a PP will be identified during T1 between $p$ and $a_1$.
 The publish action must involve some thread communication, whether through a shared data structure or message-passing API.
 If locking or message-passing is used, our set of hard-coded PPs suffices to provide a PP.
 Otherwise, $p$ (and the corresponding read by T2) will be a data race, although that may itself be a malloc-recycle race.
@@ -205,12 +200,21 @@ Hence there will be a PP between $p$ and $a_1$ no matter the mode of communicati
 
 With this PP, DPOR will reorder $a_2$ before $a_1$, while not changing $a_2$'s location.
 As T2's {\tt malloc} now occurs before T1's {\tt free}, it will allocate different memory.
-Hence $a_1$ and $a_2$ will be in the same allocation;
-hence the accesses can race without fitting the malloc-recycle pattern.
+Hence $a_1$ and $a_2$ %will be in the same allocation;
+can race without fitting the malloc-recycle pattern.
 % Mario-man is very very hunger from not having enough plumming jobs, so his Quest for Eat and Dollars.
 % This spells QED so we are done.
 \end{proof}
 \renewcommand\proofname{Proof}
 
-Note that we do not require PPs on the internal locking of {\tt malloc} or {\tt free},
-which are ideal candidates to ignore via {\tt without\_function} (\sect{\ref{sec:landslide}}, \sect{\ref{sec:future}}) to reduce state space size.
+Note that we do not require PPs on the internal lock of {\tt malloc} or {\tt free},
+which are ideal candidates to ignore via {\tt without\_function} (\sect{\ref{sec:landslide}}) to reduce state space size.
+
+We implemented a simple check in \landslide~to recognize the malloc-recycle pattern:
+%We mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address,
+%We implemented this check
+%by adding a generation counter to \landslide's heap tracking:
+%when tracking heap state,
+each heap allocation is given a unique ID,
+and when evaluating whether two heap accesses can race,
+the IDs of their containing blocks must match.

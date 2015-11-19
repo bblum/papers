@@ -5,27 +5,29 @@ In this section, we discuss \quicksand's limitations and opportunities for futur
 
 % TODO CAMREADY: Measure how much subset overlap there is.
 {\bf Avoiding redundant work.}
-When we extend a small state space with more PPs, the new state space is guaranteed to test a superset of thread interleavings compared to the old one.
+When we extend a small state space with more PPs, the new state space is guaranteed to test a superset of interleavings compared to the old one.
 Any interleaving which does not preempt threads on any of the new PPs will be repeated work.
 %Because we prioritize completing small state spaces before extending them with more PPs,
 %the superset state spaces we run later will repeat each branch of their already-completed subsets.
 %
 %We measured the proportion of repeated work among completed state spaces across our test suite;
 %on average, {\bf \large 999\%} of the interleavings in each test were repeated, with some tests as high as {\bf \large 9999\%}.
-This may make Iterative Deepening slower than SSS-MC to find certain bugs,
-for example, if both {\tt mutex\_lock} and {\tt mutex\_unlock} PPs together expose a bug, but not either alone.
+This may make us slower than SSS-MC to find certain bugs,
+for example, if both {\tt lock} and {\tt unlock} PPs together expose a bug, but not either alone.
 %Similarly, when pursuing total verification (\sect{\ref{sec:totalverif}}),
 %if the state space resulting from preempting on every instruction could be completed,
 %an SSS-MC tool such as \cite{spin} might achieve that verification faster,
 %as Iterative Deepening will test many subsets of data-race PPs first.
-Predicting whether each future interleaving has been tested before is not straightforward,
-but we believe future implementations of Iterative Deepening could incorporate cross-job memoization
+Predicting whether an upcoming interleaving has already been tested is not straightforward,
+but we believe future implementations
+%of Iterative Deepening
+could incorporate cross-job memoization
 to prune some or all such repeated work.
 
 {\bf Finer-grained PP subsets.}
 \quicksand~was able to partially guarantee safety for some PPs in 89\% of tests with too-large maximal state spaces.
-However, in 4 tests, no more than the minimal state space could be verified,
-and in 6 other tests, no state spaces were completed at all.
+However, in 4 cases, no more than the minimal state space could be verified,
+and in 6 others, no state spaces were completed at all.
 %Larger state spaces often result from finer-grained locking,
 %which can indicate a more intricate concurrent algorithm or an unnecessarily complicated design.
 %Such programs may require even more rigorous verification than a program with a single global lock.
@@ -35,7 +37,7 @@ While we used {\tt within\_function} (\sect{\ref{sec:landslide}}) {\em staticall
 future
 %Iterative Deepening
 implementations could use this mechanism to {\em dynamically} subset PPs further,
-making partial verification of such large tests possible.
+making partial verification of larger tests possible.
 %enabling partial verification of such large tests. % if need space
 %Because our current implementation does not avoid repeated interleavings across state spaces,
 %as discussed above,
