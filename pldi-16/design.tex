@@ -6,8 +6,8 @@ Iterative Deepening
 %likewise
 makes progressively deeper searches of the state space until the CPU budget is exhausted.
 In this context, the depth is the number of PPs used.
-Hence, our tool \quicksand~schedules multiple MC instances in parallel to simultaneously test many different subsets of the available PPs
-, which we refer to as {\em jobs}.
+Hence, our tool \quicksand~schedules multiple MC instances in parallel to simultaneously test many different subsets of the available PPs,
+which we refer to as {\em jobs}.
 It prioritizes jobs based on number of PPs, ETA, and whether they include data-race PPs.
 We rely on state-space estimation \cite{estimation}
 to predict which jobs are likely to complete within a reasonable time,
@@ -28,12 +28,16 @@ We focus on run-time data-race detection~\cite{hybriddatarace,tsan,ifrit} as the
 
 Iterative Deepening must be seeded with a set of initial state spaces,
 which can be any number of subsets of the statically-available PPs SSS-MC would use.
+For completeness (\sect{\ref{sec:totalverif}}), the maximal state space must be included among these.
+
 For testing user-space code, we begin with the four PP sets from Figure~\ref{fig:id}:
 $\{yield\}$,
 $\{yield,lock\}$,
 $\{yield,unlock\}$,
 and $\{yield,lock,unlock\}$,
-By extension, these also introduce PPs on any other sync primitives implemented with internal locks,
+By extension, these also introduce PPs on any other sync primitives
+%implemented
+with internal locks,
 such as condvars or semaphores.
 Preempting on voluntary switches such as {\tt yield} is always necessary to maintain the invariant that only one thread runs between consecutive PPs.
 %so the {\tt yield} PP is always implicitly enabled.
@@ -94,8 +98,7 @@ Similarly, whenever a job finds a bug, we cancel all pending superset jobs, as t
 	\Input{\PendingJobs, the list of pending jobs, sorted by decreasing heuristic priority}
 	\Input{\SuspendedJobs, the list of already-suspended jobs, sorted by increasing ETA}
 	\If{\GetETA{$j_0$} $<$ HeuristicETAFactor $\times$ TimeLeft()}{
-		// Common case: Job is expected to complete. \\
-		return $j_0$
+		return $j_0$ // Common case: job is expected to finish.
 	}
 	\ForEach{job $j_P \in$ \PendingJobs}{
 		// Don't run a pending job if a subset of it is already suspended; its ETA would be at least as bad. \\

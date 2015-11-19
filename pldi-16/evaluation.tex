@@ -42,7 +42,9 @@ Our evaluation answers the following questions:
 \subsection{Test Suite}
 \label{sec:testsuite}
 Our test suite consists of \numthrlibs~``P2'' student thread libraries, from Carnegie Mellon's 15-410 operating systems class,
-and \numpintoses~``Pintos'' student kernels, from Berkeley's CS162 and University of Chicago's CS230 operating systems classes.
+and \numpintoses~``Pintos'' student kernels, from Berkeley's CS162 and University of Chicago's
+% TODO CAMREADY: CMSC 23000 to be precise
+CS230 operating systems classes.
 %
 The P2 project comprises \texttt{thr\_create()}, \texttt{thr\_exit()}, \texttt{thr\_join()}, mutexes, condition variables, semaphores, and reader/writer locks;
 all implemented from scratch in userspace with a UNIX-like system call interface \cite{kspec,thrlib}.
@@ -59,7 +61,8 @@ using provided mutex, context-switch, and virtual memory implementations
 % 1716 1719 1720 1723 1723 1727 1737 1743 1744 1751 1769 1777 1782 1789 1789 1812 1918
 % 1926 1946 1994 2022 2043 2066 2077 2088 2099 2131 2164 2172 2190 2215 2227 2277 2282
 % 2384 2387 2483 2486 2503 2514 2551 2597 2610 2665 4114
-Though not ``real world'' programs, both projects are quite complex:
+%Though not ``real world'' programs,
+Both projects are quite complex:
 the P2s average 1807 lines of code, %C and x86 assembly (stddev 489.5),
 % Pintos SLOC stats: 718.1923077 avg; 643 median; range 68-1821
 % Obtained with:
@@ -74,7 +77,7 @@ the P2s average 1807 lines of code, %C and x86 assembly (stddev 489.5),
 %	dloc=`getloc $i devices`
 %	echo -e "\t$tloc\t$uloc\t$dloc"
 %done
-and the Pintoses average 718.
+and the Pintoses average 718 lines, for a total of 198,772.
 
 We chose P2s and Pintoses for our test suite because of the relative ease of generating hundreds of unique state spaces,
 varied in size and correctness, and with a diverse set of bug types\footnote{
@@ -82,7 +85,7 @@ Many of the codebases exhibited {\em deterministic} bugs (i.e., encountered on t
 We fixed these by hand, before running tests, to ensure that every bug in our study required meaningful work by the MC.}.
 % TODO: Is this ok? Too arrogant?
 We believe that merely finding a small handful of new real-world bugs is distressingly anecdotal,
-and that our test suite's size allows for a more statistically significant comparison among MC and data-race testing strategies,
+and that our test suite's size allows for a more statistically significant comparison among MC and data-race testing strategies.
 %compared to anecdotally showing a small handful of new bugs that could be found in real-world programs.
 
 \newcommand\mxtest{\texttt{mx\_test}}
