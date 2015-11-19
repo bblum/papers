@@ -27,7 +27,7 @@ A proof sketch of the contrapositive statement follows.
 \newcommand\ppinstr[1]{\ensuremath{\mathsf{instr}(#1)}}
 \newcommand\ppothers[1]{\ensuremath{\mathsf{others}(#1)}}
 \begin{theorem}
-If a bug can be exposed by any thread interleaving possible by preempting on any instruction,
+If a bug can be exposed by any thread interleaving possible by preempting on all instructions,
 Iterative Deepening will eventually test an equivalent interleaving which exposes the same bug.
 \end{theorem}
 \begin{proof}
@@ -40,27 +40,27 @@ and let $\ppothers{p}$ denote the transitions by other threads between $p$ and $
 
 \begin{lemma}[Equivalence of non-data-race PPs]
 For any thread interleaving possible by preempting on any instruction,
-there exists an equivalent interleaving which uses only data-race PPs and sync API PPs.
+there exists an equivalent interleaving which uses only data-race PPs and synchronization API PPs.
 	\label{lem:relevant}
 \end{lemma}
 
-Let $p$ be the first PP in the given interleaving such that $\ppinstr{p}$ is not a data race with $\ppothers{p}$ nor is a sync API boundary.
-Because $\ppinstr{p}$ is not a sync API boundary,
+Let $p$ be the first PP in the given interleaving such that $\ppinstr{p}$ is not a data race with $\ppothers{p}$ nor is a synchronization API boundary.
+Because $\ppinstr{p}$ is not a synchronization boundary,
 no lock can be held during $\ppothers{p}$ that was also held by the first thread across $p$.
 Hence, because $\ppinstr{p}$ is not a data race, it cannot be a shared memory conflict with $\ppothers{p}$ at all.
-Let $i$ be the first instruction among $\ppnext{p}$ which is such a conflict, or a sync API boundary.
+Let $i$ be the first instruction among $\ppnext{p}$ which is such a conflict, or a synchronization boundary.
 If $i$ is a shared memory conflict, it must be a data race, for the same reasoning as above.
 We modify the input interleaving by reordering $\ppinstr{p}$ until $i$, not including $i$, to before $\ppothers{p}$.
 By the soundness of DPOR \cite{dpor}, this is equivalent to the input interleaving.
-In other words, we have transformed $p$ into $p'$ such that $\ppnext{p'} = i$, which is a data race or sync API boundary.
+In other words, we have transformed $p$ into $p'$ such that $\ppnext{p'} = i$, which is a data race or synchronization boundary.
 All PPs in the input trace can be inductively converted in the same manner.
 
 \begin{definition}[Reachable data race]
-A data race candidate (or associated PP) is reachable if it will be identified by an MC configured to preempt only on already-reachable PPs.
+A data race candidate (and associated PPs) is reachable if it will be identified by an MC configured to preempt only on already-reachable PPs.
 \end{definition}
-Initially, the statically-available sync API PPs are reachable. Reachability of data-race PPs is transitive.
+Initially, the statically-available synchronization API PPs are reachable. Reachability of data-race PPs is transitive.
 \begin{lemma}[Saturation of data-race PPs]
-	Given any interleaving comprising only data-race PPs and sync API PPs, all such PPs are reachable.
+	Given any interleaving comprising only data-race PPs and synchronization API PPs, all involved PPs are reachable.
 	\label{lem:saturation}
 \end{lemma}
 
@@ -92,7 +92,7 @@ Hence, a single new not-yet-reachable data race is reachable in $\mathcal{S}$. H
 \\
 
 To conclude,
-for any possible interleaving, Lemma \ref{lem:relevant} provides an equivalent one with only data-race and sync API PPs,
+for any possible interleaving, Lemma \ref{lem:relevant} provides an equivalent one with only data-race and synchronization PPs,
 and Lemma \ref{lem:saturation} proves all involved PPs are reachable.
 Hence, Iterative Deepening will eventually test a state space containing the equivalent buggy interleaving.
 \end{proof}
@@ -102,24 +102,26 @@ Hence, Iterative Deepening will eventually test a state space containing the equ
 \subsection{Suppressing ``malloc-recycle'' false positives}
 \label{sec:recycle}
 
-We identify a particular class of false positive data-race candidate in which the memory is recycled by {\tt malloc} between the two accesses.
+We identify a particular class of false positive data-race candidates in which the memory was recycled by {\tt malloc} between the two accesses.
 Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can expose such behavior.
 If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 7 will be flagged as a data race.
-We term this a {\em malloc-recycle data race}.
+We call this a {\em malloc-recycle data race}.
 To the human eye, this is obviously a false positive: reordering lines 4-7 before lines 1-2 will change {\tt malloc}'s return value, causing {\tt x} and {\tt y} to no longer collide.
-Here, Thread 2's logic usually corresponds to the initialization pattern \cite{eraser}, but for generality we have added a {\tt publish} action on line 6.
+Here, Thread 2's logic usually corresponds to an initialization pattern \cite{eraser}, but for generality we have added a {\tt publish} action on line 6.
 
 % This class of false positive is unique to heap-allocated memory, among all ways threads could communicate. By contrast, global memory has unlimited lifetime, and message-passing primitives enforce a must-happens-before relationship which precludes the race.
 
-It is quite simple to mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address.
-We implemented this check by adding a generation counter to \landslide's heap tracking:
+We mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address,
+%We implemented this check
+by adding a generation counter to \landslide's heap tracking:
 each allocation is given a unique ID,
 and when evaluating whether two heap accesses can race,
 the IDs of their containing blocks must match.
-However, when limited to a single execution, suppressing any data race matching this pattern is unsound.
-Consider the more unusual program in Figure~\ref{fig:recycle-bug}:
-Now, the memory is recycled the same way, but the racing access's address is not tied to {\tt malloc}'s return value.
-Hence, reordering lines 6-7 before line 3 will cause {\tt x} and {\tt x2} to race.
+%However,
+When limited to a single test execution, suppressing any data race matching this pattern is unsound.
+Consider the more unusual program in Figure~\ref{fig:recycle-bug},
+in which the memory is recycled the same way, but the racing access's address is not tied to {\tt malloc}'s return value.
+Here, reordering lines 6-7 before line 3 will allow {\tt x} and {\tt x2} to race.
 
 \begin{figure}[t]
 	\small
@@ -184,26 +186,26 @@ the accesses still race without fitting the malloc-recycle pattern.
 
 \begin{proof}
 By definition of the malloc-recycle pattern,
-any such program must contain an access {\tt x1} by one thread T1,
+any such program must contain an access $a_1$ by one thread T1,
 followed by a {\tt free} and a {\tt malloc} possibly by either thread,
-followed by an access {\tt x2} by the other thread T2. % not depending on the result of the middle malloc.
-For brevity we say that T1 performs the {\tt free} and T2 the subsequent {\tt malloc}; the other cases are similar.
+followed by an access $a_2$ by the other thread T2. % not depending on the result of the middle malloc.
+Without loss of generality, we say that T1 performs the {\tt free} and T2 the subsequent {\tt malloc}. %; the other cases are similar.
 We also assume the only way for the program to get pointers to heap memory is through {\tt malloc};
-hence, there must also be some ``publish'' action {\tt p} by T1 which communicates the address to T2.
-Because this is a true data race, {\tt p} must occur before {\tt x1}, as {\tt x2} cannot be reordered before {\tt p}.
+hence, there must also be some ``publish'' action $p$ by T1 which communicates the address to T2.
+Because this is a true data race, $p$ must occur before $a_1$, as $a_2$ cannot be reordered before $p$.
 
-We now show that a PP will be identified during T1 between {\tt p} and {\tt x1}.
+We now show that a PP will be identified during T1 between $p$ and $a_1$.
 The publish action must involve some thread communication, whether through a shared data structure or message-passing API.
-If locking or message-passing is used, our set of hard-coded PPs suffices.
-Otherwise, {\tt p} (and the corresponding read by T2) will be a data race, although it may itself be a malloc-recycle race.
-In this case we use induction on the pointer chain leading to {\tt x}:
-in the base case, {\tt p} is global or obtained via message-passing,
-and in the inductive step, DPOR will reorder threads sufficiently to identify the PP on {\tt p}.
-Hence there will be a PP between {\tt p} and {\tt x1} no matter the mode of communication.
+If locking or message-passing is used, our set of hard-coded PPs suffices to provide a PP.
+Otherwise, $p$ (and the corresponding read by T2) will be a data race, although that may itself be a malloc-recycle race.
+In this case we use induction on the pointer chain leading to the shared address containing $p$:
+in the base case, $p$ is communicated via global data or message-passing,
+and in the inductive step, DPOR will reorder threads sufficiently to identify the PP on $p$.
+Hence there will be a PP between $p$ and $a_1$ no matter the mode of communication.
 
-With this PP, DPOR will reorder {\tt x2} before {\tt x1}, while not changing {\tt x2}'s location.
+With this PP, DPOR will reorder $a_2$ before $a_1$, while not changing $a_2$'s location.
 As T2's {\tt malloc} now occurs before T1's {\tt free}, it will allocate different memory.
-Hence {\tt x1} and {\tt x2} will be in the same allocation;
+Hence $a_1$ and $a_2$ will be in the same allocation;
 hence the accesses can race without fitting the malloc-recycle pattern.
 % Mario-man is very very hunger from not having enough plumming jobs, so his Quest for Eat and Dollars.
 % This spells QED so we are done.
@@ -211,4 +213,4 @@ hence the accesses can race without fitting the malloc-recycle pattern.
 \renewcommand\proofname{Proof}
 
 Note that we do not require PPs on the internal locking of {\tt malloc} or {\tt free},
-which are ideal candidates to ignore via {\tt without\_function} (\sect{\ref{sec:landslide}}) to reduce state space size.
+which are ideal candidates to ignore via {\tt without\_function} (\sect{\ref{sec:landslide}}, \sect{\ref{sec:future}}) to reduce state space size.

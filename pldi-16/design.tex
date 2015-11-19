@@ -44,7 +44,7 @@ so we also preempt just before a disable-interrupt opcode ({\tt cli}) and just a
 During data-race detection, {\tt cli}/{\tt sti} are treated as a single global lock.
 %as {\tt cli}'d memory accesses can still race with others that have interrupts on.
 Some kernels disable preemption without disabling interrupts,
-which can be modelled the same way using manual annotations. %of that API.
+which can be communicated to the MC using manual annotations. %of that API.
 This also assumes uni-processor scheduling; for SMP kernels, replace {\tt cli}/{\tt sti} with spinlocks.}.
 \quicksand~is configured to begin with
 $\{yield\}$,
@@ -91,8 +91,8 @@ Similarly, whenever a job finds a bug, we cancel all pending superset jobs, as t
 	%\textbf{Function} GetBestJob($j_0$, PendingJobs, SuspendedJobs): \\
 	\Input{$j_0$, the currently-running job}
 	%\Input{$eta$, $j_0$'s predicted completion time}
-	\Input{\PendingJobs, the list of pending jobs, sorted decreasingly by heuristic priority}
-	\Input{\SuspendedJobs, the list of already-suspended jobs, sorted increasingly by ETA}
+	\Input{\PendingJobs, the list of pending jobs, sorted by decreasing heuristic priority}
+	\Input{\SuspendedJobs, the list of already-suspended jobs, sorted by increasing ETA}
 	\If{\GetETA{$j_0$} $<$ HeuristicETAFactor $\times$ TimeLeft()}{
 		// Common case: Job is expected to complete. \\
 		return $j_0$
@@ -114,7 +114,7 @@ Similarly, whenever a job finds a bug, we cancel all pending superset jobs, as t
 			}
 		}
 	}
-	return $j_0$ // ETA was bad, but no other job was better.
+	return $j_0$ // \GetETA{$j_0$} was bad, but no other $j$ was better.
 	\caption{Suspending exploration of a state space in favour of a potentially smaller one.}
 	\label{alg:shouldworkblock}
 \end{algorithm}
@@ -145,7 +145,7 @@ to avoid repeatedly resuming larger jobs briefly while their ETAs only become wo
 
 During stateless MC, runtime data-race detection may find data-race candidates that we wish to investigate further.
 Because data races indicate access pairs that can interleave at instruction granularity,
-it is logical to re-execute the test and issue preemptions during those instructions to test alternate thread interleavings~\cite{racefuzzer,portend}.
+it is logical to re-execute the test and issue preemptions just before those instructions to test alternate thread interleavings~\cite{racefuzzer,portend}.
 
 \newcommand\AllJobs{\ensuremath{\mathcal{J}}}
 \begin{algorithm}[t]
@@ -168,6 +168,7 @@ it is logical to re-execute the test and issue preemptions during those instruct
 \end{algorithm}
 
 With Iterative Deepening, this is a simple matter of creating a new state space with an additional PP enabled on the racing instructions by each thread, as shown in Algorithm~\ref{alg:handledatarace}.
+We call these {\em data-race PPs}.
 Note that even though a data race may involve two different instructions, $\alpha$ and $\beta$, we add new state spaces with only one new PP at a time.
 Rather than adding a single large state space, %configured to preempt on both involved instructions,
 i.e., $AB =$ \GetPPSet{$j_0$} $\cup$ $\alpha$ $\cup$ $\beta$,
@@ -189,17 +190,18 @@ Hence,
 %together with the logic in \sect{\ref{sec:classifying}},
 each {\em pair} of racing accesses will spawn four new jobs, as shown in Figure~\ref{fig:new-dr-jobs}.
 %
-The rationale of spawning multiple jobs is that which will be more fruitful cannot be known in advance:
+The rationale of spawning multiple jobs is that we don't know in advance which will be most fruitful: %which will be most fruitful is not known in advance:
 while the big job risks not completing in time,
 the small job risks missing the data race entirely if the original PPs were required to expose it.
 % TODO CAMREADY: Put numbers here.
-In practice, we observed some bugs found quickly by these small jobs, and other bugs missed by the small jobs found eventually by the big jobs,
-which motivates the need for Iterative Deepening to prioritize the jobs at runtime.
+In practice, we observed some bugs found quickly by these small jobs, and other bugs missed by the small jobs found eventually by the big jobs.
+%which motivates the need for Iterative Deepening to prioritize the jobs at runtime.
+This phenomenon motivates Iterative Deepening to prioritize the jobs at run-time.
 
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{dr-jobs-v2.pdf}
 	\caption{\quicksand~manages the exploration of multiple state spaces, communicating with each MC instance to receive ETAs, data race candidates, and bug reports.
-		When an access pair is reported as a data race, we generate a new PP for each access and add new jobs corresponding to different combinations of those with the existing PPs.}
+		When an access pair is reported as a data race candidate, we generate a new PP for each access, and add new jobs corresponding to different combinations of those with the existing PPs.}
 	\label{fig:new-dr-jobs}
 \end{figure}
 
@@ -238,8 +240,8 @@ in which case we report a potential false positive that the user must handle (\s
 % shold_reproduce -- small dr jobs are not allowed to add further instances of themself (why not? don't remember)
 % priority change between suspected and confirmed dr
 Algorithm~\ref{alg:shouldworkblock} allows heuristically scaling a job's ETA when comparing to the time budget,
-to express how optimistic we are about the estimate's accuracy.
-We use 2 as this scaling factor based on the results in \cite{estimation}.
+to express how pessimistic we are about the estimate's accuracy.
+We use a scaling factor defaulting to 2 based on the results in \cite{estimation}.
 %though we allow changing it via the command line.
 We also include a heuristic to
 %ignore ETAs entirely
@@ -249,10 +251,15 @@ so that their ETAs have some time to stabilize.
 
 We classify data-race candidates as {\em single-order} or {\em both-order} \cite{portend}
 based on whether the MC observed the racing instructions ordered one or both ways in the original state space,
-Jobs with both-order data-race PPs are prioritized higher,
-because single-order candidates are more likely to be false-positives
-(though before preempting during the access itself, we cannot say for sure, hence the heuristic).
+Single-order candidates are more likely to be false positives,
+although preempting during the access itself is necessary to say for sure.
+Hence, we add PPs for both types of candiates, and heuristically prioritize jobs with both-order data-race PPs
+(indicated by the HeuristicPriority($\alpha$) call in Algorithm~\ref{alg:handledatarace}).
+%Jobs with both-order data-race PPs are prioritized higher,
+%because single-order candidates are more likely to be false-positives.
+%(though before preempting during the access itself, we cannot say for sure, hence the heuristic).
 %so we prioritize jobs with both-order data-race PPs.
-For single-order races, we do not add a PP for the later access at all;
-should it be needed, preempting on the first access will suffice to upgrade the race to both-order.
+For single-order races, we do not initially add a PP for the later access at all:
+if preempting on the first access can reorder the race, it will be upgraded to both-order in the new state space, and we will add the second PP then.
+%should it be needed, preempting on the first access will suffice to upgrade the race to both-order.
 
