@@ -10,24 +10,24 @@ Hence, our tool \quicksand~schedules multiple MC instances in parallel to simult
 , which we refer to as {\em jobs}.
 It prioritizes jobs based on number of PPs, ETA, and whether they include data-race PPs.
 We rely on state-space estimation \cite{estimation}
-to understand which jobs are likely to complete on time,
-before actually testing each interleaving within.
-The overall purpose is to decide automatically when to defer testing a state space,
+to predict which jobs are likely to complete within a reasonable time,
+before actually testing each interleaving.
+The overall goal is to decide automatically when to defer testing a state space,
 so an inexpert user can provide only their total CPU budget as a test parameter,
 and to enable completing appropriately-sized jobs within that budget.
 
 Note that Iterative Deepening is a {\em wrapper} algorithm around stateless MC.
 A MC tool is still used to test each state space, and other reduction techniques are still applicable.
 Moreover, because Iterative Deepening treats the set of preemption points as mutable,
-it can add new ones reactively based on any runtime analysis.
-We focus on dynamic data-race detection~\cite{hybriddatarace,tsan} as the mechanism for finding new preemption candidates.
+it can add new preemption points reactively based on any runtime analysis.
+We focus on run-time data-race detection~\cite{hybriddatarace,tsan,ifrit} as the mechanism for finding new preemption candidates.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Initial PP configuration}
 
-Iterative Deepening must be seeded with some initial state spaces,
-which can be any number of subsets of the statically-available PPs that SSS-MC would use.
+Iterative Deepening must be seeded with a set of initial state spaces,
+which can be any number of subsets of the statically-available PPs SSS-MC would use.
 For testing user-space code, we begin with the four PP sets from Figure~\ref{fig:id}:
 $\{yield\}$,
 $\{yield,lock\}$,
@@ -69,8 +69,8 @@ which could potentially be improved in future work (\sect{\ref{sec:future}}).
 With a limited CPU budget, we must avoid running tests that are likely to be fruitless.
 Hence, we separate the available PP sets into a set of {\em suspended} jobs (partially-explored state spaces with high ETAs),
 and a set of {\em pending} jobs (untested ones with unknown ETAs).
-When a MC instance reports an ETA too high,
-we compare other pending jobs to find another one more likely to complete in time.
+When the MC reports an ETA too high for some job,
+we compare with other pending and suspended jobs to find another one more likely to complete in time.
 %
 Our method for doing so, listed in Algorithm~\ref{alg:shouldworkblock}, is the heart of Iterative Deepening.
 %\footnote{
@@ -82,9 +82,9 @@ Our method for doing so, listed in Algorithm~\ref{alg:shouldworkblock}, is the h
 Its main feature is understanding that if \GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$},
 and $j_1$ is suspended,
 then $j_2$'s state space is guaranteed to be strictly larger, so $j_2$ will take at least as long.
-Hence we should avoid testing $j_2$ unless $j_1$'s ETA improves over time.
+Hence we should avoid testing $j_2$ unless $j_1$ is later resumed and its ETA improves after further execution. %over time.
 %reveals that it might finish in time after all.
-Similarly, when some job finds a bug, we cancel all pending superset jobs, as they would find the same bug.
+Similarly, whenever a job finds a bug, we cancel all pending superset jobs, as they would find the same bug.
 
 \begin{algorithm}[t]
 	\SetKwInOut{Input}{Input}
@@ -167,7 +167,7 @@ it is logical to re-execute the test and issue preemptions during those instruct
 	\label{alg:handledatarace}
 \end{algorithm}
 
-With Iterative Deepening, this is a simple matter of creating a new state space with a PP enabled on the racing instructions by each thread, as shown in Algorithm~\ref{alg:handledatarace}.
+With Iterative Deepening, this is a simple matter of creating a new state space with an additional PP enabled on the racing instructions by each thread, as shown in Algorithm~\ref{alg:handledatarace}.
 Note that even though a data race may involve two different instructions, $\alpha$ and $\beta$, we add new state spaces with only one new PP at a time.
 Rather than adding a single large state space, %configured to preempt on both involved instructions,
 i.e., $AB =$ \GetPPSet{$j_0$} $\cup$ $\alpha$ $\cup$ $\beta$,
@@ -204,13 +204,13 @@ which motivates the need for Iterative Deepening to prioritize the jobs at runti
 \end{figure}
 
 The new state spaces may expose a failure, in which case we report a data-race bug,
-or complete successfully, which indicates a benign or false-positive data race.
+or complete successfully, indicating a benign or false-positive data race.
 They may also uncover a new data-race candidate entirely, %in some alternate interleaving,
-in which case we iteratively advance to a superset state space containing PPs for both racing access pairs.
+in which case we may iteratively advance to a superset state space containing PPs for both racing access pairs.
 %Because Iterative Deepening is
 Being constrained by a CPU budget,
 we may time out before completing a data race's associated state space,
-in which case it remains a potential false positive that the user must handle.
+in which case we report a potential false positive that the user must handle (\sect{\ref{sec:future}}).
 
 %When \landslide~detects a data race, it reports each of the two memory accesses involved in the race.
 %Each report indicates the program counter value (PC) associated with the access, as well as some further conditions to help filter away unrelated executions of the same instruction on different data.

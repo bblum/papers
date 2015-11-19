@@ -17,18 +17,20 @@ and search ordering strategies such as Iterative Context Bounding \cite{chess-ic
 
 % Can I even make a claim this broad to begin with?
 However, all stateless model checkers to date are bound by a fixed set of {\em preemption points}: code locations that define the granularity at which threads interleave.
-Choosing these preemption points is a tradeoff between schedule coverage and feasibility of completion.
 For example, \textsc{CHESS} \cite{chess} preempts only on synchronization operations and library calls, which can miss lock-free shared memory races.
 %
 On the other hand, SPIN \cite{spin} and Inspect \cite{inspect}
-are able to preempt threads around any shared memory access. Such fine granularity would automatically check if each data race is a real bug, but makes full state space completion intractable for even modestly-sized tests.
+are able to preempt threads before any shared memory access. Such fine granularity would automatically check each data race for the possibility of failure, but risks timing out before the state space can be completed. %makes full state space completion intractable for even modestly-sized tests.
+Choosing these preemption points is a tradeoff between schedule coverage and feasibility of completion,
+but even with state-of-the-art reduction techniques,
+any choice made in advance must necessarily leave some tests impossibly large \cite{parrot,mcr}.
 %
-This work shows how to avoid making that tradeoff decision in advance.
+%This work shows how to avoid making that tradeoff decision in advance.
 
 We present \quicksand,
 a model checking framework for deciding at runtime which preemption points to test,
 according to which resulting state spaces are most likely to fit a prescribed CPU budget.
-It uses data-race analysis to dynamically find new preemption points which expose bugs not reachable by preempting on API calls alone.
+It uses data-race analysis \cite{eraser} to dynamically find new preemption points which expose bugs not reachable by preempting on API calls alone.
 When prior work would time out on large tests by trying several preemption points simultaneously,
 \quicksand~tests smaller state spaces based on subsets of those points, which often finds the same bugs sooner.
 On the other hand, when the CPU budget is large enough to fully test all data-race preemption points,

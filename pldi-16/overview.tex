@@ -3,6 +3,13 @@
 
 We review the background in stateless model checking and data-race analysis using the example program in Figure~\ref{fig:example}.
 
+\subsection{Stateless Model Checking}
+
+Stateless model checking \cite{verisoft} is a testing technique for systematically exploring the possible thread interleavings of a concurrent program.
+A stateless model checker executes the program repeatedly, each time according to a new thread interleaving, until the state space (or the CPU budget) is exhausted.
+Rather than identifying suspicious conditions which may include false alarms, the approach of many static analyses \cite{racerx,coverity},
+stateless model checkers focus on concrete observable failures such as assertions, deadlocks, and segfaults.
+
 \begin{figure}[t]
 	\small
 \begin{tabular}{rll}
@@ -28,13 +35,6 @@ We review the background in stateless model checking and data-race analysis usin
 \label{fig:example}
 \end{figure}
 
-\subsection{Stateless Model Checking}
-
-Stateless model checking \cite{verisoft} is a testing technique for systematically exploring the possible thread interleavings of a concurrent program.
-A stateless model checker executes the program repeatedly, each time according to a new thread interleaving, until the state space (or the CPU budget) is exhausted.
-Rather than identifying suspicious conditions which may include false alarms, the approach of many static analyses \cite{racerx,coverity},
-stateless model checkers focus on concrete observable failures such as assertions, deadlocks, and segfaults.
-
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{trees-v2-squashed.pdf}
 	\caption{Iterative Deepening example.
@@ -55,15 +55,15 @@ The approach of prior work is to enable all preemption points simultaneously, i.
 To mitigate the exponential explosion,
 Dynamic Partial Order Reduction \cite{dpor} identifies equivalent execution sequences according to Mazurkiewicz trace theory \cite{mazurkiewicz},
 and tests at least one execution from each equivalence class.
-Intuitively, if two thread transitions between preemption points do not conflict on any shared resource access, reordering them produces an equivalent interleaving.
+Intuitively, if two thread transitions between preemption points do not conflict on any shared resource access, reordering them produces an equivalent interleaving, i.e., the same program behaviour.
 Nevertheless, state spaces are still exponentially-sized in the number of conflicting transitions.
 
 This motivates {\em Iterative Deepening}, our new technique for heuristically adjusting the preemption points at runtime.
 Rather than committing to one state space with every available preemption point enabled,
 Iterative Deepening searches among different {\em subsets} of the points;
 for example, ``preempt on all calls to {\tt mutex\_lock} but not on {\tt mutex\_unlock}''.
-Hence, we will test all the state spaces shown in Figure~\ref{fig:id} in parallel,
-and decide on-the-fly whether to pursue each test, or to defer it in favour of smaller ones.
+Hence, we will test all the state spaces illustrated in Figure~\ref{fig:id} in parallel,
+and decide on-the-fly whether to pursue each test, or to defer it in favour of others.
 
 \subsection{Data Race Detection}
 
@@ -107,12 +107,12 @@ but new PPs cannot be added, nor ineffective ones removed, by any dynamic analys
 Although all data races are undefined behaviour in C and C++ \cite{boehm-memorymodels},
 we distinguish between data-race {\em candidates} and data-race {\em bugs}.
 Because data-race analysis is prone to false-positives,
-we classify unprotected access pairs separately from bugs,
+we classify unprotected memory access pairs separately from bugs,
 calling such pairs {\em data race candidates}.
-Should a future interleaving, preempting during those accesses,
+Should a future interleaving, preempting during such accesses,
 lead to a failure, then we report a {\em data-race bug}.
-Otherwise, if the access pair can be reordered, but does not produce a failure under any interleaving, it is a {\em benign data race}.
-If they cannot be reordered at all, it is a {\em false positive}.
+Otherwise, if the access pair can be reordered, but does not produce a failure under any interleaving, it is a {\em benign data race} (with respect to the test input).
+If they cannot be reordered at all, due to some other communication, it is a {\em false positive}.
 %TODO: Don't do this, below. Scan paper for uses of 'false positive' where you mean to say 'benign' or 'both'.
 %For brevity, we count benign data races as a subset of false positives.
 
