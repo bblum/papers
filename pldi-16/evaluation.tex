@@ -191,8 +191,8 @@ which we explain presently.
 % TODO CAMREADY: Compare QS-ETAs to QS-Random to evaluate "smaller is better" claim.
 
 {\bf Finding the same bugs faster.}
-To show that Iterative Deepening is effective even for MC testing domains without data races, %such as message-passing distributed systems,
-we ran the test suite with \quicksand~configured to explore only subsets of the hard-coded mutex PPs
+To show that Iterative Deepening is effective even for MC domains without data races, %such as message-passing distributed systems,
+we configured \quicksand~to explore only subsets of the synchronization PPs
 (i.e., ignoring all data-race candidates).
 %\footnote{
 %Because \quicksand~is not yet instrumented to subset hard-coded PPs beyond the 4 ways shown in Figure~\ref{fig:id},
@@ -201,9 +201,10 @@ we ran the test suite with \quicksand~configured to explore only subsets of the 
 %
 The line QS-no-DR-PPs represents this experiment.
 Even though SSS-MC mostly catches up to it by the end of the 10-hour budget,
-QS-no-DR-PPs finds many more of the bugs much sooner.
-Hence, for arbitrary small CPU budgets,
-Iterative Deepening is likely to find bugs SSS-MC will miss.
+and is faster in the first 60 seconds due to less start-up overhead,
+QS-no-DR-PPs finds more of the bugs sooner thereafter.
+Hence, for modest CPU budgets,
+\quicksand~is likely to find bugs SSS-MC will miss.
 %and for more ambitiously-sized tests,
 %programmers can be more confident in the verification provided when \quicksand~times out with no bug found.
 %We conclude that for smaller arbitrary CPU budgets, especially less than 1 hour,

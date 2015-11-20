@@ -4,15 +4,17 @@
 \subsection{Landslide}
 \label{sec:landslide}
 
-We chose \landslide~\cite{landslide} as our stateless model checker due to its ability to trace program execution at the granularity of individual instructions and memory accesses, which dynamic data-race detection requires.
+We chose \landslide~\cite{landslide} as our MC tool due to its ability to trace execution at the granularity of individual instructions and memory accesses, which dynamic data-race detection requires.
 \landslide~implements DPOR \cite{dpor},
 %\cite{dpor},
-state space estimation \cite{estimation}, and a hybrid lockset/happens-before data-race analysis \cite{hybriddatarace}.
+state space estimation \cite{estimation}, and a hybrid
+%lockset/happens-before
+data-race analysis \cite{hybriddatarace}.
 It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield} or {\tt xchg} loops) with a heuristic similar to Fair-Bounded Search \cite{bpor}.
-% this line can be cut if space is needed
-It can test both user-level and kernel-level code (although it is limited to timer nondeterminism).
 % joshua wants "segfault" to be "memory access error (i.e., segmentation fault, or bus error)"
 Its bug-detection metrics are assertion failure, deadlock, segfault, heap checking \cite{valgrind}, and a heuristic infinite loop check.
+It can test both userspace and kernel code (although it is limited to timer nondeterminism),
+and runs programs in a full-system hardware simulator \cite{simics}.
 
 {\bf Restricting PPs with stack trace predicates.}
 When testing a particular module in a large codebase,

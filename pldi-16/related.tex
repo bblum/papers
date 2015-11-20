@@ -77,11 +77,11 @@ which could allow future work to avoid tracing every memory access.
 
 Closer to our work, replay analysis \cite{recordreplaydrs} also suppresses false positives by testing multiple thread interleavings.
 %after finding data race candidates.
-This work compares the immediately resulting program states for differences,
+This work compares the program states immediately after the access pair for differences,
 preferring to err on the side of false positives.
 RaceFuzzer \cite{racefuzzer} avoids false positives by requiring an actual failure be exhibited, as we do,
 although it uses random schedule fuzzing rather than stateless MC.
-While this technique can also classify malloc-recycle candidates as false positives (\sect{\ref{sec:recycle}}),
+While this technique can classify malloc-recycle candidates as false positives (\sect{\ref{sec:recycle}}),
 they require replaying the threads in a new interleaving.
 Moreover, \cite{portend} argues that accurate classification may require many re-executions,
 %according to many pre- and post-race sequences,
