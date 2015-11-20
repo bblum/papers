@@ -38,8 +38,8 @@ stateless model checkers focus on concrete observable failures such as assertion
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{trees-v2-squashed.pdf}
 	\caption{Iterative Deepening example.
-		The minimal state space (top) includes only voluntary thread switches, such as {\tt yield()}. %or {\tt cond\_wait()}.
-		Multiple further tests can be run: preempting on calls to {\tt mutex\_lock} alone (left), {\tt mutex\_unlock} alone (right), or both together (bottom).
+		The minimal state space (A) includes only voluntary thread switches, such as {\tt yield()}. %or {\tt cond\_wait()}.
+		Multiple further tests can be run: preempting on calls to {\tt mutex\_lock} alone (B), {\tt mutex\_unlock} alone (C), or both together (D).
 Each option increases the state space size unpredictably, so multiple state spaces should be tested in parallel.
 Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
 }
@@ -50,7 +50,7 @@ The checker defines the granularity of thread interleavings by which {\em preemp
 Most model checkers \cite{chess,dbug-ssv} choose synchronization/thread library API boundaries for these points;
 in our example program, these would be lines 1, 4, and 7.
 Figure~\ref{fig:id} shows several possible resulting state spaces.
-The approach of prior work is to enable all preemption points simultaneously, i.e., to test only the bottom state space.
+The approach of prior work is to enable all preemption points simultaneously, i.e., to test only the state space denoted (D).
 
 To mitigate the exponential explosion,
 Dynamic Partial Order Reduction \cite{dpor} identifies equivalent execution sequences according to Mazurkiewicz trace theory \cite{mazurkiewicz},
@@ -117,7 +117,7 @@ If they cannot be reordered at all, due to some other communication, it is a {\e
 %For brevity, we count benign data races as a subset of false positives.
 
 We also identify the {\em minimal} and {\em maximal state space} for each test.
-The {\em minimal state space} includes only thread switches arising from normal execution (Figure~\ref{fig:id}, top).
-The {\em maximal state space} is the one tested by SSS-MC: all statically-available PPs are enabled (Figure~\ref{fig:id}, bottom).
+The {\em minimal state space} includes only thread switches arising from normal execution (Figure~\ref{fig:id}, A).
+The {\em maximal state space} is the one tested by SSS-MC: all statically-available PPs are enabled (Figure~\ref{fig:id}, D).
 %However, should new data-race PPs be added during a test, the new maximal state space will be the one including those as well.
 %% don't say this ^ -- because when you add dr pps, they add in pairs and there would be multiple maximals, at least until they each get explored and subseuqnetly add a pp of the other of the pair.
