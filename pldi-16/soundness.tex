@@ -32,7 +32,7 @@ Iterative Deepening will eventually test an equivalent interleaving which expose
 \end{theorem}
 \begin{proof}
 The proof has two parts:
-first, we show that preempting on data-racing instructions and synchronization API boundaries suffices to test all possible program behavior;
+first, we show that preempting on data-racing instructions and synchronization API boundaries suffices to test all possible program behaviour;
 second, we show that Iterative Deepening will eventually detect all such data races.
 Given a PP $p$, let $\ppnext{p}$ denote the next transition after $p$ executed by the thread which ran immediately before $p$,
 let $\ppinstr{p}$ denote the first instruction of $\ppnext{p}$,
@@ -105,7 +105,7 @@ Hence, Iterative Deepening will eventually test a state space containing the equ
 \label{sec:recycle}
 
 We identify a particular class of false positive data-race candidates in which the associated memory was recycled by re-allocation between the two accesses.
-Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can expose such behavior.
+Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can expose such behaviour.
 If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 7 will be flagged as a data race.
 We call this a {\em malloc-recycle data race}.
 To the human eye, this is obviously a false positive: reordering lines 4-7 before lines 1-2 will change {\tt malloc}'s return value, causing {\tt x} and {\tt y} to no longer collide.
