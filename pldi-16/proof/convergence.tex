@@ -12,7 +12,7 @@ Hence, our convergence statement is as follows:
 \end{theorem}
 
 The contrapositive statement offers more structure for an easier proof\footnote{
-For the reader who likes to avoid non-constructive proofs, % \cite{vargomax}, % TODO: uncomment for camready/TR
+For the reader who likes to avoid non-constructive proofs, % \cite{vargomax}, % TODO CAMREADY: uncomment
 note that we are using the constructive contrapositive direction:
 Theorem~\ref{thm:convergence} is $A \rightarrow B$ and Theorem~\ref{thm:totalverif} is $\neg B \rightarrow \neg A$.}:
 
@@ -197,18 +197,50 @@ starting with the first instruction of $\beta$'s corresponding transition in $\p
 and ending with the next sync API PP in $\beta$, which we'll call $\pbk$.
 Again, the only certainly-executed instruction by $\alpha$ after $\tai$ is $\ppinstr{\mathcal{I}}{\alpha}{i}$.
 It is even possible that neither $\ppinstr{\mathcal{I}}{\alpha}{i}$ nor any other instruction by thread $\alpha$ will conflict with any other thread,
-until a different data race PP between two other threads is discovered,
-as shown in Figure~\ref{fig:threethreads}.
+until a different data race PP between two other threads is discovered.
+% TODO CAMREADY
+%as shown in Figure~\ref{fig:threethreads}.
 
 It follows from the inductive hypothesis (which covers the prefix indicated by ``$...$''),
 and from sync API PPs being reachable by definition,
 that $\mathcal{K}$ is reachable.
 
-\begin{figure}[t]
-	TODO % TODO
-	\caption{In this example, even though thread 1's data-race PP must occur first in a buggy interleaving, it cannot be reached until after Iterative Deepening first reaches the later-occurring data-race PP between threads 2 and 3.}
-	\label{fig:threethreads}
-\end{figure}
+%\begin{figure*}[t]
+%	\small
+%	\centering
+%\begin{tabular}{rlll}
+%	& \multicolumn{3}{c}{\texttt{~~int x = 0, y = 0;~~~~~~~~~~~~~~~~~~~~~~~~~~~}} \\
+%	& \multicolumn{3}{c}{\texttt{bool run\_racy\_code = false;~~~~~~~~~~~~~~~~}} \\
+%	\\
+%	& Thread $\alpha$ & Thread $\beta$ & Thread $\gamma$ \\
+%& \texttt{run\_racy\_code = true;} \\
+%& \texttt{int tmp = x;} \\
+%& // preempted ($p_{\alpha{}1}$) \\
+%& & & \texttt{if (run\_racy\_code) \{} \\
+%& & & \texttt{~~~~int tmp = y;} \\
+%& & & \texttt{~~~~}// preempted ($p_{\gamma{}1}$) \\
+%& & \texttt{int tmp = y;} \\
+%& & // no preemption ($p_{\beta{}1}$) \\
+%& & // $\ppinstr{}{\beta}{1}$ \\
+%& & \texttt{y = tmp + 1;} \\
+%& & & \texttt{~~~~}// $\ppinstr{}{\gamma}{1}$ \\
+%& & & \texttt{~~~~y = tmp + 1;} \\
+%& & & \texttt{~~~~if (/* y raced */) \{} \\
+%& & & \texttt{~~~~~~~~int tmp = x;} \\
+%& & & \texttt{~~~~~~~~}// preempted ($p_{\gamma{}2}$) \\
+%& // $\ppinstr{}{\alpha}{1}$ \\
+%& \texttt{x = tmp + 1;} \\
+%& & & \texttt{~~~~~~~~}// $\ppinstr{}{\gamma}{2}$ \\
+%& & & \texttt{~~~~~~~~x = tmp + 1;} \\
+%& & & \texttt{~~~~~~~~assert(!(/* x raced */));} \\
+%& & & \texttt{~~~~\}} \\
+%& & & \texttt{\}} \\
+%
+%
+%\end{tabular}
+%	\caption{In this example, even though thread 1's data-race PP must occur first in a buggy interleaving, it cannot be reached until after Iterative Deepening first reaches the later-occurring data-race PP between threads 2 and 3.}
+%	\label{fig:threethreads}
+%\end{figure*}
 
 \newcommand\tbk{\ensuremath{t_{\beta{}k}}}
 \newcommand\tbka{\ensuremath{t_{\beta{}k1}}}
