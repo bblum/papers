@@ -14,14 +14,13 @@ A sequence of instructions executed by the program between two preemption points
 \label{def:transition}
 \end{definition}
 Our model checker provides the invariant that each transition's instructions are associated with exactly one thread. (That is, the set of PPs always includes all thread switches.)
+We also include a trace of all memory accesses in the representation of transitions.
 
 \begin{definition}[Must-happen-before (MHB)]
 	Given two transitions $A$ and $B$, we say $A$ MHB $B$ if $B$ cannot be reordered to occur before $A$.
 \end{definition}
 All transitions of the same thread are trivially MHB-related.
 Two transitions $A$ and $B$ of different threads MHB if some synchronization event in $A$ causes $B$ to become runnable while it was previously blocked. Such synchronization events include {\tt thread\_create}, {\tt cond\_signal}, {\tt sem\_post}, but {\em not} {\tt mutex\_lock} or {\tt mutex\_unlock}.
-% FIXME: Address concern about using blocking sync primitives, eg sem or rwlock, in a mutex like fashion.
-% FIXME: Even though MHB(T1_0, T1_1) and MHB(T1_1, T2_0), then still not necessarily MHB(T1_0, T2_0).
 
 Note how our {\em must}-happen-before relation differs from the conventional definition of happens-before (``observed to happen before'') \cite{lamport-clocks}.
 Our use of MHB matches the ``limited happens-before'' used in \cite{hybriddatarace} and \cite{tsan};
@@ -31,9 +30,40 @@ However, as prior work has shown, they miss many other bugs involving unprotecte
 Indeed, because most concurrent malloc implementations are protected by a lock,
 our malloc-recycle false positives are indistinguishable from such false negatives under pure-HB.
 }.
+We illustrate the difference in Figure~\ref{fig:mhb}.
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{\hilight{brickred}{my\_x->foo = ...;}} & \\
+	2 & \texttt{\hilight{olivegreen}{mutex\_lock(...);}} &\\
+	3 & \texttt{global\_x = my\_x;} & \\
+	%4 & \texttt{\hilight{olivegreen}{yield();}} & \\
+	4 & \texttt{\hilight{olivegreen}{mutex\_unlock(...);}} & \\
+	5 & & \texttt{\hilight{olivegreen}{mutex\_lock(...);}} \\
+	6 & & \texttt{my\_x = global\_x;} \\
+	7 & & \texttt{\hilight{olivegreen}{mutex\_unlock(...);}} \\
+	8 & & \texttt{if (my\_x != NULL)} \\
+	9 & & \texttt{\hilight{brickred}{~~~~my\_x->foo = ...;}} \\
+\end{tabular}
+	\caption{Example program to illustrate the difference between {\em pure happens-before} and {\em must-happen-before}.
+	Under pure happens-before (which does not identify false positives), lines 1 and 9 are not a data race candidate.
+	Under MHB, they are; although after trying to reorder them, it will be classified as a false positive.}
+	\label{fig:mhb}
+\end{figure}
+Intuitively, $A$ MHB $B$ can be thought to mean ``$B$ cannot be reordered before $A$''.
+Note also that, while lock-protected critical sections can be reordered around each other (i.e., line 1 not MHB lines 8-9),
+one cannot be reordered to be in the middle of the other (i.e, lines 3-4 MHB line 6).
+Hence, MHB is not necessarily transitive.
+In the latter case, the MHB relation is established by the mutex's blocking mechanism used during contention.
 
 \begin{definition}[Shared memory conflict]
 A pair of memory accesses between two threads to the same address where at least one of them is a write.
+\end{definition}
+
+\begin{definition}[Interleaving]
+	An ordered list of transitions and preemption points between them.
 \end{definition}
 
 \begin{definition}[Independent transitions]
@@ -48,10 +78,14 @@ Intuitively, the behaviour of a program could change by reordering two transitio
 All possible interleavings of a program can be partitioned into equivalence classes,
 so only one interleaving from each equivalence class need be tested to ensure total schedule coverage \cite{mazurkiewicz}.
 
+\begin{definition}[State space]
+	A set of interleavings subject to the constraint that, given the preemption points used, all equivalence classes of possible interleavings are represented by at least one member.
+\end{definition}
+
 \begin{definition}[Dynamic Partial Order Reduction (DPOR)]
 	A state-space search algorithm for stateless model checkers,
 	guaranteed to reorder transitions of two threads
-	iff they have a shared memory conflict and are not related by MHB \cite{dpor}.
+	iff they are not independent and are not related by MHB \cite{dpor}.
 	\label{def:dpor}
 \end{definition}
 

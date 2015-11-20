@@ -22,24 +22,23 @@ Theorem~\ref{thm:convergence} is $A \rightarrow B$ and Theorem~\ref{thm:totalver
 	\label{thm:convergence}
 \end{theorem}
 
-\newcommand\ppnext[1]{\ensuremath{\mathsf{next}(#1)}}
-\newcommand\ppinstr[1]{\ensuremath{\mathsf{instr}(#1)}}
-\newcommand\ppothers[1]{\ensuremath{\mathsf{others}(#1)}}
-\newcommand\pppfx[1]{\ensuremath{\mathsf{pfx}(#1)}}
+%\newcommand\ppnext[3]{\ensuremath{\mathsf{next}_{#1}(#2,#3)}}
+\newcommand\ppinstr[3]{\ensuremath{\mathsf{nextinstr}_{#1}(#2,#3)}}
+\newcommand\ppothers[3]{\ensuremath{\mathsf{others}_{#1}(#2,#3)}}
+\newcommand\pppfx[2]{\ensuremath{\mathsf{pfx}(#1,#2)}}
 \newcommand\conflicts[2]{\ensuremath{\mathsf{conflicts}(#1,#2)}}
 \newcommand\pai{\ensuremath{p_{\alpha{}i}}}
 \newcommand\tai{\ensuremath{t_{\alpha{}i}}}
 Let
 \[
-	\mathcal{I} = \{(t_{\alpha{}1}, p_{\alpha{}1}), (t_{\beta{}1}, p_{\beta{}1}), ... (t_{\alpha{}n}, p_{\alpha{}n}), ...\}
+	\mathcal{I} = [ (t_{\alpha{}1}, p_{\alpha{}1}), (t_{\beta{}1}, p_{\beta{}1}), ... (t_{\alpha{}n}, p_{\alpha{}n}), ... ]
 \]
-be an interleaving trace, where the element $(\tai, \pai)$ represents the $i$th transition $t$ of thread $\alpha$, and the associated preemption point $p$.
+be an interleaving trace, where the element $(\tai, \pai)$ represents the $i$th transition $t$ of thread $\alpha$, and the associated preemption point $p$ at its end.
 We will use the following notation:
 \begin{itemize}
-	\item $\ppnext{\pai}$ indicates the next transition by the same thread, $t_{\alpha{}(i+1)}$,
-	\item $\ppinstr{\pai}$ indicates the first instruction executed during $t_{\alpha{}(i+1)}$. and
-	\item $\ppothers{\pai}$ indicates the set of all transitions by other threads between $\tai$ and $t_{\alpha{}(i+1)}$.
-	\item $\conflicts{t_\alpha,t_\beta}$ indicates the set of memory access pairs between $t_\alpha$ and $t_\beta$ such that among each pair, one access belongs to each thread $\alpha$ and $\beta$, the address is the same, and at least one is a write; i.e., precisely the shared memory conflict relation required by DPOR to determine dependent interleavings.
+	\item $\ppinstr{\mathcal{I}}{\alpha}{i}$ indicates the first instruction executed during $t_{\alpha{}(i+1)}$ (the {\em next} transition), i.e., the instruction of $\alpha$ that \pai preempted just before.
+	\item $\ppothers{\mathcal{I}}{\alpha}{i}$ indicates the set of all transitions by other threads between $\tai$ and $t_{\alpha{}(i+1)}$.
+	\item $\conflicts{t_\alpha}{t_\beta}$ indicates the set of memory access pairs between $t_\alpha$ and $t_\beta$ such that among each pair, one access belongs to each thread $\alpha$ and $\beta$, the address is the same, and at least one is a write; i.e., precisely the shared memory conflict relation required by DPOR to determine dependent interleavings.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -51,12 +50,12 @@ as it is only capable of preempting on data races and sync API boundaries.
 Thus, our first task is to show that all naive interleavings have an equivalent interleaving with only data-race and sync API PPs.
 
 \begin{definition}[Relevant preemption point]
-	We say a PP $\pai$ is {\em relevant} if either $\ppnext{\pai}$ is a sync API boundary (including a voluntary yield),
+	We say a PP $\pai$ is {\em relevant} if either $\ppinstr{\mathcal{I}}{\alpha}{i}$ is a sync API boundary (including a voluntary yield),
 	or if
 	\[
-		\conflicts{\ppothers{\pai}}{\ppinstr{\pai}} \ne \emptyset
+		\conflicts{\ppothers{\mathcal{I}}{\alpha}{i}}{\ppinstr{\mathcal{I}}{\alpha}{i}} \ne \emptyset
 	\]
-	i.e., the instruction by thread $\alpha$ immediately after $\pai$ has a memory conflict with some other thread interleaved during $\pai$.
+	i.e., the instruction by thread $\alpha$ immediately after $\pai$ has a memory conflict with some other thread interleaved between $\tai$ and that instruction.
 \end{definition}
 \begin{definition}[Fully-relevant interleaving]
 	An interleaving comprised only of relevant PPs.
@@ -70,33 +69,35 @@ Thus, our first task is to show that all naive interleavings have an equivalent 
 
 \begin{proof}
 	Let $\pai$ be the first irrelevant PP of a naive interleaving $\mathcal{I}$.
-	We ask, did some thread among $\ppothers{\pai}$ conflict with any instruction from $\ppnext{\pai}$, even though there was no conflict with $\ppinstr{\pai}$?
+	We ask, did some thread among $\ppothers{\mathcal{I}}{\alpha}{i}$ conflict with any instruction from $t_{\alpha{}(i+1)}$, even though there was no conflict with $\ppinstr{\mathcal{I}}{\alpha}{i}$?
 	\begin{itemize}
 			% rho for relevant.
-		\item If $\conflicts{\ppothers{\pai}}{\ppnext{\pai}} \ne \emptyset$, or if $\tai$ contains a sync API boundary instruction that's not already a PP,
-			then let $\rho$ be either the first instruction by $\ppnext{\pai}$ among the conflicts or the first sync API instruction, whichever comes first.
-			Let $\pppfx{\rho}$ denote the instruction sequence between $\ppinstr{\pai}$ and $\rho$, including the former but not the latter.
+			% no, scratch that.
+			% chi for conflict.
+		\item If $\conflicts{\ppothers{\mathcal{I}}{\alpha}{i}}{t_{\alpha{}(i+1)}} \ne \emptyset$, or if $\tai$ contains a sync API boundary instruction that's not already a PP,
+			then let $\chi$ be either the first instruction by $t_{\alpha{}(i+1)}$ among the conflicts or the first sync API instruction, whichever comes first.
+			Let $\pppfx{t_{\alpha{}(i+1)}}{\chi}$ denote the instruction sequence between $\ppinstr{\mathcal{I}}{\alpha}{i}$ and $\chi$, including the former but not the latter.
 			Now, we output the new interleaving:
 
 			\begin{tabular}{lll}
 				\\
-				$\mathcal{I}' = \{...,$&$(\tai \cup \pppfx{\rho}, \pai'),$& \\
-									   &$\ppothers{\pai},$& \\
-					       &$(t_{\alpha{}(i+1)}) \setminus \pppfx{\rho}, p_{\alpha{}(i+1)}),$ & $ ...\}$ \\
+				$\mathcal{I}' = [...,$&$(\tai \cup \pppfx{t_{\alpha{}(i+1)}}{\chi}, \pai'),$& \\
+																		 &$\ppothers{\mathcal{I}}{\alpha}{i},$& \\
+						       &$(t_{\alpha{}(i+1)} \setminus \pppfx{t_{\alpha{}(i+1)}}{\chi}, p_{\alpha{}(i+1)}),$ & $ ...]$ \\
 				\\
 			\end{tabular}
 
-			In other words, we have simply reordered $\ppothers{\pai}$ to between $\pppfx{\rho}$ and $\rho$, removing the irrelevant $\pai$ and adding a new PP $\pai'$, which is relevant by the construction of $\rho$.
-			We know it must be possible to reorder $\ppothers{\pai}$ to after $\alpha$'s execution because no synchronization is done during $\pppfx{\rho}$, hence the other threads' runnability cannot be affected.
-			Likewise $\pppfx{\rho}$ is independent with $\ppothers{\pai}$, so by the soundness of DPOR, $\mathcal{I}' \equiv \mathcal{I}$.
-		\item Otherwise, $\conflicts{\ppothers{\pai}}{\ppnext{\pai}} = \emptyset$, and no instructions among $\ppnext{\pai}$ are a sync API boundary.
+			In other words, we have simply reordered $\ppothers{\mathcal{I}}{\alpha}{i}$ to between $\pppfx{t_{\alpha{}(i+1)}}{\chi}$ and $\chi$, removing the irrelevant $\pai$ and adding a new PP $\pai'$, which is relevant by the construction of $\chi$.
+			We know it must be possible to reorder $\ppothers{\mathcal{I}}{\alpha}{i}$ to after $\alpha$'s execution because no synchronization is done during $\pppfx{t_{\alpha{}(i+1)}}{\chi}$, hence the other threads' runnability cannot be affected.
+			Likewise $\pppfx{t_{\alpha{}(i+1)}}{\chi}$ is independent with $\ppothers{\mathcal{I}}{\alpha}{i}$, so by the soundness of DPOR, $\mathcal{I}' \equiv \mathcal{I}$.
+		\item Otherwise, $\conflicts{\ppothers{\mathcal{I}}{\alpha}{i}}{t_{\alpha{}(i+1)}} = \emptyset$, and no instructions among $t_{\alpha{}(i+1)}$ are a sync API boundary.
 			Then we output the new interleaving:
 			\[
-				\mathcal{I}' = \{..., (\tai \cup t_{\alpha(i+1)}, p_{\alpha(i+1)}), \ppothers{\pai},...\}
+				\mathcal{I}' = [..., (\tai \cup t_{\alpha(i+1)}, p_{\alpha(i+1)}), \ppothers{\mathcal{I}}{\alpha}{i},...]
 			\]
-			In other words, we have reordered {\ppothers{\pai}} with the entire next transition by thread $\alpha$.
+			In other words, we have reordered {\ppothers{\mathcal{I}}{\alpha}{i}} with the entire next transition by thread $\alpha$.
 			We know this must be possible for the same reasons as above, and again, the transitions are independent, so $\mathcal{I}' \equiv \mathcal{I}$.
-					       %&$(t_{\alpha{}(i+1)}) \setminus \pppfx{\rho}, p_{\alpha{}(i+1)}),$ & $ ...\}$ \\
+			%&$(t_{\alpha{}(i+1)}) \setminus \pppfx{t_{\alpha{}(i+1)}}{\chi}, p_{\alpha{}(i+1)}),$ & $ ...\}$ \\
 	\end{itemize}
 	This constitutes an algorithm for inductively converting (or removing) all irrelevant PPs to relevant ones.
 \end{proof}
@@ -145,7 +146,7 @@ reachable data races.
 \end{definition}
 
 \begin{definition}[Reachable preemption point]
-A PP $\pai$ such that either $\ppinstr{\pai}$ is part of a reachable data race, or a sync API boundary.
+	A PP $\pai$ such that either $\ppinstr{\mathcal{I}}{\alpha}{i}$ is part of a reachable data race, or a sync API boundary.
 \end{definition}
 
 \begin{lemma}
@@ -160,42 +161,42 @@ A PP $\pai$ such that either $\ppinstr{\pai}$ is part of a reachable data race, 
 \newcommand\coalesce[1]{\ensuremath{\mathsf{coalesce}(#1)}}
 
 \begin{proof}
-Let $\mathcal{I} = \{(t_{\alpha{}1}, p_{\alpha{}1}), ...\}$ be the fully-relevant interleaving and PP sequence in the premise of the lemma which exposed a bug.
+Let $\mathcal{I} = [(t_{\alpha{}1}, p_{\alpha{}1}), ...]$ be the fully-relevant interleaving and PP sequence in the premise of the lemma which exposed a bug.
 We proceed by induction on the PPs according to the order of their preemptions.
-(Note that this is not necessarily the same as the order of the racing instructions $\ppinstr\pai$, which occur in $\ppnext\pai$, not in \tai.)
+(Note that this is not necessarily the same as the order of the racing instructions $\ppinstr{\mathcal{I}}{\alpha}{i}$, which occur in $t_{\alpha{}(i+1)}$, not in \tai.)
 For both the base case and inductive step, we know (vacuously, for the former) that for each other PP $\pbh$ with $\tbh \prec \tai \in \mathcal{I}$, $\pbh$ is reachable.
-We must show that a data race involving $\ppinstr\pai$
-is reachable, and we are not allowed to use $\pai$ until we find the data race between $\ppinstr\pai$ and $\ppothers\pai$.
+We must show that a data race involving $\ppinstr{\mathcal{I}}{\alpha}{i}$
+is reachable, and we are not allowed to use $\pai$ until we find the data race between $\ppinstr{\mathcal{I}}{\alpha}{i}$ and $\ppothers{\mathcal{I}}{\alpha}{i}$.
 
 {\bf Coalescing not-yet-reachable data race PPs.}
 Consider the alternate interleaving prefix:
 \[
-	\mathcal{J} = \{..., (\tai \cup \ppnext\pai', \paj), \ppothers\pai' \}
+	\mathcal{J} = [..., (\tai \cup t_{\alpha{}(i+1)}', \paj), \ppothers{\mathcal{I}}{\alpha}{i}' ]
 \]
-where we have reordered $\ppnext\pai$ to before the execution of $\ppothers\pai$.
+where we have reordered $t_{\alpha{}(i+1)}$ to before the execution of $\ppothers{\mathcal{I}}{\alpha}{i}$.
 Here, $\paj$ is the first sync API PP in $\alpha$ after $\pai$ (as $p_{\alpha(i+1)}$ may be a not-yet-reachable data race PP),
-and $\ppnext\pai'$ may include transitions of $\alpha$ beyond $\ppnext\pai$ itself.
+and $t_{\alpha{}(i+1)}'$ may include transitions of $\alpha$ beyond $t_{\alpha{}(i+1)}$ itself.
 %and for brevity, we will abbreviate the union of transitions as $\tak$.
-Then, $\ppothers\pai'$ are the other threads' transitions from our target interleaving.
-except they may be altered by the presence of some {\em other} data race in $\ppnext\pai'$ occurring after $\ppinstr\pai$.
-Likewise, $\ppnext\pai'$ may be altered by some other data race in $\ppothers\pai'$.
-The only certainty so far is that $\ppnext\pai'$ begins with $\ppinstr\pai$.
+Then, $\ppothers{\mathcal{I}}{\alpha}{i}'$ are the other threads' transitions from our target interleaving.
+except they may be altered by the presence of some {\em other} data race in $t_{\alpha{}(i+1)}'$ occurring after $\ppinstr{\mathcal{I}}{\alpha}{i}$.
+Likewise, $t_{\alpha{}(i+1)}'$ may be altered by some other data race in $\ppothers{\mathcal{I}}{\alpha}{i}'$.
+The only certainty so far is that $t_{\alpha{}(i+1)}'$ begins with $\ppinstr{\mathcal{I}}{\alpha}{i}$.
 
-It would be straightforward to show that any other data races in $\ppnext\pai'$, which would be discovered in this interleaving,
-could be reordered to after $\ppothers\pai'$,
-eventually transforming $\ppnext\pai'$ to contain no conflicting memory accesses but $\ppinstr\pai$ itself.
-Unfortunately, $\mathcal{J}$ is not necessarily reachable, as $\ppothers\pai'$ still includes any data-race PPs from $\ppothers\pai$,
+It would be straightforward to show that any other data races in $t_{\alpha{}(i+1)}'$, which would be discovered in this interleaving,
+could be reordered to after $\ppothers{\mathcal{I}}{\alpha}{i}'$,
+eventually transforming $t_{\alpha{}(i+1)}'$ to contain no conflicting memory accesses but $\ppinstr{\mathcal{I}}{\alpha}{i}$ itself.
+Unfortunately, $\mathcal{J}$ is not necessarily reachable, as $\ppothers{\mathcal{I}}{\alpha}{i}'$ still includes any data-race PPs from $\ppothers{\mathcal{I}}{\alpha}{i}$,
 which were ordered after $\pai$ in $\mathcal{I}$ and hence not covered by the inductive assumption.
-Hence, we must perform the same ``coalescing'' for each thread in $\ppothers\pai'$ that we did for $\alpha$,
+Hence, we must perform the same ``coalescing'' for each thread in $\ppothers{\mathcal{I}}{\alpha}{i}'$ that we did for $\alpha$,
 which we will abbreviate:
 \[
-	\mathcal{K} = \{..., (\tai \cup \ppnext\pai', \paj), \coalesce{\ppothers\pai'} \}
+	\mathcal{K} = [..., (\tai \cup t_{\alpha{}(i+1)}', \paj), \coalesce{\ppothers{\mathcal{I}}{\alpha}{i}'} ]
 \]
-For each other thread $\beta$, $\coalesce{\ppothers\pai'}$ will contain a single transition,
-starting with the first instruction of $\beta$'s corresponding transition in $\ppothers\pai$,
+For each other thread $\beta$, $\coalesce{\ppothers{\mathcal{I}}{\alpha}{i}'}$ will contain a single transition,
+starting with the first instruction of $\beta$'s corresponding transition in $\ppothers{\mathcal{I}}{\alpha}{i}$,
 and ending with the next sync API PP in $\beta$, which we'll call $\pbk$.
-Again, the only certainly-executed instruction by $\alpha$ after $\tai$ is $\ppinstr\pai$.
-It is even possible that neither $\ppinstr\pai$ nor any other instruction by thread $\alpha$ will conflict with any other thread,
+Again, the only certainly-executed instruction by $\alpha$ after $\tai$ is $\ppinstr{\mathcal{I}}{\alpha}{i}$.
+It is even possible that neither $\ppinstr{\mathcal{I}}{\alpha}{i}$ nor any other instruction by thread $\alpha$ will conflict with any other thread,
 until a different data race PP between two other threads is discovered,
 as shown in Figure~\ref{fig:threethreads}.
 
@@ -215,15 +216,15 @@ that $\mathcal{K}$ is reachable.
 \newcommand\tgl{\ensuremath{t_{\gamma{}l}}}
 
 {\bf Finding the next reachable data-race PP.}
-Now, we show by induction that a data race on $\ppinstr\pai$ will be reachable.
+Now, we show by induction that a data race on $\ppinstr{\mathcal{I}}{\alpha}{i}$ will be reachable.
 We assume that a state space $\mathcal{S}$ containing $\mathcal{K}$,
-plus $n$ unique data race PPs among $\ppnext\pai'$ and $\ppothers\pai$,
+plus $n$ unique data race PPs among $t_{\alpha{}(i+1)}'$ and $\ppothers{\mathcal{I}}{\alpha}{i}$,
 will be reachable.
 (In the base case, the number of new data-race PPs is 0, and $\mathcal{K}$'s reachability is justified above.)
-We must show that in this state space, if the $\ppinstr\pai$ data race is not reachable,
+We must show that in this state space, if the $\ppinstr{\mathcal{I}}{\alpha}{i}$ data race is not reachable,
 a new unique data-race PP will instead be reachable.
 
-By the definition of fully-relevant interleaving, $\mathcal{I}$ guarantees that some other thread $\omega$ can execute a data-racing instruction with $\ppinstr\pai$.
+By the definition of fully-relevant interleaving, $\mathcal{I}$ guarantees that some other thread $\omega$ can execute a data-racing instruction with $\ppinstr{\mathcal{I}}{\alpha}{i}$.
 %
 By the soundness of DPOR, if a program behaviour is possible by interleaving threads at the boundaries of
 the given transitions, that interleaving will be tested.
@@ -234,36 +235,38 @@ However, we do not get a {\em single} such transition for free.
 We have arrived at the crux of the proof:
 to show that there cannot be multiple data-race PPs which must both be enabled before either data race can be identified.
 Such a circular dependency seems intuitively impossible, but to actually find the ``first reachable'' PP is not straightforward.
-We require that in $\mathcal{S}$, there exists a single transition $\tbk$ that can alone be split into $\{\tbka,\tbkb\}$,
+We require that in $\mathcal{S}$, there exists a single transition $\tbk$ that can alone be split into $[\tbka,\tbkb]$,
 and some other communicating transition $\tgl$ which conflicts with $\tbkb$.
-%i.e., $\{\tbka, \tgl', \tbkb'\}$ exposes new program behaviour.
+%i.e., $[\tbka, \tgl', \tbkb']$ exposes new program behaviour.
 
-We show this by contradiction\footnote{
-Regrettably, we could not devise a constructive algorithm for this part of the proof.
-We leave constructively identifying the first-reachable data-race PP to future work,
-and trust that merely showing one must exist will satisfy the demands of modern verification.}:
+We show this by contradiction:
+% Sully points out that it's constructive because the set of interleavings / data races is finite.
+%\footnote{
+%Regrettably, we could not devise a constructive algorithm for this part of the proof.
+%We leave constructively identifying the first-reachable data-race PP to future work,
+%and trust that merely showing one must exist will satisfy the demands of modern verification.}:
 %
 Assume that for all $\tbk \in \mathcal{S}$,
-and all possible points $\pbk'$ at which to split it into $\{\tbka,\tbkb\}$,
+and all possible points $\pbk'$ at which to split it into $[\tbka,\tbkb]$,
 and all other non-MHB transitions $\tgl$,
 $\tgl$ has no shared memory conflicts with $\tbkb$.
 %
 Let $\mathcal{S}' = \mathcal{S} \cup \pbk'$, i.e., the state space obtained by adding any such $\pbk'$ to $\mathcal{S}$'s PP-set.
 By the soundness of DPOR, because any such $\tgl$ is independent with $\tbkb$,
 \[
-	\{..., \tbka, \tbkb, \tgl\}
+	[..., \tbka, \tbkb, \tgl]
 	\equiv
-	\{..., \tbka, \tgl', \tbkb'\}
+	[..., \tbka, \tgl', \tbkb']
 \]
 Hence, $\mathcal{S} \equiv \mathcal{S}'$. % This jump to full-state-space-equivalence seems a bit big, but the middle steps are all just more equivalence, obviously.
 Then, the above assumption also applies to $\mathcal{S}'$,
 which shows that for any {\em pair} of transitions such as $\tbk$, adding two new PPs cannot expose new program behaviour.
 Hence, inductively, no set of new PPs of any size would expose new program behaviour not already exposed in $\mathcal{S}$.
-However, the instruction by $\omega$ which conflicts with $\ppinstr\pai$ was not observed in $\mathcal{S}$,
+However, the instruction by $\omega$ which conflicts with $\ppinstr{\mathcal{I}}{\alpha}{i}$ was not observed in $\mathcal{S}$,
 so we have our contradiction.
 
-Hence, if $\mathcal{S}$ does not expose the $\ppinstr\pai$ data race directly,
-there must exist some transitions $\tbk = \{\tbka,\tbkb\}$ and $\tgl$ such that $\tgl$ shared-memory-conflicts with $\tbkb$ and could be interleaved immediately before it.
+Hence, if $\mathcal{S}$ does not expose the $\ppinstr{\mathcal{I}}{\alpha}{i}$ data race directly,
+there must exist some transitions $\tbk = [\tbka,\tbkb]$ and $\tgl$ such that $\tgl$ shared-memory-conflicts with $\tbkb$ and could be interleaved immediately before it.
 By the maximal state space assumption, all sync API PPs are already enabled, so the locksets of $\beta$ and $\gamma$ cannot overlap and there is no MHB relation.
 %%% more verbose version
 %so the locks held by $\beta$ cannot change during $\tbk$,
@@ -273,7 +276,7 @@ Hence the memory conflict between $\tgl$ and $\tbkb$ will be identified as a dat
 Finally, because $\tbk$ was not previously split by a PP, the data-race was not already discovered.
 
 {\bf Reaching $\mathbf{p_{\alpha{}i}}$.}
-Hence either a data-race with $\ppinstr\pai$ will be identified,
+Hence either a data-race with $\ppinstr{\mathcal{I}}{\alpha}{i}$ will be identified,
 or an infinite/nonterminating sequence of other unique data-race PPs will be identified,
 but by the halting assumption, this would constitute an infinite loop bug, which is sufficient.
 (Alternatively, for any program with a finitely-sized instruction listing, the number of unique instruction pairs is finite.)

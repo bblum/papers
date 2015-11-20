@@ -55,7 +55,7 @@ In our paper we show the effectiveness of combining dynamic data-race detection 
 Our approach involves adding new state spaces to explore each time a new data-race candidate is found.
 This document presents two proofs concerning the technique.
 
-First, we prove that given enough time, Iterative Deepening will converge to the same degree of schedule coverage that would be provided by a na\"{i}ve MC preempting on every single instruction.
+First, we prove that given enough time, Iterative Deepening will converge to the same degree of schedule coverage that would be provided by a na\"{i}ve model checker (MC) preempting on every single instruction.
 In other words, when Iterative Deepening finishes generating new data-race PPs, and completes all associated state spaces,
 it serves as a full verification of {\em all possible} thread schedules of the given test case.
 
