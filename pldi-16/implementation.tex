@@ -41,12 +41,12 @@ However, Iterative Deepening removes the need for human attention to verify them
 Hence, we extended \landslide~to
 %with an option
 optionally make its data race analysis consider accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()},
-which we use in \sect{\ref{sec:testsuite}}.
+which we use to test mutexes (\sect{\ref{sec:testsuite}}).
 %(Accesses from other synchronization functions, such as {\tt cond\_wait()}, would either be included already, or be protected by an internal mutex.)
 
 \subsection{Quicksand}
 
-\quicksand~is an independent program that wraps the execution of several \landslide~instances.
+\quicksand~is an independent program that wraps the execution of several \landslide~MC instances.
 The implementation is roughly 3000 lines of C.
 %It uses a thread pool to schedule the available state spaces,
 %sorting such jobs according to their status among a running queue, pending queue, and suspended queue.
@@ -58,10 +58,10 @@ plus other MC-specific options such as our modifications to \landslide~for testi
 %passed as an argument to \landslide.
 Then, a dedicated \quicksand~thread communicates with the MC process via message-passing. %on a FIFO pipe.
 %\landslide~messages \quicksand~
-The MC messages after testing each new interleaving to report updated progress and ETA
+The MC messages after testing each interleaving to report updated progress and ETA
 and whenever a new data-race candidate or bug is found.
-\quicksand~in turn replies whether to suspend/resume due to too high ETA, or quit due to timeout.
-We suspend jobs simply by making the MC wait on a message-passing call.
+\quicksand~in turn replies whether to resume/suspend (due to too high ETA), or quit (due to timeout).
+We suspend jobs simply by making the MC wait on a message-passing reply.
 Should \quicksand~later re-schedule a suspended job, we send a message to continue,
 resuming it where it left off.
 %otherwise, we resume it only after time runs out, causing it to exit.

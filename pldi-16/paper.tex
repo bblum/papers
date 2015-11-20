@@ -62,11 +62,12 @@ Several reduction techniques can mitigate this explosion,
 but even after pruning equivalent interleavings, the state space size
 %for a fixed set of preemption points
 is often intractable.
-Prior tools are limited to preempting only on synchronization APIs,
+Most prior tools are limited to preempting only on synchronization APIs,
 which reduces the space further, but can miss unsynchronized thread communication bugs.
 %
 Data race detection, another concurrency testing approach, focuses on suspicious memory access pairs during a single test execution.
-It avoids concerns of state space size, but is prone to false positives.
+It avoids concerns of state space size, but is prone to false positives:
+spurious reports of access pairs that cannot be reordered to produce a bug.
 
 We present an {\em Iterative Deepening} framework for stateless model checking,
 which manages the exploration of many state spaces using different preemption points.
@@ -80,7 +81,7 @@ and uncovers new bugs not reachable by prior model checkers.
 It also enables full verification of all possible schedules when every data race is verified as benign within the CPU budget.
 In our evaluation, Iterative Deepening
 %with data-race preemption points
-found 1.79x as many bugs and verified 4.25x as many tests compared to stateless model checking without data-race preemption points.
+found 1.8x as many bugs and verified 4.3x as many tests compared to stateless model checking without data-race preemption points.
 %Our evaluation shows this technique is
 %more effective than single-state-space model checking
 %%both at finding more bugs and at completing more state spaces when no bug exists.
@@ -138,7 +139,7 @@ They are available at:
 
 % TODO CAMREADY
 %{\em removed for double-blind review}
-%Many thanks to Vaishaal Shankar, Haryadi Gunawi, and David A. Eckhardt for generously providing student implementations from Berkeley's, U. of Chicago's, and CMU's OS classes respectively.
+%Many thanks to Vaishaal Shankar, Haryadi Gunawi, and David A. Eckhardt for generously providing student implementations from Berkeley's, U. of chicago's, and CMU's OS classes respectively.
 %Thanks to Wind River for the use of their simulator \simics.
 %Thanks to
 %Ji\v{r}\'{i} \v{S}im\v{s}a, Joshua Wise, Jean Yang, Brandon Lucia, Haryadi Gunawi, John Wilkes, and

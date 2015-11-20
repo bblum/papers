@@ -6,15 +6,18 @@ Iterative Deepening
 %likewise
 makes progressively deeper searches of the state space until the CPU budget is exhausted.
 In this context, the depth is the number of PPs used.
-Hence, our tool \quicksand~schedules multiple MC instances in parallel to simultaneously test many different subsets of the available PPs,
-which we refer to as {\em jobs}.
-It prioritizes jobs based on number of PPs, ETA, and whether they include data-race PPs.
+Hence, our tool \quicksand~schedules multiple MC instances in parallel to simultaneously test many different subsets of the available PPs.
+%which we refer to as {\em jobs}.
+We refer to each unique set of PPs as a {\em job},
+and prioritize them based on number of PPs, ETA, and whether they include data-race PPs,
 We rely on state-space estimation \cite{estimation}
 to predict which jobs are likely to complete within a reasonable time,
-before actually testing each interleaving.
+before actually testing a large fraction of interleavings for each.
 The overall goal is to decide automatically when to defer testing a state space,
 so an inexpert user can provide only their total CPU budget as a test parameter,
 and to enable completing appropriately-sized jobs within that budget.
+We seek to maximize completed state spaces,
+as each one serves as a guarantee that all interleavings possible with its PPs were tested.
 
 Note that Iterative Deepening is a {\em wrapper} algorithm around stateless MC.
 A MC tool is still used to test each state space, and other reduction techniques are still applicable.
@@ -35,9 +38,9 @@ $\{yield\}$,
 $\{yield,lock\}$,
 $\{yield,unlock\}$,
 and $\{yield,lock,unlock\}$,
-By extension, these also introduce PPs on any other sync primitives
-%implemented
-with internal locks,
+By extension, these also introduce PPs on any other primitives
+which use
+internal locks,
 such as condvars or semaphores.
 Preempting on voluntary switches such as {\tt yield} is always necessary to maintain the invariant that only one thread runs between consecutive PPs.
 %so the {\tt yield} PP is always implicitly enabled.
@@ -152,7 +155,7 @@ it is logical to re-execute the test and issue preemptions just before those ins
 \begin{algorithm}[t]
 	\SetKwInOut{Input}{Input}
 	\Input{$j_0$, the currently-running job}
-	\Input{\AllJobs, the set of all existing jobs}
+	\Input{\AllJobs, the set of all existing (or completed) jobs}
 	\Input{$\alpha$, an instruction reported by the MC as part of a racing access pair}
 	\If{$\forall j \in \AllJobs,$
 	\GetPPSet{$j_0$} $\cup$ $\alpha$
@@ -162,7 +165,7 @@ it is logical to re-execute the test and issue preemptions just before those ins
 		AddNewJob(\GetPPSet{$j_0$} $\cup$ $\alpha$, HeuristicPriority($\alpha$)) \\
 	}
 	\If{$\forall j \in \AllJobs,$ \GetPPSet{$j$} $\neq \{\alpha\}$}{
-		AddNewJob($\{\alpha\}$, HeuristicPriority($\alpha$))
+		AddNewJob($\{yield, \alpha\}$, HeuristicPriority($\alpha$))
 	}
 	\caption{Adding new jobs with data-race PPs.}
 	\label{alg:handledatarace}
@@ -247,7 +250,7 @@ We use a scaling factor defaulting to 2 based on the results in \cite{estimation
 We also include a heuristic to
 %ignore ETAs entirely
 never suspend jobs before they pass a certain threshold of interleavings tested,
-for which we choose 32,
+with a default of 32,
 so that their ETAs have some time to stabilize.
 
 We classify data-race candidates as {\em single-order} or {\em both-order} \cite{portend}
@@ -263,4 +266,3 @@ Hence, we add PPs for both types of candiates, and heuristically prioritize jobs
 For single-order races, we do not initially add a PP for the later access at all:
 if preempting on the first access can reorder the race, it will be upgraded to both-order in the new state space, and we will add the second PP then.
 %should it be needed, preempting on the first access will suffice to upgrade the race to both-order.
-
