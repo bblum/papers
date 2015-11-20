@@ -26,7 +26,7 @@ A proof sketch of the contrapositive statement follows.
 \newcommand\ppnext[1]{\ensuremath{\mathsf{next}(#1)}}
 \newcommand\ppinstr[1]{\ensuremath{\mathsf{instr}(#1)}}
 \newcommand\ppothers[1]{\ensuremath{\mathsf{others}(#1)}}
-\begin{theorem}
+\begin{theorem}[Convergence]
 If a bug can be exposed by any thread interleaving possible by preempting on all instructions during a specific test,
 Iterative Deepening will eventually test an equivalent interleaving which exposes the same bug.
 \end{theorem}
@@ -59,6 +59,7 @@ All PPs in the input trace can be inductively converted in the same manner.
 A data race candidate, and its associated PPs, are reachable if it will be identified by an MC configured to preempt only on already-reachable PPs.
 \end{definition}
 Initially, the statically-available synchronization API PPs are reachable. Reachability of data-race PPs is transitive.
+
 \begin{lemma}[Saturation of data-race PPs]
 	Given any interleaving comprising only data-race PPs and synchronization API PPs, all involved PPs are reachable.
 	\label{lem:saturation}
