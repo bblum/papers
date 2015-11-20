@@ -89,7 +89,7 @@ and {\em limited happens-before},
 in which only blocking operations like {\tt cond\_wait} or {\tt join} enforce the order.
 Compared to the former, the latter may output false positives, but avoids false negatives \cite{tsan},
 in which a potential racing access pair is not reported, even though it could lead to a bug.
-We use the limited happens-before analysis, accepting some false positive overhead for the sake of total verification (\sect{\ref{sec:totalverif}}).
+We use the limited happens-before analysis, accepting some overhead from false positives for the sake of total verification (\sect{\ref{sec:totalverif}}).
 
 \subsection{Terminology}
 

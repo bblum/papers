@@ -84,7 +84,7 @@ varied in size and correctness, and with a diverse set of bug types\footnote{
 Many of the codebases exhibited {\em deterministic} bugs (i.e., encountered on the first interleaving tested).
 We fixed these by hand, before running tests, to ensure that every bug in our study required meaningful work by the MC.}.
 % TODO: Is this ok? Too arrogant?
-We believe that merely finding a small handful of new real-world bugs is distressingly anecdotal,
+We believe that merely finding a small handful of new real-world bugs is largely anecdotal,
 and that our test suite's size allows for a more statistically significant comparison among MC and data-race testing strategies.
 %compared to anecdotally showing a small handful of new bugs that could be found in real-world programs.
 
@@ -173,7 +173,7 @@ and instrumenting \quicksand~to report total CPU-hours rather than wall-clock ti
 (With the growing importance of multicore for performance, \quicksand's inherent parallelism is another convenient benefit.)
 
 %\quicksand's times by 10 to convert from wall-clock time to CPU-hours (even though it sometimes falls short of 100\% parallelism).
-Figure~\ref{fig:dowefindbugsfaster} plots a cumulative distribution of bugs found before a given elapsed CPU-time. % during its associated test.
+Figure~\ref{fig:dowefindbugsfaster} plots a cumulative distribution of bugs found before a given elapsed CPU consumption. % during its associated test.
 We tested several configurations of \quicksand~to compare against SSS-MC from multiple angles,
 indicated by each of the ``QS'' lines,
 which we explain presently.
@@ -278,13 +278,13 @@ breaks down the number and types of bugs found by each test program.
 % Still, this smarter configuration for SSS-MC found only 99999999999 bugs of \quicksand's 13.
 %In \mxtest~in particular, the control experiment found dramatically fewer bugs (just 1),
 %even compared to the other test programs
-In \mxtest, in which we stop trusting the lock implementation's correctness,
+In \mxtest, in which we do not trust the lock implementation's correctness,
 the control experiment found dramatically fewer bugs (just 1)\footnote{
 	The one bug SSS-MC found was in a fully-assembler lock implementation. {\tt yield()}'s return value clobbered a value stored in {\tt \%eax}, which could lead to a failure after two repeated contentions. Preempting only on {\tt yield()} (in the contention loop) was sufficient to find the bug.}.
 %Intuitively, this is due to our control experiment being able to preempt only on the boundaries of the API which
 %Though for many applications of MC, assuming a correct lock implementation is sufficient,
 Though it often suffices to assume correctly-implemented locks,
-we consider this strong evidence that low-level synchronization code must be verified with data-race PPs.
+we consider this strong evidence that new low-level synchronization code must be verified with data-race PPs.
 
 {\bf Partial verification.}
 When a MC job times out, the user may prefer a brief summary of what parts of the test were verified, rather than writing off all the CPU time as a waste.
@@ -325,7 +325,7 @@ only 69 of which were observed to avoid the re-allocation in an alternate interl
 Our proof in \sect{\ref{sec:recycle}} guarantees the safety of pruning all 833 other state spaces.
 
 Among those 69 true data-races, %which initially fit the malloc-recycle pattern,
-none of them exposed a new bug when used as a PP.
+none exposed a new bug when used as a PP.
 This suggests that for other data-race tools,
 suppressing malloc-recycle candidates may be a productive heuristic,
 even if unsound without Iterative Deepening.
@@ -335,7 +335,7 @@ and fall back to classifying them with DPOR.
 
 {\bf Full verification.}
 For 153 of our 629 tests, \quicksand~was able to provide the total verification guarantee described in \sect{\ref{sec:totalverif}}.
-In Figure~\ref{fig:totalverif} we plot the cumulative distribution of \quicksand's total verifications before a given elapsed CPU-time.
+In Figure~\ref{fig:totalverif} we plot the cumulative distribution of \quicksand's total verifications before a given elapsed CPU consumption.
 Among these, 36 tests contained no data-race candidates whatsoever,
 so the same verification could be provided by SSS-MC.
 We plot these for comparison,
@@ -413,7 +413,7 @@ but stress testing's comparative problem with achieving reliable coverage is alr
 \cite{chess-icb,gambit}.
 Likewise, replay-based tools \cite{portend} are dependent upon the data-race detector to provide an execution trace leading to each candidate.
 This experiment suggests that
-such tools could benefit from a similar feedback loop as Iterative Deepening.
+such tools could benefit from a similar feedback loop as used in Iterative Deepening.
 %i.e., discovering transitively-reachable data races while testing initial ones.
 %although that would still not simultaneously be able to provide total verifications.
 % TODO: read gambit paper

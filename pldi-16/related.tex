@@ -37,7 +37,7 @@ although it requires code to be written in the PROMELA language.
 %However, SPIN is stateful rather than stateless, and explicitly storing visited program states rather than using DPOR limits the size of programs that can be practically tested.
 %
 Inspect \cite{inspect} instruments source code by inserting wrapper calls around all accesses to potentially-shared data.
-It identifies such instructions in advance with an over-approximating alias analysis,
+It identifies such instructions in advance with an over-approximating static alias analysis,
 while \landslide~\cite{landslide} traces the memory locations of accesses at runtime.
 Both SPIN and Inspect fix their set of PPs in advance, so could be
 %combined with \quicksand~
@@ -70,7 +70,7 @@ Android applications, using domain-specific heuristics (orthogonal to our method
 Like \landslide, DataCollider \cite{datacollider} offers data-race techniques for kernel code.
 IFRit \cite{ifrit}
 improves performance using an interference analysis,
-which would allow future work to avoid tracing every memory access.
+which could allow future work to avoid tracing every memory access.
 %although in our context, we cannot admit false negatives (\sect{\ref{sec:totalverif}}).
 % No, IDGAF about pure happens before.
 %FastTrack \cite{fasttrack} optimizes the performance of pure happens-
@@ -89,14 +89,14 @@ which is tantamount to adding a new state space in \quicksand.
 Our proof in \sect{\ref{sec:recycle}} allows us to eliminate this special case with no additional replay beyond what DPOR already requires.
 
 Portend \cite{portend} is the most closely related work we have found.
-Based on single-pass data race reports, it tests alternate program executions to classify candidates in a taxonomy of likely severity.
+Based on reports from single-pass data-race analysis, it tests alternate executions to classify candidates in a taxonomy of likely severity.
 It uses symbolic execution to test input nondeterminism as well as schedule nondeterminism,
 %while we explore the latter only.
 and additionally reports non-failing races which nevertheless cause
 %suspiciously
 different program output. %, which is orthogonal to our technique.
 However, Portend does not test alternate interleavings {\em in advance} of knowing any specific data races,
-which is necessary to expose certain bugs (\sect{\ref{sec:eval-falseneg}}) or to provide full verification (\sect{\ref{sec:totalverif}}).
+which is necessary to find certain bugs (\sect{\ref{sec:eval-falseneg}}) or to provide full verification (\sect{\ref{sec:totalverif}}).
 % Not really true.
 %It also assumes the POSIX synchronization API, so cannot verify arbitrary synchronization algorithms such as we do with \mxtest.
 Future work could combine the two approaches, using MC to produce new data-race traces for Portend to classify, or using Portend's analysis to inform \quicksand's heuristic priorities.

@@ -110,21 +110,23 @@ found 1.8x as many bugs and verified 4.3x as many tests compared to stateless mo
 We have presented Iterative Deepening and \quicksand, a new technique and tool for automating the choice of preemption points (PPs) during stateless model checking.
 % , and \quicksand, a tool which implements this technique tailored to the \landslide~model checker.
 \quicksand~incorporates data-race analysis to create new PPs tailored specifically to the program under test,
-and manages multiple model checker instances to test many different PP subsets in a given CPU budget, even when the full state space of all PPs would be computationally intractable.
+and automatically finds state spaces that are appropriately sized to complete in a given CPU budget.
+%and manages multiple model checker instances to test many different PP subsets in a given CPU budget, even when the full state space of all PPs would be computationally intractable.
 
-Our evaluation shows that \quicksand~achieves better bug-finding results than either single-pass data-race detection or single-state-space model checking alone.
+We achieve better bug-finding results than either single-pass data-race detection or single-state-space model checking alone,
 %We dramatically reduce false-positive data race reports,
 %%by verifying the absence of bugs in their associated state spaces
 %and find bugs caused by nondeterministic data-races in alternate thread interleavings missed entirely by single-pass analysis.
 %Compared to prior work,
 %, we find bugs faster in smaller subset state spaces, %% not true, or at least, not by very much
 %when the maximal state space is too large to explore
-We find new bugs with data-race PPs that could not be exposed by preempting only on synchronization APIs.
+finding new bugs with data-race PPs that could not be exposed by preempting only on synchronization APIs.
+By using \numstudence~student projects as our test suite, we also show the potential benefit as a debugging platform in educational settings.
 Moreover, when all data-race PPs can be fully tested within the CPU budget, we provide a verification as strong as if every single instruction had been used as a PP.
 
 %Although \landslide~itself is not publicly available due to its dependency on the non-free simulator \simics, \quicksand~is open-source and its interface can be adapted to fit any similar tool.
 \quicksand~is open-source and its interface can be adapted to fit any tool similar to \landslide.
-We have also posted our evaluation's full data set. %and logs.
+We have also posted our evaluation's data set. %and logs.
 They are available at:
 
 % TODO CAMREADY: Make data set, at least, public.

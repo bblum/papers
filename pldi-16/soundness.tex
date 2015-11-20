@@ -27,7 +27,7 @@ A proof sketch of the contrapositive statement follows.
 \newcommand\ppinstr[1]{\ensuremath{\mathsf{instr}(#1)}}
 \newcommand\ppothers[1]{\ensuremath{\mathsf{others}(#1)}}
 \begin{theorem}
-If a bug can be exposed by any thread interleaving possible by preempting on all instructions,
+If a bug can be exposed by any thread interleaving possible by preempting on all instructions during a specific test,
 Iterative Deepening will eventually test an equivalent interleaving which exposes the same bug.
 \end{theorem}
 \begin{proof}
@@ -83,7 +83,7 @@ If a program behaviour is possible by interleaving threads at the boundaries of 
 it will be tested in the containing state space.
 By contrapositive, to expose this behaviour, one or more preemptions must occur in the middle of some transition, rather than at the boundaries.
 
-We now show by contradiction there cannot be {\em multiple} data-race PPs which must both be enabled before either data race can be identified.
+We now show by contradiction there cannot be {\em multiple} data-race PPs which must all be enabled before either data race can be identified.
 Assume there does not exist a single transition $t_1 \in \mathcal{S}$ which alone can be split into $\{t_1',t_1''\}$ by a PP $q$,
 such that another thread's concurrent transition $t_2$ conflicts with $t_1''$.
 By the soundness of DPOR, because all $t_2$s are independent with $t_1''$, $\mathcal{S} \equiv \mathcal{S} \cup q$.
@@ -103,7 +103,7 @@ Hence, Iterative Deepening will eventually test a state space containing the equ
 \subsection{Suppressing ``malloc-recycle'' false positives}
 \label{sec:recycle}
 
-We identify a particular class of false positive data-race candidates in which the memory was recycled by {\tt malloc} between the two accesses.
+We identify a particular class of false positive data-race candidates in which the associated memory was recycled by re-allocation between the two accesses.
 Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can expose such behavior.
 If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 7 will be flagged as a data race.
 We call this a {\em malloc-recycle data race}.
@@ -162,7 +162,7 @@ it would miss the bug in this adversarial program.}
 %{\em limited happens-before} relation in a hybrid approach with lockset tracking.
 %the hybrid approach combining lockset tracking and the {\em limited} happens-before relation is not vulnerable to false negatives,
 
-Fortunately, when data-race detection is combined with DPOR and Iterative Deepening, pruning these false positives is sound even when such adversarial programs are considered.
+Fortunately, when data-race detection is combined with DPOR and Iterative Deepening, pruning all malloc-recycle candidates is sound, even considering adversarial programs such as Figure~\ref{fig:recycle-bug}.
 This makes it unnecessary to verify such data races by actively adding more preemptions,
 achieving a potentially combinatorial reduction in how many state spaces we generate.
 %Intuitively, we need not worry about cases such as Figure~\ref{fig:recycle-bug} because,
