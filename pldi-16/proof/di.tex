@@ -104,8 +104,8 @@ A shared memory conflict where furthermore:
 \end{definition}
 
 The same as in the paper, we distinguish between data-race {\em candidates} and data-race {\em bugs}.
-In this proof we are concerned solely with candidates, and judging whether they are true data races or false positives.
-It is up to \quicksand, outside the scope of this proof, to decide whether true data races are benign or buggy.
+In this proof we are concerned solely with candidates, and wheter they can be observed to race or are false positives.
+It is up to the MC to decide whether true data races are benign or buggy.
 
 \begin{definition}[False positive data race]
 	An apparent data race that cannot be observed in the opposite order from what was actually executed.

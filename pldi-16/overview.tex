@@ -113,8 +113,6 @@ Should a future interleaving, preempting during such accesses,
 lead to a failure, then we report a {\em data-race bug}.
 Otherwise, if the access pair can be reordered, but does not produce a failure under any interleaving, it is a {\em benign data race} (with respect to the test input).
 If they cannot be reordered at all, due to some other communication, it is a {\em false positive}.
-%TODO: Don't do this, below. Scan paper for uses of 'false positive' where you mean to say 'benign' or 'both'.
-%For brevity, we count benign data races as a subset of false positives.
 
 We also identify the {\em minimal} and {\em maximal state space} for each test.
 The {\em minimal state space} includes only thread switches arising from normal execution (Figure~\ref{fig:id}, A).
