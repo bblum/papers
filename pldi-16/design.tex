@@ -164,7 +164,7 @@ it is logical to re-execute the test and issue preemptions just before those ins
 	}{
 		AddNewJob(\GetPPSet{$j_0$} $\cup$ $\alpha$, HeuristicPriority($\alpha$)) \\
 	}
-	\If{$\forall j \in \AllJobs,$ \GetPPSet{$j$} $\neq \{\alpha\}$}{
+	\If{$\forall j \in \AllJobs,$ \GetPPSet{$j$} $\neq \{yield, \alpha\}$}{
 		AddNewJob($\{yield, \alpha\}$, HeuristicPriority($\alpha$))
 	}
 	\caption{Adding new jobs with data-race PPs.}
