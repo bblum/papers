@@ -1,0 +1,69 @@
+\section{Implementation}
+\label{sec:implementation}
+
+\subsection{Landslide}
+\label{sec:landslide}
+
+We chose \landslide~\cite{landslide} as our MC tool due to its ability to trace execution at the granularity of individual instructions and memory accesses, which dynamic data-race detection requires.
+\landslide~implements DPOR \cite{dpor},
+%\cite{dpor},
+state space estimation \cite{estimation}, and a hybrid
+%lockset/happens-before
+data-race analysis \cite{hybriddatarace}.
+It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield} or {\tt xchg} loops) with a heuristic similar to Fair-Bounded Search \cite{bpor}.
+% joshua wants "segfault" to be "memory access error (i.e., segmentation fault, or bus error)"
+Its bug-detection metrics are assertion failure, deadlock, segfault, heap checking \cite{valgrind}, and a heuristic infinite loop check.
+It can test both userspace and kernel code (although it is limited to timer nondeterminism),
+and runs programs in a full-system hardware simulator \cite{simics}.
+
+{\bf Restricting PPs with stack trace predicates.}
+When testing a particular module in a large codebase,
+the user is likely to be uninterested in PPs arising from other modules.
+Rather than preempting indiscriminately on any synchronization call, regardless of the call-site,
+\landslide~provides a configuration command, {\tt within\_function}, for identifying which call-sites matter.
+%Most MC tools preempt indiscriminately on any synchronization call, regardless of the call-site.
+%However, when testing a particular module in a large codebase,
+%the user is likely to be uninterested in PPs arising from other modules.
+%\landslide~provides the {\tt within\_function} configuration command for a user to identify which call-sites matter most.
+Before inserting a PP, \landslide~requires at least one argument to {\tt within\_function} to appear in the current thread's stack trace.
+%Similarly, the {\tt without\_function} directive indicates a blacklist,
+%serving as the dual of {\tt within\_function}.
+The {\tt without\_\allowbreak{}function} directive is the dual of {\tt within\_function}, indicating a blacklist.
+We use this feature to restrict the scope of some tests in our evaluation (\sect{\ref{sec:testsuite}}).
+%Multiple invocations can be used; later ones take precedence.
+%\cite{landslide} provides further detail on this feature.
+
+{\bf Data races in lock implementations.}
+Data race tools in prior work \cite{tsan,portend} recognize the implementations of synchronization primitives to avoid spuriously flagging memory accesses therein. %resulting from the lock implementation itself.
+Assuming that the lock implementation is already correct enables more productive data-race analysis on the rest of the codebase.
+Otherwise, with testing limited to one execution,
+%even if one wishes to test for lock bugs,
+data-race analysis would flag every access pair in the lock implementation. %, requiring human attention to verify.
+However, Iterative Deepening removes the need for human attention to verify them. %can automatically verify a large quantity of data-race candidates as benign.
+Hence, we extended \landslide~to
+%with an option
+optionally make its data race analysis consider accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()},
+which we use to test mutexes (\sect{\ref{sec:testsuite}}).
+%(Accesses from other synchronization functions, such as {\tt cond\_wait()}, would either be included already, or be protected by an internal mutex.)
+
+\subsection{Quicksand}
+
+\quicksand~is an independent program that wraps the execution of several \landslide~MC instances.
+The implementation is roughly 3000 lines of C.
+%It uses a thread pool to schedule the available state spaces,
+%sorting such jobs according to their status among a running queue, pending queue, and suspended queue.
+%Jobs are further prioritized by number of PPs, ETA, and whether they include data-race PPs.
+The interface with the MC has two parts. %, which any similar MC could implement, has two parts.
+First, when starting each job, \quicksand~creates a configuration file declaring which PPs to use,
+% can lose this line due to space
+plus other MC-specific options such as our modifications to \landslide~for testing mutexes. %mutex-testing mode,
+%passed as an argument to \landslide.
+Then, a dedicated \quicksand~thread communicates with the MC process via message-passing. %on a FIFO pipe.
+%\landslide~messages \quicksand~
+The MC messages after testing each interleaving to report updated progress and ETA
+and whenever a new data-race candidate or bug is found.
+\quicksand~in turn replies whether to resume/suspend (due to too high ETA), or quit (due to timeout).
+We suspend jobs simply by making the MC wait on a message-passing reply.
+Should \quicksand~later re-schedule a suspended job, we send a message to continue,
+resuming it where it left off.
+%otherwise, we resume it only after time runs out, causing it to exit.

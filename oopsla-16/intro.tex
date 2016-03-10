@@ -1,0 +1,65 @@
+\section{Introduction}
+
+% blah blah trite opening sentence
+%As parallelism becomes ever more important for achieving high performance in modern-day programs,
+%so too do advanced concurrency testing techniques become important for verifying the correctness of those programs.
+Concurrency bugs are notoriously hard to find and reproduce because they only appear in specific thread interleavings, which arise at random during normal program execution.
+{\em Stateless model checking} \cite{verisoft} offers a method for finding such bugs,
+or verifying their absence,
+%by systematically executing a program along as many distinct interleavings as possible,
+by forcing a program to execute each distinct interleaving,
+capturing
+%and controlling
+this nondeterminism in a finite state space.
+Unfortunately, these state spaces explode exponentially in the size of the input program.
+Reduction techniques such as Dynamic Partial Order Reduction \cite{dpor} and Maximal Causality Reduction \cite{mcr} expand the limits of feasible test completion,
+and search ordering strategies such as Iterative Context Bounding \cite{chess-icb} allow bugs to be found sooner in a given space should they exist.
+
+% Can I even make a claim this broad to begin with?
+However, all stateless model checkers to date are bound by a fixed set of {\em preemption points}: code locations that define the granularity at which threads interleave.
+For example, \textsc{CHESS} \cite{chess} preempts only on synchronization operations and library calls, which can miss lock-free shared memory races.
+%
+On the other hand, SPIN \cite{spin} and Inspect \cite{inspect}
+are able to preempt threads before any shared memory access. Such fine granularity would automatically check each data race for the possibility of failure, but risks timing out before the state space can be completed. %makes full state space completion intractable for even modestly-sized tests.
+Choosing preemption points is a tradeoff between schedule coverage and feasibility of completion,
+but even with state-of-the-art reduction techniques,
+any choice made in advance must necessarily leave some tests unaffordably large \cite{parrot,mcr}.
+%
+%This work shows how to avoid making that tradeoff decision in advance.
+
+We present \quicksand,
+a model checking framework for deciding at runtime which preemption points to test,
+according to which resulting state spaces are most likely to fit a prescribed CPU budget.
+It uses data-race analysis \cite{eraser} to dynamically find new preemption points which expose bugs not reachable by preempting on API calls alone.
+When prior work would time out on large tests by trying several preemption points simultaneously,
+\quicksand~tests smaller state spaces based on subsets of those points, which often finds the same bugs sooner.
+On the other hand, when the CPU budget is large enough to fully test all data-race preemption points,
+we prove that this constitutes a total verification of all possible thread schedules.
+Short of deciding in advance to preempt on every single instruction \cite{spin}, this was not previously possible without data-race preemption points.
+
+We evaluate \quicksand~by testing \numstudence~student thread libraries and kernels from the undergraduate operating systems classes at Carnegie Mellon University, University of California at Berkeley, and University of Chicago.
+%We show many advantages over both conventional stateless model checking and single-pass data-race analysis.
+We find many of the same bugs found by the conventional approach faster using subsets of preemption points,
+and that data-race preemption points quickly expose many new bugs that prior model checkers could not find at all.
+
+Our contributions are as follows:
+\begin{enumerate}
+	\item {\em Iterative Deepening}, a new technique for combining data-race analysis with stateless model checking, and \quicksand, an open-source implementation;
+	\item A proof of convergence, showing that should it be possible in the given CPU budget,
+		fully testing every discovered data-race preemption point is equivalent to testing all possible thread schedules;
+	\item A new tactic for eliminating one class of false-positive data races,
+		which cannot soundly be used in a single-pass analysis,
+		but which we prove correct when used with Iterative Deepening;
+		%, unsound in single-pass analysis but which we prove sound when used with Iterative Deepening;
+	\item A large evaluation in which \quicksand~compares favourably to stand-alone data-race detection and stateless model checking approaches, finding new bugs that would be missed by either alone.
+\end{enumerate}
+
+% TODO CAMREADY: uncomment if a reviewer complains about the absence of this
+%The rest of the paper is organized as follows.
+%\sect{\ref{sec:overview}} reviews the background material, %on stateless model checking and data-race analysis,
+%\sect{\ref{sec:design}} and \sect{\ref{sec:implementation}} discuss our design and implementation, %of Iterative Deepening,
+%\sect{\ref{sec:soundness}} presents our proofs of convergence and of the soundness of our new false-positive data-race tactic,
+%\sect{\ref{sec:eval}} presents our evaluation,
+%\sect{\ref{sec:future}} discusses limitations and future work,
+%\sect{\ref{sec:related}} surveys the related work,
+%and \sect{\ref{sec:conclusion}} concludes.

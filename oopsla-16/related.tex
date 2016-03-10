@@ -1,0 +1,112 @@
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Stateless Model Checking}
+
+We build upon many established model-checking techniques, dating back
+% of course
+to Verisoft, the original C model checker \cite{verisoft}.
+%, and Eraser, the original data race detector \cite{eraser}.
+%Our model checker
+%\landslide~\cite{landslide} itself implements many techniques from prior work (\sect{\ref{sec:landslide}}).
+%itself implements DPOR \cite{dpor},
+%state space estimation \cite{estimation},
+%and data-race detection \cite{eraser}.
+We compare related tools by their treatment of shared-memory thread communication.
+
+{\bf Synchronization events only.} CHESS \cite{chess} and dBug \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
+Hence, they will miss any bugs that require interleaving threads at instruction granularity during a data race. CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
+
+{\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, MaceMC \cite{macemc}, MoDist \cite{modist}, ETA \cite{dbug-retreat}, and Concuerror \cite{optimal-dpor},
+limit thread communication to a message-passing API to more effectively test distributed systems.
+This eliminates the need for data-race analysis, but restricts the class of programs that can be tested.
+Nevertheless, Iterative Deepening is applicable to these tools.
+
+{\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs.
+However, the resulting state space explosion demands that any such tool either
+choose a small subset of instructions to consider as PPs
+or be limited to very small test programs.
+%However, every such prior tool we know of has serious drawbacks.
+SKI \cite{ski} approaches kernel code by statically choosing a random set of instructions in advance, %offsets from the start of the test,
+which is perhaps more similar to
+%stress testing or
+schedule fuzzing \cite{randomized-scheduler} than to exhaustive state space exploration.
+%
+SPIN \cite{spin} specializes in verifying synchronization primitive implementations such as RCU \cite{rcu}, which is similar to our \mxtest~experiment,
+although it requires code to be written in the PROMELA language.
+%However, SPIN is stateful rather than stateless, and explicitly storing visited program states rather than using DPOR limits the size of programs that can be practically tested.
+%
+Inspect \cite{inspect} instruments source code by inserting wrapper calls around all accesses to potentially-shared data.
+It identifies such instructions in advance with an over-approximating static alias analysis,
+while \landslide~\cite{landslide} traces the memory locations of accesses at runtime.
+Both SPIN and Inspect fix their set of PPs in advance, so could be
+%combined with \quicksand~
+extended with Iterative Deepening in future work.
+%so cannot check implementations directly.
+
+{\bf Other techniques.} Various improvements or alternatives to DPOR have been developed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr},
+%DPOR for relaxed memory models \cite{tsopso},
+and SAT-directed MC \cite{satcheck}.
+These are all compatible with our technique.
+Recent work \cite{tsopso} has extended DPOR for relaxed memory models \cite{memory-consistency-models},
+which we do not yet account for in our proofs (\sect{\ref{sec:soundness}}).
+Parrot \cite{parrot} combines MC with a partially-determinizing runtime for further reduction, but still, fewer than half the non-trivial state spaces in their evaluation could be completed.
+%providing a strong argument for \quicksand.
+Finally, Iterative Context Bounding (ICB) \cite{chess-icb} is most similar to our work,
+as both approaches provide a partial verification
+%on some subset of interleavings
+when full completion is intractable (\sect{\ref{sec:future}}).
+However, ICB is limited to a fixed set of PPs, and to our knowledge no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
+
+\subsection{Data Race Detection}
+\label{sec:related-dr}
+
+%Too many related projects to list have made contributions to the
+Many advances have been made on the false-positive data race problem since it was first introduced in \cite{eraser}.
+\cite{hybriddatarace} and \cite{tsan} combine the lockset and happens-before analyses into a hybrid technique, which we employ.
+DroidRacer \cite{droidracer} and CAFA \cite{cafa} target
+%event-driven
+Android applications, using domain-specific heuristics (orthogonal to our method) to reduce false positives. % cut for space?
+Like \landslide, DataCollider \cite{datacollider} offers data-race techniques for kernel code.
+IFRit \cite{ifrit}
+improves performance using an interference analysis,
+which could allow future work to avoid tracing every memory access.
+%although in our context, we cannot admit false negatives (\sect{\ref{sec:totalverif}}).
+% No, IDGAF about pure happens before.
+%FastTrack \cite{fasttrack} optimizes the performance of pure happens-
+
+Closer to our work, replay analysis \cite{recordreplaydrs} also suppresses false positives by testing multiple thread interleavings.
+%after finding data race candidates.
+This work compares the program states immediately after the access pair for differences,
+preferring to err on the side of false positives.
+RaceFuzzer \cite{racefuzzer} avoids false positives by requiring an actual failure be exhibited, as we do,
+although it uses random schedule fuzzing rather than stateless MC.
+While this technique can classify malloc-recycle candidates as false positives (\sect{\ref{sec:recycle}}),
+they require replaying the threads in a new interleaving.
+Moreover, \cite{portend} argues that accurate classification may require many re-executions,
+%according to many pre- and post-race sequences,
+which is tantamount to adding a new state space in \quicksand.
+Our proof in \sect{\ref{sec:recycle}} allows us to eliminate this special case with no additional replay beyond what DPOR already requires.
+
+Portend \cite{portend} is the most closely related work we have found.
+Based on reports from single-pass data-race analysis, it tests alternate executions to classify candidates in a taxonomy of likely severity.
+It uses symbolic execution to test input nondeterminism as well as schedule nondeterminism,
+%while we explore the latter only.
+and additionally reports non-failing races which nevertheless cause
+%suspiciously
+different program output. %, which is orthogonal to our technique.
+However, Portend does not test alternate interleavings {\em in advance} of knowing any specific data races,
+which is necessary to find certain bugs (\sect{\ref{sec:eval-falseneg}}) or to provide full verification (\sect{\ref{sec:totalverif}}).
+% Not really true.
+%It also assumes the POSIX synchronization API, so cannot verify arbitrary synchronization algorithms such as we do with \mxtest.
+Future work could combine the two approaches, using MC to produce new data-race traces for Portend to classify, or using Portend's analysis to inform \quicksand's heuristic priorities.
+
+% \subsection{Other Concurrency Testing Approaches}
+%
+% blah blah pldi'15 symbiosis DSP
+
+% Note that BPOR paper claims that ICB(3+) repeats LOADS of work, and that makes it ok for landslide-ID to repeat work.
+
+% IDK if i should mention it, but OOPSLA 2015, protocol based verification of MPI concurrency paper. Different verification approach entirely; doesn't suffer exponential explosion but limited to programs with no shared state and MPI communication only
+
+% Probably NOT worth a mention: OOPSLA 2015, stateless model checking of event driven applications. Turning timer-driven model on its head and checking single-threaded, but asynch-event-driven programs (i.e. device-like signal handlers)

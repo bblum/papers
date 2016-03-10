@@ -1,0 +1,214 @@
+%-----------------------------------------------------------------------------
+%
+%               Template for sigplanconf LaTeX Class
+%
+% Name:         sigplanconf-template.tex
+%
+% Purpose:      A template for sigplanconf.cls, which is a LaTeX 2e class
+%               file for SIGPLAN conference proceedings.
+%
+% Guide:        Refer to "Author's Guide to the ACM SIGPLAN Class,"
+%               sigplanconf-guide.pdf
+%
+% Author:       Paul C. Anagnostopoulos
+%               Windfall Software
+%               978 371-2316
+%               paul@windfall.com
+%
+% Created:      15 February 2005
+%
+%-----------------------------------------------------------------------------
+
+
+\documentclass[10pt,times,numbers]{sigplanconf}
+\usepackage[1stsubmission]{oopsla2016}
+
+% The following \documentclass options may be useful:
+
+% preprint      Remove this option only once the paper is in final form.
+% 10pt          To set in 10-point type instead of 9-point.
+% 11pt          To set in 11-point type instead of 9-point.
+% numbers       To obtain numeric citation style instead of author/year.
+
+% template-provided usepackages
+\usepackage{amsmath}
+% custom ones copied from pldi template
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage[linesnumbered,ruled]{algorithm2e}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{amsthm}
+\usepackage[colorlinks=true,allcolors=blue,breaklinks,draft=false]{hyperref}
+\newcommand{\doi}[1]{doi:~\href{http://dx.doi.org/#1}{\Hurl{#1}}}
+
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+
+% ???
+%\newcommand{\cL}{{\cal L}}
+
+\begin{document}
+
+% TODO CAMREADY: Don't forget to run e.g. s/\\quicksand /\\quicksand~/
+\newcommand\landslide{\textsc{Landslide}}
+\newcommand\quicksand{\textsc{Quicksand}}
+\newcommand\simics{\textsc{Simics}}
+\newcommand{\sect}[1]{\S #1} 
+\newcommand\hilight[2]{\color{#1}#2\color{black}}
+\definecolor{orange}{RGB}{192,96,0}
+\definecolor{olivegreen}{RGB}{0,127,0}
+\definecolor{brickred}{RGB}{192,0,0}
+\definecolor{commentblue}{RGB}{0,0,192}
+
+\newcommand\numthrlibs{79}
+\newcommand\numpintoses{78} % 'di' is basecode. durr
+\newcommand\numstudence{157} % total pintoses plus p2s
+
+\special{papersize=8.5in,11in}
+\setlength{\pdfpageheight}{\paperheight}
+\setlength{\pdfpagewidth}{\paperwidth}
+
+\conferenceinfo{OOPSLA '16}{November 2--4, 2016, Amsterdam, the Netherlands}
+\copyrightyear{2016}
+\copyrightdata{978-1-nnnn-nnnn-n/yy/mm}
+\copyrightdoi{nnnnnnn.nnnnnnn}
+
+% Uncomment the publication rights you want to use.
+%\publicationrights{transferred}
+\publicationrights{licensed}     % this is the default
+%\publicationrights{author-pays}
+
+%\titlebanner{banner above paper title}        % These are ignored unless
+%\preprintfooter{short description of paper}   % 'preprint' option specified.
+
+\title{Stateless Model Checking with Data-Race Preemption Points}
+
+\authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
+\authorinfo{Garth Gibson}{Carnegie Mellon University}{garth@cs.cmu.edu}
+%\authorinfo{\vspace{24pt}}{}{}
+
+\maketitle
+
+\begin{abstract}
+Stateless model checking is a powerful technique for testing concurrent programs,
+but suffers from exponential state space explosion when the test input parameters are too large.
+Several reduction techniques can mitigate this explosion,
+but even after pruning equivalent interleavings, the state space size
+%for a fixed set of preemption points
+is often intractable.
+Most prior tools are limited to preempting only on synchronization APIs,
+which reduces the space further, but can miss unsynchronized thread communication bugs.
+%
+Data race detection, another concurrency testing approach, focuses on suspicious memory access pairs during a single test execution.
+It avoids concerns of state space size, but is prone to false positives:
+spurious reports of access pairs that cannot be reordered to produce a bug.
+
+We present an {\em Iterative Deepening} framework for stateless model checking,
+which manages the exploration of many state spaces using different preemption points.
+It uses state space estimation to prioritize jobs most likely to complete in a fixed CPU budget,
+and it incorporates data-race analysis to add new preemption points on the fly.
+Preempting threads during a data race's instructions
+%These preemption points allow us to check whether each data-race can produce an observable failure, and
+can automatically classify the race as buggy or benign,
+and uncovers new bugs not reachable by prior model checkers.
+%
+It also enables full verification of all possible schedules when every data race is verified as benign within the CPU budget.
+In our evaluation, Iterative Deepening
+%with data-race preemption points
+found 1.8x as many bugs and verified 4.3x as many tests compared to stateless model checking without data-race preemption points.
+%Our evaluation shows this technique is
+%more effective than single-state-space model checking
+%%both at finding more bugs and at completing more state spaces when no bug exists.
+%both at finding the same bugs faster and at finding new bugs entirely.
+\end{abstract}
+
+\category{D.2.4}{Software Engineering}{Software/Program Verification}
+\category{D.2.5}{Software Engineering}{Testing and Debugging}
+%
+%% general terms are not compulsory anymore,
+%% you may leave them out
+%\terms
+%term1, term2
+%
+%\keywords
+%keyword1, keyword2
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{intro}
+\input{overview}
+\input{design}
+\input{implementation}
+\input{soundness}
+\input{evaluation}
+\input{warpzone}
+\input{related}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+%We are great. Accept our paper.
+
+We have presented Iterative Deepening and \quicksand, a new technique and tool for automating the choice of preemption points (PPs) during stateless model checking.
+% , and \quicksand, a tool which implements this technique tailored to the \landslide~model checker.
+\quicksand~incorporates data-race analysis to create new PPs tailored specifically to the program under test,
+and automatically finds state spaces that are appropriately sized to complete in a given CPU budget.
+%and manages multiple model checker instances to test many different PP subsets in a given CPU budget, even when the full state space of all PPs would be computationally intractable.
+
+We achieve better bug-finding results than either single-pass data-race detection or single-state-space model checking alone,
+%We dramatically reduce false-positive data race reports,
+%%by verifying the absence of bugs in their associated state spaces
+%and find bugs caused by nondeterministic data-races in alternate thread interleavings missed entirely by single-pass analysis.
+%Compared to prior work,
+%, we find bugs faster in smaller subset state spaces, %% not true, or at least, not by very much
+%when the maximal state space is too large to explore
+finding new bugs with data-race PPs that could not be exposed by preempting only on synchronization APIs.
+By using \numstudence~student projects as our test suite, we also show the potential benefit as a debugging platform in educational settings.
+Moreover, when all data-race PPs can be fully tested within the CPU budget, we provide a verification as strong as if every single instruction had been used as a PP.
+
+%Although \landslide~itself is not publicly available due to its dependency on the non-free simulator \simics, \quicksand~is open-source and its interface can be adapted to fit any similar tool.
+\quicksand~is open-source and its interface can be adapted to fit any tool similar to \landslide.
+We have also posted our evaluation's data set. %and logs.
+They are available at:
+
+% TODO CAMREADY: Make data set, at least, public.
+
+{\em github links removed for double-blind review}
+%\url{https://github.com/bblum/landslide} % POST-SUBMISSION TODO: put QS in its own repository
+%
+%\url{https://github.com/bblum/landslide} % POST-SUBMISSION TODO: put final logs somewhere
+% TODO CAMREADY: Don't forget to anonymize the names of all your grupos.
+
+%\section{Acknowledgements}
+
+% TODO CAMREADY
+%{\em removed for double-blind review}
+%Many thanks to Vaishaal Shankar, Haryadi Gunawi, and David A. Eckhardt for generously providing student implementations from Berkeley's, U. of chicago's, and CMU's OS classes respectively.
+%Thanks to Wind River for the use of their simulator \simics.
+%Thanks to
+%Ji\v{r}\'{i} \v{S}im\v{s}a, Joshua Wise, Jean Yang, Brandon Lucia, Haryadi Gunawi, John Wilkes, and
+%the anonymous PLDI reviewers for their helpful comments.
+%This work was supported in part by
+%the U.S. Army Research Office under grant number W911NF0910273.
+
+
+% TODO: proofs->appeendix
+\appendix
+\section{Appendix Title}
+
+This is the text of the appendix, if you need one.
+
+\acks
+
+Acknowledgments, if needed.
+
+% We recommend abbrvnat bibliography style.
+
+\bibliographystyle{abbrvnat}
+\bibliography{citations}{}
+
+\end{document}
