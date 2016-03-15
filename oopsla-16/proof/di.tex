@@ -1,0 +1,210 @@
+\section{Definitions}
+
+\subsection{Stateless model checking terms}
+
+\begin{definition}[Preemption point (PP)]
+	A PP is a code location between two instructions at which we may force threads to switch.
+\end{definition}
+
+In the main paper, we identified PPs by predicates on the instruction pointer and current thread ID. Hence, the ``same'' PP may occur multiple times during an execution; for example, {\tt mutex\_lock()} may be called from {\tt foo()} and later again from {\tt bar()}.
+For the sake of this proof, we separate such cases into multiple unique PPs: each PP is simply a label denoting the end of a single transition.
+
+\begin{definition}[Transition]
+A sequence of instructions executed by the program between two preemption points (PPs).
+\label{def:transition}
+\end{definition}
+Our model checker provides the invariant that each transition's instructions are associated with exactly one thread. (That is, the set of PPs always includes all thread switches.)
+We also include a trace of all memory accesses in the representation of transitions.
+
+\begin{definition}[Must-happen-before (MHB)]
+	Given two transitions $A$ and $B$, we say $A$ MHB $B$ if $B$ cannot be reordered to occur before $A$.
+\end{definition}
+All transitions of the same thread are trivially MHB-related.
+Two transitions $A$ and $B$ of different threads MHB if some synchronization event in $A$ causes $B$ to become runnable while it was previously blocked. Such synchronization events include {\tt thread\_create}, {\tt cond\_signal}, {\tt sem\_post}, but {\em not} {\tt mutex\_lock} or {\tt mutex\_unlock}.
+
+Note how our {\em must}-happen-before relation differs from the conventional definition of happens-before (``observed to happen before'') \cite{lamport-clocks}.
+Our use of MHB matches the ``limited happens-before'' used in \cite{hybriddatarace} and \cite{tsan};
+the advantage of this over pure-happens-before detectors in producing fewer false negatives is well-argued in those prior works\footnote{
+Because pure-HB data race detectors avoid false positives altogether, they would have no trouble avoiding our malloc-recycle false positives.
+However, as prior work has shown, they miss many other bugs involving unprotected variables accessed alternately before and after mutex-protected critical sections.
+Indeed, because most concurrent malloc implementations are protected by a lock,
+our malloc-recycle false positives are indistinguishable from such false negatives under pure-HB.
+}.
+We illustrate the difference in Figure~\ref{fig:mhb}.
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{\hilight{brickred}{my\_x->foo = ...;}} & \\
+	2 & \texttt{\hilight{olivegreen}{mutex\_lock(...);}} &\\
+	3 & \texttt{global\_x = my\_x;} & \\
+	%4 & \texttt{\hilight{olivegreen}{yield();}} & \\
+	4 & \texttt{\hilight{olivegreen}{mutex\_unlock(...);}} & \\
+	5 & & \texttt{\hilight{olivegreen}{mutex\_lock(...);}} \\
+	6 & & \texttt{my\_x = global\_x;} \\
+	7 & & \texttt{\hilight{olivegreen}{mutex\_unlock(...);}} \\
+	8 & & \texttt{if (my\_x != NULL)} \\
+	9 & & \texttt{\hilight{brickred}{~~~~my\_x->foo = ...;}} \\
+\end{tabular}
+	\caption{Example program to illustrate the difference between {\em pure happens-before} and {\em must-happen-before}.
+	Under pure happens-before (which does not identify false positives), lines 1 and 9 are not a data race candidate.
+	Under MHB, they are; although after trying to reorder them, it will be classified as a false positive.}
+	\label{fig:mhb}
+\end{figure}
+Intuitively, $A$ MHB $B$ can be thought to mean ``$B$ cannot be reordered before $A$''.
+Note also that, while lock-protected critical sections can be reordered around each other (i.e., line 1 not MHB lines 8-9),
+one cannot be reordered to be in the middle of the other (i.e, lines 3-4 MHB line 6).
+Hence, MHB is not necessarily transitive.
+In the latter case, the MHB relation is established by the mutex's blocking mechanism used during contention.
+
+\begin{definition}[Shared memory conflict]
+A pair of memory accesses between two threads to the same address where at least one of them is a write.
+\end{definition}
+
+\begin{definition}[Interleaving]
+	An ordered list of transitions and preemption points between them.
+\end{definition}
+
+\begin{definition}[Independent transitions]
+Two transitions between different threads are independent if the intersection of their shared memory accesses contains no conflicts.
+\end{definition}
+
+\begin{definition}[Equivalent interleaving]
+Two interleavings are equivalent if one can be transformed into the other by permuting only independent transitions.
+\end{definition}
+
+Intuitively, the behaviour of a program could change by reordering two transitions only if they contain a memory conflict.
+All possible interleavings of a program can be partitioned into equivalence classes,
+so only one interleaving from each equivalence class need be tested to ensure total schedule coverage \cite{mazurkiewicz}.
+
+\begin{definition}[State space]
+	A set of interleavings subject to the constraint that, given the preemption points used, all equivalence classes of possible interleavings are represented by at least one member.
+\end{definition}
+
+\begin{definition}[Dynamic Partial Order Reduction (DPOR)]
+	A state-space search algorithm for stateless model checkers,
+	guaranteed to reorder transitions of two threads
+	iff they are not independent and are not related by MHB \cite{dpor}.
+	\label{def:dpor}
+\end{definition}
+
+The soundness of DPOR guarantees that if a program behaviour can possibly be exposed by any thread interleaving around the given transitions/PPs,
+that interleaving will eventually be tested by reordering only such conflicting transitions.
+In other words, reordering memory-independent thread transitions cannot possibly affect program behaviour.
+
+\subsection{Data race and other memory terms}
+
+\begin{definition}[Data race]
+A shared memory conflict where furthermore:
+\begin{itemize}
+	\item The intersection of both threads' locksets is empty (i.e., the threads do not hold the same lock during each access), and
+	\item The threads' transitions are not related by MHB.
+\end{itemize}
+\end{definition}
+
+The same as in the paper, we distinguish between data-race {\em candidates} and data-race {\em bugs}.
+In this proof we are concerned solely with candidates, and wheter they can be observed to race or are false positives.
+It is up to the MC to decide whether true data races are benign or buggy.
+
+\begin{definition}[False positive data race]
+	An apparent data race that cannot be observed in the opposite order from what was actually executed.
+\end{definition}
+
+False positives are caused when some data dependency based on some other shared state, invisible to the data-race analysis,
+changes some variable values when the threads are reordered, such that the memory addresses no longer collide.
+
+\begin{definition}[Malloc-recycle data race]
+	A data race where the address is contained in some heap-allocated memory, and between the two accesses, that memory was passed to free() and returned again by a subsequent malloc().
+\end{definition}
+
+Figures~\ref{fig:recycle} and \ref{fig:recycle-bug} show an example.
+In the case of malloc-recycle false positives, the allocation heap is the ``other shared state'' mentioned in the previous definition, and malloc's return value is the variable value that changed.
+
+Recent work \cite{sparc-ssm} has proposed hardware techniques for detecting many classes of stale heap pointer accesses, including the one shown in Figure \ref{fig:recycle-bug}.
+This approach could be combined with stateless model checking in future work to identify such bugs immediately,
+rather than requiring Iterative Deepening to explore new state spaces corresponding to the data race.
+However, if the {\tt malloc} call were in thread 1 instead of thread 2, the bug would still be nondeterministic, requiring stateless model checking to expose.
+
+\begin{definition}[Use after free]
+	Any read or write to heap memory which was once allocated, but no longer is.
+\end{definition}
+
+These can immediately be identified as failures by a MC which tracks allocation state.
+%Most commonly this refers to accesses to a region already freed, but for brevity we also include
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \} *x;}} \\
+	& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \} *y;~~~~~~~~~~}} \\
+	\\
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
+	2 & \texttt{\hilight{olivegreen}{free}(x1);} \\
+	3 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
+	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	5 & & \texttt{\hilight{commentblue}{// ...initialize...}}\\
+	6 & & \texttt{publish(y);} \\
+	7 & & \texttt{\hilight{brickred}{y->bar = ...;}} \\
+\end{tabular}
+\caption{False-positive malloc-recycle pattern. This is the common case for which we avoid creating new state spaces.}
+\label{fig:recycle}
+\end{figure}
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{publish(x1);} & \\
+	2 & & \texttt{x2 = get\_published\_x();} \\
+	3 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
+	4 & \texttt{\hilight{olivegreen}{free}(x1);} \\
+	5 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
+	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+\end{tabular}
+\caption{Adversarial program which fits the malloc-recycle pattern, but nevertheless contains a true race.}
+\label{fig:recycle-bug}
+\end{figure}
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& Thread 1 & Thread 2 \\
+	1 & \texttt{publish(x1);} & \\
+	2 & & \texttt{x2 = get\_published\_x();} \\
+	3 & & \texttt{\hilight{commentblue}{// x not free, so malloc's}} \\
+	4 & & \texttt{\hilight{commentblue}{// return value changes!}} \\
+	5 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	6 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
+	8 & \texttt{\hilight{olivegreen}{free}(x1);} \\
+\end{tabular}
+\caption{Goal interleaving, which reorders the adversarial program's threads away from the pattern, while the data race remains.}
+\label{fig:recycle-goal}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Intuition}
+
+In this section we provide (hopefully) intuitive summaries of both our proof goals.
+%for readers not interested in double-checking the proofs' internal structure.
+
+{\bf Intuition for Iterative Deepening convergence.}
+In summary, we are proving that when Iterative Deepening finishes saturating the set of available data-race PPs,
+that set represents every single code location where a preemption could possibly affect the program's behaviour,
+and that completing the associated state spaces is as strong of a verification as testing all possible thread interleavings under any preemptions anywhere.
+Some data-races may be hidden in control-flow paths which could only be executed after preempting on a different data-race,
+but the technique's iterative nature will eventually find it.
+On the other hand, relying on the soundness of DPOR, preempting on an instruction which is neither a data-race or sync API boundary cannot affect the program's behaviour,
+so any PPs beyond the ones we consider are irrelevant.
+
+{\bf Intuition for malloc-recycle soundness.}
+In summary, we are proving that if a malloc-recycle-pattern data race is a true race, rather than a false positive,
+then DPOR is guaranteed to ``reorder away the free and re-malloc''.
+In other words, DPOR's exploration will eventually interleave threads in such a way that the malloc-recycle pattern will disappear,
+while the access pair remains for the data-race detector to find, as shown in Figure~\ref{fig:recycle-goal}.
+Hence, in the same state space where the malloc-recycle data race was found, if it's a true race, the same race will also appear without the recycle pattern.
+So if that race hides a failure bug (assertion, segfault, etc.), Iterative Deepening will still be led to the necessary preemption point to find that bug.

@@ -1,0 +1,91 @@
+%
+% LaTeX template for prepartion of submissions to PLDI'15
+%
+% Requires temporary version of sigplanconf style file provided on
+% PLDI'15 web site.
+%
+%\documentclass[pldi]{../sigplanconf-pldi15}
+\documentclass[10pt,times,numbers]{../sigplanconf}
+\usepackage[1stsubmission]{../oopsla2016}
+
+%
+% the following standard packages may be helpful, but are not required
+%
+\usepackage{SIunits}            % typset units correctly
+\usepackage{courier}            % standard fixed width font
+\usepackage[scaled]{helvet} % see www.ctan.org/get/macros/latex/required/psnfss/psnfss2e.pdf
+\usepackage{url}                  % format URLs
+\usepackage{listings}          % format code
+\usepackage{amsthm}          % format code
+\usepackage{enumitem}      % adjust spacing in enums
+\usepackage[linesnumbered,ruled]{algorithm2e}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+%\usepackage{setspace}
+\usepackage[colorlinks=true,allcolors=blue,breaklinks,draft=false]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
+% known bug: http://tex.stackexchange.com/questions/1522/pdfendlink-ended-up-in-different-nesting-level-than-pdfstartlink
+\newcommand{\doi}[1]{doi:~\href{http://dx.doi.org/#1}{\Hurl{#1}}}   % print a hyperlinked DOI
+%\doublespacing
+
+
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+
+\begin{document}
+
+%
+% any author declaration will be ignored  when using 'plid' option (for double blind review)
+%
+
+%\newcommand\landslide{\textsc{Landslide}} % Don't mention landslide in the proof.
+\newcommand\quicksand{\textsc{Quicksand}}
+\newcommand\simics{\textsc{Simics}}
+\newcommand{\sect}[1]{\S #1}
+\newcommand\hilight[2]{\color{#1}#2\color{black}}
+\definecolor{olivegreen}{RGB}{0,127,0}
+\definecolor{brickred}{RGB}{192,0,0}
+\definecolor{commentblue}{RGB}{0,0,255}
+
+%\title{Soundness Proof for Eliminating Malloc-Recycle Data Races in Stateless Model Checking}
+\title{Soundness Proofs for Iterative Deepening}
+\authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
+
+\maketitle
+\begin{abstract}
+In our paper we show the effectiveness of combining dynamic data-race detection \cite{eraser,hybriddatarace} with stateless model checking \cite{verisoft,dpor}.
+Our approach involves adding new state spaces to explore each time a new data-race candidate is found.
+This document presents two proofs concerning the technique.
+
+First, we prove that given enough time, Iterative Deepening will converge to the same degree of schedule coverage that would be provided by a na\"{i}ve model checker (MC) preempting on every single instruction.
+In other words, when Iterative Deepening finishes generating new data-race PPs, and completes all associated state spaces,
+it serves as a full verification of {\em all possible} thread schedules of the given test case.
+
+Second, we prove the soundness of the {\em malloc-recycle} false-positive-elimination tactic we discuss in the paper.
+Despite many powerful reduction techniques, the state spaces are still exponentially sized,
+so any way to avoid exploring some in advance is obviously beneficial.
+We prove that for the special case of {\em malloc-recycle} false positives, it is safe to eliminate these immediately upon discovering them, without bothering to explore their associated state spaces.
+
+
+This document is supplemental material to our main paper; we assume the reader is already familiar with our motivation and terminology.
+\end{abstract}
+
+\input{di}
+\input{assumptions}
+\input{convergence}
+\input{recycle}
+
+% TODO CAMREADY
+% We suspect that DPOR + pure-HB will always eventually find all data races uncovered by MHB.
+% for the purpose of iterative deepening, MHB is
+% better because it will find the data races much sooner, rather than requiring you
+% to explore the maximal state space before the race can be uncovered
+
+\section{Acknowledgements}
+
+{\em removed for double blind review}
+% Michael J. ``Sully'' Sullivan, Carlo Angiuli, and Nathaniel Filardo double-checked the proof and provided valuable feedback on notation style and the flow of explanation.
+
+\bibliographystyle{abbrvnat}
+\bibliography{../citations}{}
+\end{document}
