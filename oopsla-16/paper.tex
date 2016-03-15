@@ -30,14 +30,13 @@
 % 11pt          To set in 11-point type instead of 9-point.
 % numbers       To obtain numeric citation style instead of author/year.
 
-% template-provided usepackages
 \usepackage{amsmath}
-% custom ones copied from pldi template
 \usepackage{url}
 \usepackage{enumitem}
 \usepackage[linesnumbered,ruled]{algorithm2e}
 \usepackage{algpseudocode}
 \usepackage{graphicx}
+\usepackage{courier} % TODO: remove this? and get nicer fonts?
 \usepackage{amsthm}
 \usepackage[colorlinks=true,allcolors=blue,breaklinks,draft=false]{hyperref}
 \newcommand{\doi}[1]{doi:~\href{http://dx.doi.org/#1}{\Hurl{#1}}}
@@ -45,9 +44,6 @@
 \newtheorem{lemma}{Lemma}
 \newtheorem{theorem}{Theorem}
 \newtheorem{definition}{Definition}
-
-% ???
-%\newcommand{\cL}{{\cal L}}
 
 \begin{document}
 
@@ -83,6 +79,14 @@
 %\titlebanner{banner above paper title}        % These are ignored unless
 %\preprintfooter{short description of paper}   % 'preprint' option specified.
 
+% TODO: remove all changebars before submission
+%\setcounter{changebargrey}{0}
+%\newcommand\revision[1]{\begin{samepage}\cbstart#1\cbend\end{samepage}}
+%\newcommand\revision[1]{\cbstart#1\cbend}
+%\newcommand\revision[1]{#1}
+\definecolor{purple}{RGB}{192,0,192}
+\newcommand\revision[1]{\hilight{purple}{#1}}
+
 \title{Stateless Model Checking with Data-Race Preemption Points}
 
 \authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
@@ -105,8 +109,8 @@ Data race detection, another concurrency testing approach, focuses on suspicious
 It avoids concerns of state space size, but is prone to false positives:
 spurious reports of access pairs that cannot be reordered to produce a bug.
 
-We present an {\em Iterative Deepening} framework for stateless model checking,
-which manages the exploration of many state spaces using different preemption points.
+\revision{We present \quicksand, a new stateless model checking framework}~which
+manages the exploration of many state spaces using different preemption points.
 It uses state space estimation to prioritize jobs most likely to complete in a fixed CPU budget,
 and it incorporates data-race analysis to add new preemption points on the fly.
 Preempting threads during a data race's instructions
@@ -124,8 +128,8 @@ found 1.8x as many bugs and verified 4.3x as many tests compared to stateless mo
 %both at finding the same bugs faster and at finding new bugs entirely.
 \end{abstract}
 
-\category{D.2.4}{Software Engineering}{Software/Program Verification}
-\category{D.2.5}{Software Engineering}{Testing and Debugging}
+\revision{\category{D.2.4}{Software Engineering}{Software/Program Verification}}
+%\category{D.2.5}{Software Engineering}{Testing and Debugging}
 %
 %% general terms are not compulsory anymore,
 %% you may leave them out
