@@ -44,7 +44,7 @@ and that data-race preemption points quickly expose many new bugs that prior mod
 
 Our contributions are as follows:
 \begin{enumerate}
-	\item {\em Iterative Deepening}, a new technique for combining data-race analysis with stateless model checking, and \quicksand, an open-source implementation;
+	\item {\em Iterative Deepening}, a new \revision{algorithm}~for combining data-race analysis with stateless model checking, and \quicksand, an open-source implementation;
 	\item A proof of convergence, showing that should it be possible in the given CPU budget,
 		fully testing every discovered data-race preemption point is equivalent to testing all possible thread schedules;
 	\item A new tactic for eliminating one class of false-positive data races,

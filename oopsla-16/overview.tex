@@ -72,8 +72,8 @@ Two instructions are said to race if
 they both access the same memory address,
 at least one is a write,
 the threads do not hold the same lock,
-and no synchronization enforces an order on the thread transitions.
-Data races are not necessarily bugs, but represent suspicious violations of common locking discipline.
+and no synchronization enforces an order on the thread transitions \revision{(the {\em Happens-Before} relation)}.
+Data races \revision{do not always lead to failures}, but represent suspicious violations of common locking discipline.
 In Figure~\ref{fig:example}, lines 3 and 5 each race with 2 and 6, and line 6 races with 8.
 
 Though state-of-the-art model checkers preempt only on synchronization events,
@@ -83,14 +83,84 @@ preempting just before an instruction identified as part of a data race.
 None of the state spaces in Figure~\ref{fig:id} contain this interleaving,
 as none of the mutex/yield preemptions split lines 2 and 6 across different transitions.
 
-Prior work \cite{hybriddatarace} distinguishes between {\em pure happens-before} \cite{lamport-clocks},
-in which accesses with a lock release/acquire in between are not considered concurrent,
-and {\em limited happens-before},
-in which only blocking operations like {\tt cond\_wait} or {\tt join} enforce the order.
-% TODO CAMREADY: cite our soundness proofs tech report in this paragraph as well
-Compared to the former, the latter may report false positives, but avoids false negatives \cite{tsan},
-in which a potential racing access pair is not reported, even though it could lead to a bug.
-We use the limited happens-before analysis, accepting some overhead from false positives for the sake of total verification (\sect{\ref{sec:totalverif}}).
+% TODO: if you need, you can recover a line of text by abbreviating "HB".
+\revision{
+	{\bf Variants of Happens-Before (HB).}
+	Most prior work focuses on {\em Pure HB} \cite{lamport-clocks} as the order relation between accesses.
+\cite{predictive-dr} and \cite{hybriddatarace} identify a problem with this approach:
+it cannot identify access pairs separated by an unrelated lock operation which could race in an alternate interleaving,
+as shown in the example program in Figure~\ref{fig:hb-example}(a). % TODO
+We call such unreported access pairs {\em false negatives}.
+\cite{hybriddatarace} introduces the {\em Limited HB} relation,
+which will report such potential races
+by considering only blocking operations like {\tt cond\_wait} to enforce the order.
+However, consider the similar program in Figure~\ref{fig:hb-example}(b), % TODO
+in which the access pair ceases to exist in the alternate interleaving.
+Limited HB will report all potential races, avoiding false negatives \cite{tsan},
+but at the cost of necessarily reporting some such {\em false positives}.
+Finally, the {\em Causally-Precedes} relation \cite{predictive-dr} strikes a middle ground,
+extending Pure HB to additionally report a subset of potential races while soundly avoiding false positives.
+
+Stand-alone data-race analyses must avoid inundating the user with false alarms \cite{racerx}.
+However, this work incorporates data-race analysis in an internal feedback loop,
+using MC to automatically check each potential race
+and reporting to the user only of directly observed failures.
+%Our convergence theorem requires identifying all potential data-races to provide total verification (\sect{\ref{sec:totalverif}})
+%% TODO CAMREADY: cite our soundness proofs tech report in this paragraph as well
+Hence, we employ Limited HB in this paper},
+accepting some overhead from false positives for the sake of total verification (\sect{\ref{sec:totalverif}}).
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{c}
+	\revision{
+\begin{tabular}{rll}
+	& \multicolumn{2}{c}{\texttt{int x = 0; bool y = false; mutex\_t mx;}} \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
+	1 & \texttt{\hilight{brickred}{x++;}~// A1} & \\
+	2 & \texttt{mutex\_lock(\&mx);} & \\
+	3 & \texttt{mutex\_unlock(\&mx);} & \\
+	4 & & \texttt{mutex\_lock(\&mx);} \\
+	5 & & \texttt{mutex\_unlock(\&mx);} \\
+	6 & & \texttt{\hilight{brickred}{x++;}~// A2} \\
+\end{tabular}
+}
+\\
+\revision{\normalsize (a) True potential data race.}
+\\
+\\
+\revision{
+\begin{tabular}{rll}
+	%& \multicolumn{2}{c}{\texttt{int x = 0; bool y = false; mutex\_t mx;}} \\
+	%& {\bf Thread 1} & {\bf Thread 2} \\
+	1 & \texttt{\hilight{brickred}{x++;}~// B1} & \\
+	2 & \texttt{mutex\_lock(\&mx);} & \\
+	3 & \texttt{y = true;} & \\
+	4 & \texttt{mutex\_unlock(\&mx);} & \\
+	5 & & \texttt{mutex\_lock(\&mx);} \\
+	6 & & \texttt{bool tmp = y;} \\
+	7 & & \texttt{mutex\_unlock(\&mx);} \\
+	8 & & \texttt{if (tmp)} \\
+	9 & & \texttt{~~~~\hilight{brickred}{x++;}~// B2} \\
+\end{tabular}
+}
+\\
+\revision{\normalsize (b) No data race in any interleaving.}
+\end{tabular}
+\caption{\revision{Data-race analyses may be prone to either {\em false negatives} or {\em false positives}.
+Applying Pure HB to program (a) will miss the potential race possible between A1/A2 in an alternate interleaving,
+while using Limited HB on (b) will produce a false alarm on B1/B2.}}
+\label{fig:hb-example}
+\end{figure}
+
+% Old explanation.
+%Prior work \cite{hybriddatarace} distinguishes between {\em pure happens-before} \cite{lamport-clocks},
+%in which accesses with a lock release/acquire in between are not considered concurrent,
+%and {\em limited happens-before},
+%in which only blocking operations like {\tt cond\_wait} or {\tt join} enforce the order.
+%Compared to the former, the latter may report false positives, but avoids false negatives \cite{tsan},
+%in which a potential racing access pair is not reported, even though it could lead to a bug.
+%We use the limited happens-before analysis, accepting some overhead from false positives for the sake of total verification (\sect{\ref{sec:totalverif}}).
 
 \subsection{Terminology}
 
@@ -108,13 +178,14 @@ but new PPs cannot be added, nor ineffective ones removed, by any dynamic analys
 
 Although all data races are undefined behaviour in C and C++ \cite{boehm-memorymodels},
 we distinguish between data-race {\em candidates} and data-race {\em bugs}.
-Because data-race analysis is prone to false-positives,
-we classify unprotected memory access pairs separately from bugs,
-calling such pairs {\em data race candidates}.
+% old explanation
+%Because data-race analysis is prone to false-positives,
+%we classify unprotected memory access pairs separately from bugs,
+\revision{We refer to racing (or potentially-racing) memory access pairs as}~{\em data race candidates}.
 Should a future interleaving, preempting during such accesses,
-lead to a failure, then we report a {\em data-race bug}.
-Otherwise, if the access pair can be reordered, but does not produce a failure under any interleaving, it is a {\em benign data race} (with respect to the test input).
-If they cannot be reordered at all, due to some other communication, it is a {\em false positive}.
+lead to \revision{an observable}~failure, then we report a {\em data-race bug}.
+Otherwise, if the access pair can be reordered \revision{to be simultaneous}, but does not produce a failure under any interleaving, it is a {\em benign data race} (with respect to the test input).
+If they cannot be reordered at all, due to some other communication \revision{such as in Figure~\ref{fig:hb-example}(b)}, it is a {\em false positive}.
 
 We also identify the {\em minimal} and {\em maximal state space} for each test.
 The {\em minimal state space} includes only thread switches arising from normal execution (Figure~\ref{fig:id}, A).
