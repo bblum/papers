@@ -17,9 +17,9 @@ We compare related tools by their treatment of shared-memory thread communicatio
 {\bf Synchronization events only.} CHESS \cite{chess} and dBug \cite{dbug-ssv} instrument the thread library API, and can preempt programs only during calls to this API.
 Hence, they will miss any bugs that require interleaving threads at instruction granularity during a data race.
 %CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
-\revision{\cite{chess} mentions the ability of CHESS to add PPs using a single-pass data-race analysis,
+\revision{\cite{chess} discusses the ability of CHESS to add PPs using a single-pass data-race analysis,
 % FIXME... idk, "discusses (without explicit evaluation)..., but, as our evaluation shows..."?
-but does not discuss either the increase in bug-finding capacity or the soundness properties.
+but does not evaluate either the increase in bug-finding capacity or the soundness properties.
 Our convergence theorem (\sect{\ref{sec:soundness}}) is a natural extension of \cite{chess-icb}'s Theorem 3,
 which alone provides soundness only for race-free programs.}
 
@@ -57,7 +57,8 @@ SAT-directed MC \cite{satcheck},
 These are all compatible with our technique.
 Recent work \cite{tsopso} has extended DPOR for relaxed memory models \cite{memory-consistency-models},
 which we do not yet account for in our proofs (\sect{\ref{sec:soundness}}).
-Parrot \cite{parrot} combines MC with a partially-determinizing runtime for further reduction, but still, fewer than half the non-trivial state spaces in their evaluation could be completed.
+Parrot \cite{parrot} combines MC with a partially-determinizing runtime for further reduction, but still, fewer than half the non-trivial \revision{tests}~in their evaluation could be completed,
+\revision{which motivates \quicksand's CPU-budget-oriented approach.}
 %providing a strong argument for \quicksand.
 
 \revision{{\bf Restricting preemptions.}
