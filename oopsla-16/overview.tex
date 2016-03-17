@@ -66,6 +66,7 @@ Hence, we will test all the state spaces shown in Figure~\ref{fig:id} in paralle
 and decide on-the-fly whether to pursue each test, or to defer it in favour of others.
 
 \subsection{Data Race Detection}
+\label{sec:overview-dr}
 
 Data race analysis \cite{eraser} identifies pairs of unsynchronized memory accesses between threads.
 Two instructions are said to race if
@@ -104,7 +105,7 @@ extending Pure HB to additionally report a subset of potential races while sound
 Stand-alone data-race analyses must avoid inundating the user with false alarms \cite{racerx}.
 However, this work incorporates data-race analysis in an internal feedback loop,
 using MC to automatically check each potential race
-and reporting to the user only of directly observed failures.
+and reporting to the user only directly observed failures.
 %Our convergence theorem requires identifying all potential data-races to provide total verification (\sect{\ref{sec:totalverif}})
 %% TODO CAMREADY: cite our soundness proofs tech report in this paragraph as well
 Hence, we employ Limited HB in this paper},

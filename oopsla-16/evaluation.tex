@@ -106,10 +106,10 @@ We tested P2s with 6 multithreaded programs:
 \bct~and \paraguay~for cvars,
 \paradise~for semaphores,
 and \rwldgr~for r/w locks.
-For \mxtest, \paradise, and \paraguay, we used {\tt without\_function} to blacklist {\tt thr\_create}, {\tt thr\_exit}, and {\tt thr\_join},
+For \mxtest, \paradise, and \paraguay, we used the {\tt without\_function} command to blacklist {\tt thr\_create}, {\tt thr\_exit}, and {\tt thr\_join},
 and for \mxtest~we enabled \landslide's mutex-testing option
 (see \sect{\ref{sec:landslide}}).
-We tested Pintoses with 3 programs from the class test suite: \prisema, a test of the kernel scheduling algorithm,
+We tested Pintoses with 3 programs from the class's provided test suite: \prisema, a test of the kernel scheduling algorithm,
 \alarmsimul, for the timer sleep routine,
 and \waitsimple, for process lifecycle system calls\footnote{
 	Some of the Pintoses were partially implemented,
@@ -119,7 +119,7 @@ The source code of all 9 test cases is available at
 {\em [submitted as supplementary material]}.
 For all tests, we used {\tt without\_function} to blacklist PPs on {\tt malloc}'s internal lock.
 We ran all tests on 12-core 3.2 GHz Xeon machines. %with 12GB of RAM.
-In total, our evaluation comprises 629 tests (pairs of a test program and a Pintos or P2),
+In total, our evaluation comprises 629 unique tests (pairs of a test program and a Pintos or P2),
 at least 163 of which could expose bugs.
 
 %\begin{table}[t]

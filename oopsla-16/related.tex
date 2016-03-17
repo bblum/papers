@@ -50,7 +50,7 @@ Both SPIN and Inspect fix their set of PPs in advance, so could be
 extended with Iterative Deepening in future work.
 %so cannot check implementations directly.
 
-{\bf Other techniques.} Various improvements or alternatives to DPOR have been developed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr},
+{\bf \revision{Reduction}~techniques.} Various improvements or alternatives to DPOR have been developed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr},
 %DPOR for relaxed memory models \cite{tsopso},
 SAT-directed MC \cite{satcheck},
 \revision{and R4 for event-driven applications \cite{r4}}.
@@ -59,24 +59,45 @@ Recent work \cite{tsopso} has extended DPOR for relaxed memory models \cite{memo
 which we do not yet account for in our proofs (\sect{\ref{sec:soundness}}).
 Parrot \cite{parrot} combines MC with a partially-determinizing runtime for further reduction, but still, fewer than half the non-trivial state spaces in their evaluation could be completed.
 %providing a strong argument for \quicksand.
+
+\revision{{\bf Restricting preemptions.}
+Preemption Sealing \cite{sealing} pre\-sents a mechanism similar to the {\tt within\_function} command (\sect{\ref{sec:landslide}}) for users to manually restrict preemptions.
+It demonstrates the need to consider subsets of PPs,
+as well as developers' willingness to limit a test case's scope so the resulting state space may be fully verified (\sect{\ref{sec:totalverif}}).
+%It justifies our assumption that expert
+%programmers can customize small test cases which, when fully verified,
+%provide a correctness assurance much stronger than the assurance from
+%a partially-complete exploration of a huge state space.
+Probabilistic Concurrency Testing (PCT) \cite{randomized-scheduler}
+is a randomized algorithm that can quantify the probability of uncovering bugs.
+PCT is optimized for tests with impossibly large state spaces,
+while for more approachable tests,
+its incompatibility with DPOR would significantly delay completion.
+Future work could use ETAs to heuristically switch between DPOR and PCT}.
 Finally, Iterative Context Bounding (ICB) \cite{chess-icb} is most similar to our work,
 as both approaches provide a partial verification
 %on some subset of interleavings
 when full completion is intractable (\sect{\ref{sec:future}}).
-However, ICB is limited to a fixed set of PPs, and to our knowledge no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
+However, ICB is limited to a fixed set of PPs,
+\revision{cannot estimate remaining time to total verification},
+and to our knowledge no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
 
 \subsection{Data Race Detection}
 \label{sec:related-dr}
 
 %Too many related projects to list have made contributions to the
 Many advances have been made on the false-positive data race problem since it was first introduced in \cite{eraser}.
-\cite{hybriddatarace} and \cite{tsan} combine the lockset and happens-before analyses into a hybrid technique, which we employ.
+\cite{hybriddatarace} and \cite{tsan}
+%combine the lockset and happens-before analyses into a hybrid technique,
+\revision{introduce Limited Happens-Before}, %(\sect{\ref{sec:overview-dr}})},
+which we employ,
+\revision{while \cite{predictive-dr} introduces the Causally-Precedes relation for a sound yet incomplete analysis (\sect{\ref{sec:overview-dr}})}.
 \revision{Several tools \cite{droidracer,cafa,unnamed-android} have recently emerged to target Android applications},
 %DroidRacer \cite{droidracer} and CAFA \cite{cafa} target
 %%event-driven
 %Android applications,
 using domain-specific heuristics (orthogonal to our method) to reduce false positives. % cut for space?
-Like \landslide, DataCollider \cite{datacollider} offers data-race techniques for kernel code.
+Like \landslide, DataCollider \cite{datacollider} \revision{finds data races in}~kernel code.
 IFRit \cite{ifrit}
 improves performance using an interference analysis,
 which could allow future work to avoid tracing every memory access.
