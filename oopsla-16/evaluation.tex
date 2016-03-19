@@ -120,7 +120,9 @@ The source code of all 9 test cases is available at
 For all tests, we used {\tt without\_function} to blacklist PPs on {\tt malloc}'s internal lock.
 We ran all tests on 12-core 3.2 GHz Xeon machines. %with 12GB of RAM.
 In total, our evaluation comprises 629 unique tests (pairs of a test program and a Pintos or P2),
-at least 163 of which could expose bugs.
+% at least 157 of which could expose bugs.
+at least 165 of which could expose bugs. % QS bugs + bugs where SSSMC found but QS didnt
+% TODO: update this number with any new bugs found by PREEMPT_EVERYWHERE
 
 %\begin{table}[t]
 %	\begin{tabular}{l|l|l}
@@ -190,6 +192,9 @@ which we explain presently.
 
 % TODO CAMREADY: Compare QS-ETAs to QS-Random to evaluate "smaller is better" claim.
 
+% TODO: Nix discussion of QS-no-DR-bugs. Just do QS-no-DR-PPs.
+
+% TODO: Nix this discussion.
 {\bf Finding the same bugs faster.}
 To show that Iterative Deepening is effective even for MC domains without data races, %such as message-passing distributed systems,
 we configured \quicksand~to explore only subsets of the synchronization PPs
@@ -222,7 +227,7 @@ with data-race PPs enabled.
 %We quickly pull ahead of SSS-MC, and ultimately conclude with 179\% as many bugs in total.
 %The break-even point is at a negligible 90 seconds.
 We find significantly more bugs within any CPU budget greater than 90 seconds,
-and ultimately conclude 10 CPU-hours with 179\% as many bugs in total.
+and ultimately conclude 10 CPU-hours with 151\% as many bugs in total.
 
 Furthermore, we plotted another line from this dataset, QS-no-DR-bugs,
 which represents only the bugs found in state spaces without any data-race PPs (like QS-no-DR-PPs, but paying any overhead for using data-race PPs).
@@ -231,10 +236,20 @@ Intuitively, this line shows that for programs with only benign data races,
 %\footnote{The initial perfect overlap between QS-DRs and QS-no-DR-bugs indicates how long it takes before the first data-race bug is found.}
 %even after the extra overhead of verifying them, \quicksand~still slightly edges out SSS-MC
 
+
+% TODO: Incorporate the following point.
+% "Before the break-even point at 45 seconds (or whatever), SSS-MC approaches seem to outperform \quicksand,
+% but converting this CPU-time advantage into faster wall-clock performance is itself an open research problem \cite{parallel-dpor}.
+
+
+% TODO
+% Especially for testing kernel-level code, deciding which of a thread's memory accesses are shared versus private is nonstraightforward, as threads may share data structures allocated on their own stacks for synchronization. Hence, the common heuristic of ignoring stack accesses as private (which we employ for this control experiment) introduces some unsoundndess.
+
 \begin{table*}[t]
 	\begin{center}
 		\small
 	\begin{tabular}{r|c||c|c|c|c|c||c|c||c|c}
+		% TODO: Update SSSMC column to have more favourable ICB numbers.
 		& {\bf Num.} & {\bf SSS-MC} & {\bf QS} & {\bf DR-only} & {\bf Nondet.} & {\bf Malloc-} &
 		{\bf Mutual} & {\bf Avg. tested} & {\bf Total} & {\bf Untested} \\
 		{\bf Test name} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR bugs} & {\bf recycle DRs} &
@@ -243,17 +258,17 @@ Intuitively, this line shows that for programs with only benign data races,
 		% FIXME: update FRMs
 				% #test  sssmc   qs      dronly  nondets  FRMs   timeout comp.SSes DRPPs untested DRPPs
 		{\tt bcast}	& 79	& 7	& 11	& 4	& 4	& 51	& 0	& -	& 912	& 107	\\
-		{\tt join} 	& 79	& 14 	& 25	& 10	& 6	& 333	& 5	& 60.8	& 781	& 292	\\
+		{\tt join} 	& 79	& 14 	& 24	& 10	& 6	& 333	& 5	& 60.8	& 781	& 292	\\
 		{\tt mx} 	& 79	& 1	& 10	& 9	& 1	& 7	& 0	& -	& 829	& 1	\\
-		{\tt sem} 	& 79	& 10	& 17	& 6	& 5	& 140	& 29	& 73.3	& 753	& 279	\\
-		{\tt signal} 	& 79	& 4	& 12	& 7	& 6	& 180	& 10	& 54.2	& 1118	& 391	\\
-		{\tt rwlock} 	& 79	& 26	& 30	& 2	& 2	& 125	& 19	& 29.6	& 915	& 634	\\
+		{\tt sem} 	& 79	& 10	& 16	& 6	& 5	& 140	& 29	& 73.3	& 753	& 279	\\
+		{\tt signal} 	& 79	& 4	& 10	& 7	& 6	& 180	& 10	& 54.2	& 1118	& 391	\\
+		{\tt rwlock} 	& 79	& 26	& 28	& 2	& 2	& 125	& 19	& 29.6	& 915	& 634	\\
 		\hline
 		{\tt sched} 	& 59	& 1	& 7	& 6	& 4	& 0	& 0	& -	& 144	& 3	\\
 		{\tt alarm} 	& 44	& 5	& 21	& 17	& 3	& 35 	& 22	& 9.1	& 115	& 89	\\
 		{\tt wait} 	& 52	& 23	& 30	& 7	& 1	& 31	& 8	& 28.0	& 142	& 31	\\
 		\hline
-		{\bf Total}	& 629	& 91	& 163	& 68	& 32	& 902	& 93	& 42.6 	& 5709	& 1827	\\
+		{\bf Total}	& 629	& 91	& 157	& 68	& 32	& 902	& 93	& 42.6 	& 5709	& 1827	\\
 	\end{tabular}
 	\end{center}
 	\caption{Summary of bugs and data races found by each test program.
