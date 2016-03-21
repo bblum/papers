@@ -10,6 +10,9 @@ We chose \landslide~\cite{landslide} as our MC tool due to its ability to trace 
 state space estimation \cite{estimation}, and a hybrid
 %lockset/happens-before
 data-race analysis \cite{hybriddatarace}.
+\revision{It can optionally replace DPOR with Iterative Context Bounding (ICB) \cite{chess-icb},
+for which it uses Bounded Partial Order Reduction (BPOR) \cite{bpor} for a similar sound reduction,
+although we leave incorporating ICB with Iterative Deepening to future work (\sect{\ref{sec:future}})}.
 It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield} or {\tt xchg} loops) with a heuristic similar to Fair-Bounded Search \cite{bpor}.
 % joshua wants "segfault" to be "memory access error (i.e., segmentation fault, or bus error)"
 Its bug-detection metrics are assertion failure, deadlock, segfault, heap checking \cite{valgrind}, and a heuristic infinite loop check.

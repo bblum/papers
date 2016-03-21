@@ -22,6 +22,9 @@ Our evaluation answers the following questions:
 			\item Do data-race PPs expose new bugs that couldn't be found with SSS-MC's fixed-PP-set approach?
 				% Elaborate later:
 				% Among those, how many were missed in a {\em completed} execution of the otherwise ``maximal'' state space?
+			\revision{
+			\item Does Iterative Deepening provide more full verifications of bug-free programs more quickly?
+			}
 		\end{enumerate}
 	\item Does MC improve the accuracy of data-race detection?
 		\begin{enumerate}
@@ -118,7 +121,6 @@ and \waitsimple, for process lifecycle system calls\footnote{
 The source code of all 9 test cases is available at
 {\em [submitted as supplementary material]}.
 For all tests, we used {\tt without\_function} to blacklist PPs on {\tt malloc}'s internal lock.
-We ran all tests on 12-core 3.2 GHz Xeon machines. %with 12GB of RAM.
 In total, our evaluation comprises 629 unique tests (pairs of a test program and a Pintos or P2),
 % at least 157 of which could expose bugs.
 at least 165 of which could expose bugs. % QS bugs + bugs where SSSMC found but QS didnt
@@ -156,6 +158,35 @@ at least 165 of which could expose bugs. % QS bugs + bugs where SSSMC found but 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\revision{
+\subsection{Experimental Setup}
+
+To evaluate the benefits of data-race PPs and Iterative Deepening separately, we ran the test suite under \quicksand~in two different configurations, each of which was given a 1-hour budget and 10 CPUs for each test.
+\begin{itemize}
+	\item {\bf QS-DR}: \quicksand~with data-race PPs enabled, and
+	\item {\bf QS-Sync-Only}: \quicksand~with PPs still seeded as described in \sect{\ref{sec:initial-pp}}, but never adding new PPs from reported data-race candidates.
+\end{itemize}
+
+We represented the MC state-of-the-art with 3
+%different
+configurations of stand-alone \landslide~on the same test suite:
+\begin{itemize}
+	\item {\bf SSS-MC-DPOR}: Single state space using the maximal PP set from \sect{\ref{sec:initial-pp}}, explored with plain DPOR \cite{dpor},
+	\item {\bf SSS-MC-ICB}: With PPs as above, but using ICB \cite{chess-icb} with BPOR \cite{bpor} instead of DPOR to find bugs faster, and
+	\item {\bf SSS-MC-Shared-Mem}: % TODO: better name?
+		Using ICB+BPOR, configured to insert PPs on any shared memory access
+		(determined at runtime, excluding threads' accesses to their own stacks),
+		which in principle includes all possible data-race PPs.
+\end{itemize}
+Because parallelizing DPOR/ICB during SSS-MC is an open research problem \cite{parallel-dpor},
+we instead gave control experiments 10 hours per test with 1 CPU.
+%To match this,
+\quicksand~reports the CPU-time spent alongside the wall-clock time for a direct comparison
+(although, with the growing importance of multicore, \quicksand's inherent parallelism is a convenient benefit).
+%Finally,
+All tests ran on 12-core 3.2 GHz Xeon W3670 machines. %with 12GB of RAM.
+}
+
 \subsection{Comparing Iterative Deepening to SSS-MC}
 \label{sec:eval-sssmc}
 
@@ -164,16 +195,7 @@ at least 165 of which could expose bugs. % QS bugs + bugs where SSSMC found but 
 
 %In this section we show that using data-race PPs with \landslide~is more effective than either SSS-MC or single-pass data-race detection alone.
 
-% XXX: I hate this paragraph. I have no idea what order to put the sentences in.
-To compare to SSS-MC, we ran a control experiment for each test, running \landslide~on a single state space with all synchronization PPs enabled in advance (and no data-race PPs).
-We gave each \quicksand~test 10 CPUs for 1 hour each. % XXX
-Though \landslide~does not implement parallel DPOR \cite{parallel-dpor}, we compensated by giving each control test 1 CPU for 10 hours,
-%then dividing all associated times by 10 (simulating perfect parallelism).
-and instrumenting \quicksand~to report total CPU-hours rather than wall-clock time.
-%Pragmatically, with the growing importance of multicore, \quicksand's inherent parallelism is convenient to say the least.
-%Pragmatically, with most future performance improvements coming from increased core counts, \quicksand's inherent parallelism is convenient to say the least.
-(With the growing importance of multicore for performance, \quicksand's inherent parallelism is another convenient benefit.)
-
+% TODO: Cut/rearrange.
 %\quicksand's times by 10 to convert from wall-clock time to CPU-hours (even though it sometimes falls short of 100\% parallelism).
 Figure~\ref{fig:dowefindbugsfaster} plots a cumulative distribution of bugs found before a given elapsed CPU consumption. % during its associated test.
 We tested several configurations of \quicksand~to compare against SSS-MC from multiple angles,
@@ -188,10 +210,7 @@ which we explain presently.
 	\label{fig:dowefindbugsfaster}
 \end{figure}
 
-% TODO CAMREADY: ICB
-
 % TODO CAMREADY: Compare QS-ETAs to QS-Random to evaluate "smaller is better" claim.
-
 % TODO: Nix discussion of QS-no-DR-bugs. Just do QS-no-DR-PPs.
 
 % TODO: Nix this discussion.

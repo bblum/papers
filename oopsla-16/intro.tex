@@ -27,6 +27,9 @@ any choice made in advance must necessarily leave some tests unaffordably large 
 %
 %This work shows how to avoid making that tradeoff decision in advance.
 
+% TODO: Incorporate the following point
+% On the other hand, techniques such as ICB assume all state spaces will be too big, and optimize the search to uncover bugs more quickly, but at the expense of / by sacrificing the ability to complete a total verification quickly when possible.
+
 We present \quicksand,
 a model checking framework for deciding at runtime which preemption points to test,
 according to which resulting state spaces are most likely to fit a prescribed CPU budget.
