@@ -364,6 +364,11 @@ For the other 93, we show the number of state spaces \quicksand~was able to comp
 These completions guarantee that, if the test program could expose a bug,
 % Justify implicit hypothesis: Sync PPs + DR PPs = all possible relevant PPs.
 it would only be found by a new data-race PP not discovered yet, or by a superset combination of PPs not reached.
+\revision{
+%While obviously not as strong as full verification,
+Prior work \cite{sealing} has argued the value of such {\em compositional testing} when full verification is intractable,
+deferring to the user's expertise to judge the value of each subset of PPs verified.
+}
 
 %Hence, in Table~\ref{tab:drbugs} we count how often \quicksand~uncovered a bug only in state spaces which included data-race PPs, while
 %
