@@ -265,7 +265,7 @@ we consider this strong evidence that new low-level synchronization code must be
 		\small
 	\begin{tabular}{r|c||c|c|c|c|c||c|c||c|c}
 		% TODO: Update SSSMC column to have more favourable ICB numbers.
-		& {\bf Num.} & {\bf SSS-MC} & {\bf QS} & {\bf DR-only} & {\bf Nondet.} & {\bf Malloc-} &
+		& {\bf Num.} & {\bf DPOR} & {\bf QS} & {\bf DR-only} & {\bf Nondet.} & {\bf Malloc-} &
 		{\bf Mutual} & {\bf Avg. tested} & {\bf Total} & {\bf Untested} \\
 		{\bf Test name} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR bugs} & {\bf recycle DRs} &
 		{\bf time-outs} & {\bf subset SSes} & {\bf DR PPs} & {\bf DR PPs} \\
@@ -287,7 +287,8 @@ we consider this strong evidence that new low-level synchronization code must be
 	\end{tabular}
 	\end{center}
 	\caption{Summary of bugs and data races found by each test program.
-		SSS-MC is the control; QS is \quicksand.
+		% TODO
+		DPOR is the control; QS is \quicksand.
 		``DR-only bugs'' counts among \quicksand's bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}});
 	among those, ``Nondeterministic DR bugs'' counts how many candidates required MC integration to identify (\sect{\ref{sec:eval-dr}}).
 	``Malloc-recycle DRs'' counts how many false positives we suppressed (\sect{\ref{sec:eval-dr}}).
@@ -300,7 +301,6 @@ we consider this strong evidence that new low-level synchronization code must be
 \end{table*}
 
 % TODO CAMREADY: Compare QS-ETAs to QS-Random to evaluate "smaller is better" claim.
-% TODO: Nix discussion of QS-no-DR-bugs. Just do QS-no-DR-PPs.
 {\bf Finding the same bugs faster.}
 %To test whether Iterative Deepening is effective even for MC domains without data races, %such as message-passing distributed systems,
 \revision{The QS-Sync-Only experiment tests whether}~Iterative Deepening is effective even for MC domains without data races.

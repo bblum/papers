@@ -84,18 +84,17 @@ preempting just before an instruction identified as part of a data race.
 None of the state spaces in Figure~\ref{fig:id} contain this interleaving,
 as none of the mutex/yield preemptions split lines 2 and 6 across different transitions.
 
-% TODO: if you need, you can recover a line of text by abbreviating "HB".
 \revision{
 	{\bf Variants of Happens-Before (HB).}
 	Most prior work focuses on {\em Pure HB} \cite{lamport-clocks} as the order relation between accesses.
 \cite{predictive-dr} and \cite{hybriddatarace} identify a problem with this approach:
 it cannot identify access pairs separated by an unrelated lock operation which could race in an alternate interleaving,
-as shown in the example program in Figure~\ref{fig:hb-example}(a). % TODO
+as shown in the example program in Figure~\ref{fig:hb-example}(a).
 We call such unreported access pairs {\em false negatives}.
 \cite{hybriddatarace} introduces the {\em Limited HB} relation,
 which will report such potential races
 by considering only blocking operations like {\tt cond\_wait} to enforce the order.
-However, consider the similar program in Figure~\ref{fig:hb-example}(b), % TODO
+However, consider the similar program in Figure~\ref{fig:hb-example}(b),
 in which the access pair ceases to exist in the alternate interleaving.
 Limited HB will report all potential races, avoiding false negatives \cite{tsan},
 but at the cost of necessarily reporting some such {\em false positives}.
