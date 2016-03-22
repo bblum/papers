@@ -43,6 +43,21 @@ making partial verification of larger tests possible.
 %as discussed above,
 %we were limited to a small number of very basic PP subsets to statically seed the exploration
 
+\revision{
+{\bf Integration with static data-race analysis.}
+In \sect{\ref{sec:eval-sssmc}}, we evaluated SSS-MC's ability to find data-race-induced failures
+by configuring a static predicate to preempt on any non-stack memory access.
+This introduced up to thousands of new PPs on each new test execution, with a prohibitive performance impact.
+While this performance could be improved by
+%relaxing the preemption strategy,
+instead using a static or single-pass analysis to find data-race candidate PPs in advance \cite{portend},
+this strategy sacrifices the soundness of the verification guarantee, as shown in \sect{\ref{sec:eval-dr}}.
+However, \quicksand~itself could employ static data-race analysis \cite{racerx} in future work.
+Statically-identified data race candidates could heuristically be included in our ``seed'' PP sets (\sect{\ref{sec:initial-pp}}),
+enabling \quicksand~to focus on the most suspicious races immediately, rather than waiting for them to be identified after potentially many iterations of MC.
+}
+
+
 %{\bf Small test cases.}
 
 {\bf Partial verification.}
