@@ -185,25 +185,6 @@ we instead gave control experiments 10 hours per test with 1 CPU.
 %Finally,
 All tests ran on 12-core 3.2 GHz Xeon W3670 machines. %with 12GB of RAM.
 
-% TODO: Where should this paragraph be?
-{\bf Variance.}
-Because \quicksand~can be nondeterministic in which state spaces get scheduled for testing more often,
-we quantified the variance in the distribution of QS-DR's bugs with a permutation test.
-We re-ran
-% TODO: X=? 100?
-%X\% of the tests in
-the QS-DR experiment and compared the two observed distributions,
-finding the observed area between the curves to be among the middle
-% TODO
-Y\%
-% FIXME: How many randomly sampled permutations?
-of possible areas between permuted distributions,
-and furthermore finding the observed area to be
-% TODO
-Z\%
-of the area between QS-DR and SSS-MC-ICB (the next closest).
-}
-
 \subsection{\revision{Comparison to state-of-the-art MC}}%Comparing Iterative Deepening to SSS-MC
 \label{sec:eval-sssmc}
 
@@ -218,7 +199,7 @@ we additionally show a wall-clock comparison in (b) to highlight the impact of \
 		\revision{
 	\begin{tabular}{p{0.48\textwidth}}
 	\includegraphics[width=0.48\textwidth]{dowefindbugsfaster-squashed.pdf} \\
-		(a) Bugs found by elapsed CPU time. A more direct comparison than (b),
+		(a) Bugs found by elapsed CPU time. Overall, a more direct comparison than (b),
 		although \quicksand's start-up overhead is exaggerated, as the SSS-MC tests are not parallelized. \\
 		\\
 	\includegraphics[width=0.48\textwidth]{dowefindbugsfaster-wallclock.pdf} \\
@@ -244,6 +225,19 @@ and ultimately concludes 10 CPU-hours with \revision{151}\% as many bugs in tota
 However, converting SSS-MC's early CPU-time advantage into faster wall-clock performance remains an open research problem \cite{parallel-dpor}.
 In Figure~\ref{fig:dowefindbugsfaster}(b), we give \quicksand~full credit for its inherent parallelism, and it outperforms SSS-MC for any fixed budget of wall-clock time.}
 
+%{\bf Variance.}
+% TODO CAMREADY: Probably will need at least a 3rd run of dis.
+Because \quicksand~can be nondeterministic in its scheduling of state spaces,
+we ran the QS-DR tests a second time to quantify the variance.
+We found the area between the two QS-DR curves to be
+% TODO
+{\bf XX\%}
+of the area between QS-DR and SSS-MC-ICB (the next closest),
+% TODO cite
+which we consider an insignificant amount of variance.
+}
+
+
 % TODO: Fix up this paragraph after preempt-everywhere results come in.
 The left half of Table~\ref{tab:drbugs}
 breaks down the number and types of bugs found by each test program.
@@ -265,6 +259,46 @@ we consider this strong evidence that new low-level synchronization code must be
 %Intuitively, this line shows that for programs with only benign data races,
 %\quicksand~can afford the extra overhead of verifying them while still slightly edging out SSS-MC.
 
+% TODO: fix this table.
+\begin{table*}[t]
+	\begin{center}
+		\small
+	\begin{tabular}{r|c||c|c|c|c|c||c|c||c|c}
+		% TODO: Update SSSMC column to have more favourable ICB numbers.
+		& {\bf Num.} & {\bf SSS-MC} & {\bf QS} & {\bf DR-only} & {\bf Nondet.} & {\bf Malloc-} &
+		{\bf Mutual} & {\bf Avg. tested} & {\bf Total} & {\bf Untested} \\
+		{\bf Test name} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR bugs} & {\bf recycle DRs} &
+		{\bf time-outs} & {\bf subset SSes} & {\bf DR PPs} & {\bf DR PPs} \\
+		\hline
+		% FIXME: update FRMs
+				% #test  sssmc   qs      dronly  nondets  FRMs   timeout comp.SSes DRPPs untested DRPPs
+		{\tt bcast}	& 79	& 7	& 11	& 4	& 4	& 51	& 0	& -	& 912	& 107	\\
+		{\tt join} 	& 79	& 14 	& 24	& 10	& 6	& 333	& 5	& 60.8	& 781	& 292	\\
+		{\tt mx} 	& 79	& 1	& 10	& 9	& 1	& 7	& 0	& -	& 829	& 1	\\
+		{\tt sem} 	& 79	& 10	& 16	& 6	& 5	& 140	& 29	& 73.3	& 753	& 279	\\
+		{\tt signal} 	& 79	& 4	& 10	& 7	& 6	& 180	& 10	& 54.2	& 1118	& 391	\\
+		{\tt rwlock} 	& 79	& 26	& 28	& 2	& 2	& 125	& 19	& 29.6	& 915	& 634	\\
+		\hline
+		{\tt sched} 	& 59	& 1	& 7	& 6	& 4	& 0	& 0	& -	& 144	& 3	\\
+		{\tt alarm} 	& 44	& 5	& 21	& 17	& 3	& 35 	& 22	& 9.1	& 115	& 89	\\
+		{\tt wait} 	& 52	& 23	& 30	& 7	& 1	& 31	& 8	& 28.0	& 142	& 31	\\
+		\hline
+		{\bf Total}	& 629	& 91	& 157	& 68	& 32	& 902	& 93	& 42.6 	& 5709	& 1827	\\
+	\end{tabular}
+	\end{center}
+	\caption{Summary of bugs and data races found by each test program.
+		SSS-MC is the control; QS is \quicksand.
+		``DR-only bugs'' counts among \quicksand's bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}});
+	among those, ``Nondeterministic DR bugs'' counts how many candidates required MC integration to identify (\sect{\ref{sec:eval-dr}}).
+	``Malloc-recycle DRs'' counts how many false positives we suppressed (\sect{\ref{sec:eval-dr}}).
+	``Mutual time-outs'' counts how often both SSS-MC and \quicksand~timed out with no bug found;
+	among those, ``Average tested subset SSes'' counts how many partial verifications \quicksand~provided on average for each test (\sect{\ref{sec:eval-sssmc}}).
+	``Total DR PPs'' counts how many unique data-racing instructions we identified among tests where we found no bugs;
+	among those, ``Untested DR PPs'' counts how many could not be checked in the time limit (\sect{\ref{sec:future}}).
+		}
+	\label{tab:drbugs}
+\end{table*}
+
 % TODO CAMREADY: Compare QS-ETAs to QS-Random to evaluate "smaller is better" claim.
 % TODO: Nix discussion of QS-no-DR-bugs. Just do QS-no-DR-PPs.
 {\bf Finding the same bugs faster.}
@@ -272,8 +306,8 @@ we consider this strong evidence that new low-level synchronization code must be
 \revision{The QS-Sync-Only experiment tests whether}~Iterative Deepening is effective even for MC domains without data races.
 \revision{When \quicksand~ignores all data-race candidates,
 its results are competitive with SSS-MC-DPOR, but SSS-MC-ICB outperforms it.
-This is unsurprising: the seed subsets of PPs (\sect{\ref{sec:initial-pp}}) QS-Sync-Only is limited to are much less flexible than ICB.
-This result suggests that in future work, \quicksand~should consider using ICB in parallel with its initial PP configuration when it finds no data-race candidates to test.}
+This is unsurprising: the seed subsets of PPs (\sect{\ref{sec:initial-pp}}) QS-Sync-Only is limited to are much less flexible than ICB's preemption strategy.
+This result suggests that in future work, \quicksand~should consider using ICB in parallel with its default configuration when it finds no data-race candidates to test.}
 %\footnote{
 %Because \quicksand~is not yet instrumented to subset hard-coded PPs beyond the 4 ways shown in Figure~\ref{fig:id},
 %we ran these tests for 2.5 hours on 4 CPUs each.
@@ -310,51 +344,10 @@ the sheer number of accesses during each new execution (often thousands) added s
 	\revision{The bug-finding performance of SSS-MC-ICB approach could be improved by heuristically
 	%preempting only on data-race candidates found in advance by a single-pass analysis
 	using a single-pass analysis to find data-race PP candidates in advance
-	\cite{portend}, but this sacrifices soundness, as shown in \sect{\ref{sec:eval-falseneg}}.}
+	\cite{portend}, but this sacrifices soundness, as shown in \sect{\ref{sec:eval-dr}}.}
 }.
 Iterative Deepening avoids this overhead by waiting until runtime to identify fewer, more relevant PPs dynamically,
 and is hence more suitable for MC with data-race PPs.}
-
-
-% TODO: fix this table.
-\begin{table*}[t]
-	\begin{center}
-		\small
-	\begin{tabular}{r|c||c|c|c|c|c||c|c||c|c}
-		% TODO: Update SSSMC column to have more favourable ICB numbers.
-		& {\bf Num.} & {\bf SSS-MC} & {\bf QS} & {\bf DR-only} & {\bf Nondet.} & {\bf Malloc-} &
-		{\bf Mutual} & {\bf Avg. tested} & {\bf Total} & {\bf Untested} \\
-		{\bf Test name} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR bugs} & {\bf recycle DRs} &
-		{\bf time-outs} & {\bf subset SSes} & {\bf DR PPs} & {\bf DR PPs} \\
-		\hline
-		% FIXME: update FRMs
-				% #test  sssmc   qs      dronly  nondets  FRMs   timeout comp.SSes DRPPs untested DRPPs
-		{\tt bcast}	& 79	& 7	& 11	& 4	& 4	& 51	& 0	& -	& 912	& 107	\\
-		{\tt join} 	& 79	& 14 	& 24	& 10	& 6	& 333	& 5	& 60.8	& 781	& 292	\\
-		{\tt mx} 	& 79	& 1	& 10	& 9	& 1	& 7	& 0	& -	& 829	& 1	\\
-		{\tt sem} 	& 79	& 10	& 16	& 6	& 5	& 140	& 29	& 73.3	& 753	& 279	\\
-		{\tt signal} 	& 79	& 4	& 10	& 7	& 6	& 180	& 10	& 54.2	& 1118	& 391	\\
-		{\tt rwlock} 	& 79	& 26	& 28	& 2	& 2	& 125	& 19	& 29.6	& 915	& 634	\\
-		\hline
-		{\tt sched} 	& 59	& 1	& 7	& 6	& 4	& 0	& 0	& -	& 144	& 3	\\
-		{\tt alarm} 	& 44	& 5	& 21	& 17	& 3	& 35 	& 22	& 9.1	& 115	& 89	\\
-		{\tt wait} 	& 52	& 23	& 30	& 7	& 1	& 31	& 8	& 28.0	& 142	& 31	\\
-		\hline
-		{\bf Total}	& 629	& 91	& 157	& 68	& 32	& 902	& 93	& 42.6 	& 5709	& 1827	\\
-	\end{tabular}
-	\end{center}
-	\caption{Summary of bugs and data races found by each test program.
-		SSS-MC is the control; QS is \quicksand.
-		``DR-only bugs'' counts among \quicksand's bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}});
-	among those, ``Nondeterministic DR bugs'' counts how many candidates required MC integration to identify (\sect{\ref{sec:eval-falseneg}}).
-	``Malloc-recycle DRs'' counts how many false positives we suppressed (\sect{\ref{sec:eval-falsepos}}).
-	``Mutual time-outs'' counts how often both SSS-MC and \quicksand~timed out with no bug found;
-	among those, ``Average tested subset SSes'' counts how many partial verifications \quicksand~provided on average for each test (\sect{\ref{sec:eval-sssmc}}).
-	``Total DR PPs'' counts how many unique data-racing instructions we identified among tests where we found no bugs;
-	among those, ``Untested DR PPs'' counts how many could not be checked in the time limit (\sect{\ref{sec:future}}).
-		}
-	\label{tab:drbugs}
-\end{table*}
 
 {\bf Partial verification.}
 When a MC job times out, the user may prefer a brief summary of what parts of the test were verified, rather than writing off all the CPU time as a waste.
@@ -380,15 +373,37 @@ it would only be found by a new data-race PP not discovered yet, or by a superse
 %In Table~\ref{tab:allbugs} ....
 
 {\bf Full verification.}
+% TODO: Discuss how ICB sucks even more.
 For 153 of our 629 tests, \quicksand~was able to provide the total verification guarantee described in \sect{\ref{sec:totalverif}}.
-In Figure~\ref{fig:totalverif} we plot the cumulative distribution of \quicksand's total verifications before a given elapsed CPU consumption.
-Among these, 36 tests contained no data-race candidates whatsoever,
-so the same verification could be provided by SSS-MC.
-We plot these for comparison,
-according to the time taken by that test's SSS-MC control experiment.
-When a test can be totally verified without any data-race PPs,
-\quicksand~may be slower than SSS-MC due to redundant work (\sect{\ref{sec:future}}).
-Of course, using data-race PPs increases our capacity for total verification by 4.25x.
+In Figure~\ref{fig:totalverif} we plot the cumulative distribution of \quicksand's total verifications
+%before a given elapsed CPU consumption.
+\revision{against those provided by SSS-MC-Shared-Mem\footnote{
+	\revision{In kernel or thread library code, a thread's own stack accesses may not always be private. %assumption may not hold.
+	For example, many P2 condvars use stack-allocated list nodes to track waiting threads.
+	SSS-MC-Shared-Mem's verifications are only sound in the absence of such sharing!
+	\quicksand~detects these dynamically, without needing to discriminate between stack and heap.}
+	%Expanding the statically-coded PPs to include stack accesses would make SSS-MC-Shared-Mem's performance even worse.
+	% Especially for testing kernel-level code, deciding which of a thread's memory accesses are shared versus private is nonstraightforward, as threads may share data structures allocated on their own stacks for synchronization. Hence, the common heuristic of ignoring stack accesses as private (which we employ for this control experiment) introduces some unsoundndess.
+}.
+\quicksand~outperforms SSS-MC, being able to verify safety for
+% TODO
+{\bf 99x}
+as many tests in 10 CPU-hours.
+We attribute this again to the overhead of the sheer number of statically-coded PPs that SSS-MC-Shared-Mem must use,
+as well as to the work which ICB necessarily repeats when increasing its preemption bound.}
+
+Among these verified tests, 36 contained no data-race candidates whatsoever,
+so the same verification could be provided
+%by SSS-MC
+\revision{with synchronization PPs only.
+We plot the verifications by QS-Sync-Only, SSS-MC-DPOR and SSS-MC-ICB as well:
+among these, the otherwise more antiquated SSS-MC-DPOR performs best,
+while the other two lag behind
+}
+%\quicksand~is slower than SSS-MC-DPOR
+due to redundant work (\sect{\ref{sec:future}}).
+\revision{While QS-Sync-Only and SSS-MC-ICB are competitive with each other},
+using data-race PPs increases our \revision{verification capacity}~by 4.25x.
 
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{totalverifs-squashed.pdf}
@@ -396,14 +411,12 @@ Of course, using data-race PPs increases our capacity for total verification by 
 	Some tests had no data-race candidates, and hence could also be verified by SSS-MC.}
 	\label{fig:totalverif}
 \end{figure}
-% TODO
-% Especially for testing kernel-level code, deciding which of a thread's memory accesses are shared versus private is nonstraightforward, as threads may share data structures allocated on their own stacks for synchronization. Hence, the common heuristic of ignoring stack accesses as private (which we employ for this control experiment) introduces some unsoundndess.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Avoiding false positive data-race candidates}
-\label{sec:eval-falsepos}
+\subsection{Comparing to single-pass data-race analysis}
+\label{sec:eval-dr}
 % Though we mechanically verify whether each data race candidate leads to a bug, each new PP can increase combinatorially..... obviously wish to avoid...
 
 Beyond finding new bugs with data-race PPs, we evaluated \quicksand's performance for classifying data-race candidates in two ways.
@@ -424,17 +437,14 @@ However, \quicksand~was able to correctly identify the 69 violations of that heu
 and fall back to classifying them with DPOR.
 %which we consider a much stronger verification.
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Finding nondeterministic data-race candidates}
-\label{sec:eval-falseneg}
 %For the [NONDET] expt, you don't need to additionally count how many DRs
 %needed to be found in a DR-PP state space, because when EXPLORE_BACKWARDS=0,
 %you'll need to preempt on the DR PP to find the new DR anyway, hence they will
 %be nondet. Unless you want to separately count the subset of nondet drs that
 %are also dr-pp-ss-only (the reviewers may ask for this before cam-ready?).
-
+{\bf \revision{Finding nondeterministic data-race candidates}.}
 Some memory accesses may be hidden in a control flow path that requires a nondeterministic preemption to be executed.
 In such cases, a single-pass dynamic data-race detector
 %could not achieve the coverage necessary

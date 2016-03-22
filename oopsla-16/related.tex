@@ -127,7 +127,7 @@ and additionally reports non-failing races which nevertheless cause
 %suspiciously
 different program output. %, which is orthogonal to our technique.
 However, Portend does not test alternate interleavings {\em in advance} of knowing any specific data races,
-which is necessary to find certain bugs (\sect{\ref{sec:eval-falseneg}}) or to provide full verification (\sect{\ref{sec:totalverif}}).
+which is necessary to find certain bugs (\sect{\ref{sec:eval-dr}}) or to provide full verification (\sect{\ref{sec:totalverif}}).
 % Not really true.
 %It also assumes the POSIX synchronization API, so cannot verify arbitrary synchronization algorithms such as we do with \mxtest.
 Future work could combine the two approaches, using MC to produce new data-race traces for Portend to classify, or using Portend's analysis to inform \quicksand's heuristic priorities.
