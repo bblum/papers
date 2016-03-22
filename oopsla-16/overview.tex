@@ -141,8 +141,9 @@ accepting some overhead from false positives for the sake of total verification 
 	5 & & \texttt{mutex\_lock(\&mx);} \\
 	6 & & \texttt{bool tmp = y;} \\
 	7 & & \texttt{mutex\_unlock(\&mx);} \\
-	8 & & \texttt{if (tmp)} \\
-	9 & & \texttt{~~~~\hilight{brickred}{x++;}~// B2} \\
+	8 & & \texttt{if (tmp) \hilight{brickred}{x++;}~// B2} \\
+	%8 & & \texttt{if (tmp)} \\
+	%9 & & \texttt{~~~~\hilight{brickred}{x++;}~// B2} \\
 \end{tabular}
 }
 \\
