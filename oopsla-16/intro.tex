@@ -35,10 +35,19 @@ a model checking framework for deciding at runtime which preemption points to te
 according to which resulting state spaces are most likely to fit a prescribed CPU budget.
 It uses data-race analysis \cite{eraser} to dynamically find new preemption points which expose bugs not reachable by preempting on API calls alone.
 When prior work would time out on large tests by trying several preemption points simultaneously,
-\quicksand~tests smaller state spaces based on subsets of those points, which often finds the same bugs sooner.
+\quicksand~\revision{identifies these pitfalls in advance using state space estimation \cite{estimation},
+and instead}~tests smaller state spaces based on subsets of those points.
+\revision{Often, testing these}~smaller state spaces can even find the same bugs sooner.
+
 On the other hand, when the CPU budget is large enough to fully test all data-race preemption points,
 we prove that this constitutes a total verification of all possible thread schedules.
-Short of deciding in advance to preempt on every single instruction \cite{spin}, this was not previously possible without data-race preemption points.
+%Short of deciding in advance to preempt on every single instruction \cite{spin}, this was not previously possible without data-race preemption points.
+\revision{To achieve the same level of verification, prior model checkers must decide}~in advance to preempt on every single memory access \cite{spin}, \revision{which is computationally prohibitive for
+%even moderately-sized
+larger tests.
+Our approach provides the best of both worlds:
+by estimating the size of the test on-the-fly, \quicksand~can find bugs quickly in large tests {\em and} provide fast total verification for small ones.}
+
 
 We evaluate \quicksand~by testing \numstudence~student thread libraries and kernels from the undergraduate operating systems classes at Carnegie Mellon University, University of California at Berkeley, and University of Chicago.
 %We show many advantages over both conventional stateless model checking and single-pass data-race analysis.
