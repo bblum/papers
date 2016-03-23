@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 
+#if 1
 #define END (36000.0)
 // QS DRs
 long double series1[] = {
@@ -52,6 +53,7 @@ long double series2[] = {
 795.725917, 843.174624, 970.285112, 1387.089948, 1410.237694, 1822.463231,
 2582.530643, 20959.641808, END
 };
+#endif
 
 
 #if 0
@@ -93,6 +95,25 @@ long double series2[] = {
 	1.0,
 	2.0,
 	3.0,
+	END
+};
+#endif
+#if 0
+// Test case -- expect total logarithmic area to be 5
+#define END M_E * M_E * M_E * M_E * M_E
+long double series1[] = {
+	1,
+	M_E,
+	M_E * M_E,
+	M_E * M_E * M_E,
+	M_E * M_E * M_E * M_E,
+	END
+};
+long double series2[] = {
+	M_E,
+	M_E * M_E,
+	M_E * M_E * M_E,
+	M_E * M_E * M_E * M_E,
 	END
 };
 #endif
