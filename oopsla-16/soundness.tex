@@ -106,15 +106,15 @@ Hence, Iterative Deepening will eventually test a state space containing the equ
 
 We identify a particular class of false positive data-race candidates in which the associated memory was recycled by re-allocation between the two accesses.
 Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can expose such behaviour.
-If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 7 will be flagged as a data race.
-We call this a {\em malloc-recycle data race}.
+If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 7 will be flagged as a \revision{potential}~data race.
+We call this a {\em malloc-recycle data race \revision{candidiate}}.
 To the human eye, this is obviously a false positive: reordering lines 4-7 before lines 1-2 will change {\tt malloc}'s return value, causing {\tt x} and {\tt y} to no longer collide.
 Here, Thread 2's logic usually corresponds to an initialization pattern \cite{eraser}, but for generality we have added a {\tt publish} action on line 6.
 
 % This class of false positive is unique to heap-allocated memory, among all ways threads could communicate. By contrast, global memory has unlimited lifetime, and message-passing primitives enforce a must-happens-before relationship which precludes the race.
 
 %However,
-When limited to a single test execution, suppressing any data race matching this pattern is unsound.
+When limited to a single test execution, suppressing any data race \revision{candidate}~matching this pattern is unsound.
 Consider the more unusual program in Figure~\ref{fig:recycle-bug},
 in which the memory is recycled the same way, but the racing access's address is not tied to {\tt malloc}'s return value.
 Here, reordering lines 6-7 before line 3 will allow {\tt x} and {\tt x2} to race.
@@ -148,7 +148,7 @@ Here, reordering lines 6-7 before line 3 will allow {\tt x} and {\tt x2} to race
 	6 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
 	7 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
 \end{tabular}
-\caption{If a single-pass data race detector discarded candidates matching the malloc-recycle pattern,
+	\caption{If a single-pass \revision{Limited HB analysis}~discarded candidates matching the malloc-recycle pattern,
 it would miss the bug in this adversarial program.}
 \label{fig:recycle-bug}
 \end{figure}
@@ -164,19 +164,19 @@ it would miss the bug in this adversarial program.}
 %the hybrid approach combining lockset tracking and the {\em limited} happens-before relation is not vulnerable to false negatives,
 
 Fortunately, when data-race detection is combined with DPOR and Iterative Deepening, pruning all malloc-recycle candidates is sound, even considering adversarial programs such as Figure~\ref{fig:recycle-bug}.
-This makes it unnecessary to verify such data races by actively adding more preemptions,
+This makes it unnecessary to verify such \revision{candidates}~by actively adding more preemptions,
 achieving a potentially combinatorial reduction in how many state spaces we generate.
 %Intuitively, we need not worry about cases such as Figure~\ref{fig:recycle-bug} because,
 %should they be true races,
 %DPOR will reorder threads sufficiently for the malloc-recycle pattern to disappear.
 We provide a proof sketch below.
 
-\begin{theorem}[Soundness of eliminating malloc-recycle races]
-If a malloc-recycle data race is not a false positive,
+\begin{theorem}[Soundness of eliminating malloc-recycle candidates]
+	If a malloc-recycle \revision{candidate}~is not a false positive,
 %DPOR will reorder threads such that
 DPOR will test an alternate thread interleaving in which
 %either
-the accesses still race without fitting the malloc-recycle pattern.
+the accesses can race without fitting the malloc-recycle pattern.
 %, or a use-after-free bug will be reported immediately.
 \end{theorem}
 
@@ -188,12 +188,12 @@ followed by an access $a_2$ by the other thread T2. % not depending on the resul
 Without loss of generality, we say that T1 performs the {\tt free} and T2 the subsequent {\tt malloc}. %; the other cases are similar.
 We also assume the only way for the program to get pointers to heap memory is through {\tt malloc};
 hence, there must also be some ``publish'' action $p$ by T1 which communicates the address to T2.
-Because this is a true data race, $p$ must occur before $a_1$, as $a_2$ cannot be reordered before $p$.
+Because this is a true \revision{potential}~data race, $p$ must occur before $a_1$, as $a_2$ cannot be reordered before $p$.
 
 We require that a PP will be identified during T1 between $p$ and $a_1$.
 The publish action must involve some thread communication, whether through a shared data structure or message-passing API.
 If locking or message-passing is used, our set of hard-coded PPs suffices to provide a PP.
-Otherwise, $p$ (and the corresponding read by T2) will be a data race, although that may itself be a malloc-recycle race.
+	Otherwise, $p$ (and the corresponding read by T2) will be a \revision{potential}~data race, although that may itself be a malloc-recycle \revision{candidate}.
 In this case we use induction on the pointer chain leading to the shared address containing $p$:
 in the base case, $p$ is communicated via global data or message-passing,
 and in the inductive step, DPOR will reorder threads sufficiently to identify the PP on $p$.

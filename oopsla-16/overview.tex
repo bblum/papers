@@ -77,6 +77,18 @@ and no synchronization enforces an order on the thread transitions \revision{(th
 Data races \revision{do not always lead to failures}, but represent suspicious violations of common locking discipline.
 In Figure~\ref{fig:example}, lines 3 and 5 each race with 2 and 6, and line 6 races with 8.
 
+\revision{
+A data race analysis may be either {\em static} (inspecting source code) \cite{racerx} or {\em dynamic} (tracking individual accesses arising at run-time) \cite{tsan}.
+This paper focuses exclusively on dynamic analysis,
+so although our example refers to numbered source lines for ease of explanation,
+in practice we are actually classifying the individual memory access events corresponding to those lines during execution.
+}
+
+%\revision{Among these, only the races involving lines 3 and 5 are relevant to the possible assertion failure;
+%permuting the order of line 8 alone
+%% relative to 2 and 6
+%will not change the program's behaviour.}
+
 Though state-of-the-art model checkers preempt only on synchronization events,
 many serious concurrency bugs are caused by data races leading to corrupted shared state.
 Figure~\ref{fig:example}'s buggy interleaving is possible only with {\em data-race preemption points}:
