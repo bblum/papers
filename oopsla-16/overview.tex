@@ -178,22 +178,18 @@ while using Limited HB on (b) will produce a false alarm on B1/B2.}}
 \subsection{Terminology}
 
 For the rest of the paper, we will abbreviate {\em preemption point} (PP),
-%For the remainder of the paper, we will abbreviate {\em preemption point} (PP),
+\revision{{\em happens-before} (HB)},
 {\em model checking} (MC),
 {\em single-state-space model checking} (SSS-MC), % (i.e., the approach of prior work),
 {\em Dynamic Partial Order Reduction} (DPOR), and {\em state space estimate} (ETA).
 
 SSS-MC indicates the approach of prior tools:
 the set of PPs is fixed in advance, and the tool commits to testing every interleaving available with those PPs.
-%Reduction techniques are often used to skip equivalent interleavings \cite{dpor}, and search-ordering strategies
 Many techniques can skip equivalent interleavings or order the search to uncover bugs faster \cite{dpor,demeter,chess-icb,gambit,smc-empirical-study},
 but new PPs cannot be added, nor ineffective ones removed, by any dynamic analysis.
 
 Although all data races are undefined behaviour in C and C++ \cite{boehm-memorymodels},
 we distinguish between data-race {\em candidates} and data-race {\em bugs}.
-% old explanation
-%Because data-race analysis is prone to false-positives,
-%we classify unprotected memory access pairs separately from bugs,
 \revision{We refer to racing (or potentially-racing) memory access pairs as}~{\em data race candidates}.
 Should a future interleaving, preempting during such accesses,
 lead to \revision{an observable}~failure, then we report a {\em data-race bug}.

@@ -6,9 +6,7 @@
 
 We chose \landslide~\cite{landslide} as our MC tool due to its ability to trace execution at the granularity of individual instructions and memory accesses, which dynamic data-race detection requires.
 \landslide~implements DPOR \cite{dpor},
-%\cite{dpor},
 state space estimation \cite{estimation}, and a hybrid
-%lockset/happens-before
 data-race analysis \cite{hybriddatarace}.
 \revision{It can optionally replace DPOR with Iterative Context Bounding (ICB) \cite{chess-icb},
 for which it uses Bounded Partial Order Reduction (BPOR) \cite{bpor} for a similar sound reduction,
@@ -31,7 +29,7 @@ Rather than preempting indiscriminately on any synchronization call, regardless 
 Before inserting a PP, \landslide~requires at least one argument to {\tt within\_function} to appear in the current thread's stack trace.
 %Similarly, the {\tt without\_function} directive indicates a blacklist,
 %serving as the dual of {\tt within\_function}.
-The {\tt without\_\allowbreak{}function} directive is the dual of {\tt within\_function}, indicating a blacklist.
+The {\tt without\_\allowbreak{}function} directive \revision{serves as}~the dual of {\tt within\_function}, indicating a blacklist.
 We use this feature to restrict the scope of some tests in our evaluation (\sect{\ref{sec:testsuite}}),
 \revision{similarly to Preemption Sealing from prior work \cite{sealing}}.
 %Multiple invocations can be used; later ones take precedence.

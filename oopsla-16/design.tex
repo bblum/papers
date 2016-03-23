@@ -7,7 +7,6 @@ Iterative Deepening
 makes progressively deeper searches of the state space until the CPU budget is exhausted.
 In this context, the depth is the number of PPs used.
 Hence, our tool \quicksand~schedules multiple MC instances in parallel to simultaneously test many different subsets of the available PPs.
-%which we refer to as {\em jobs}.
 We refer to each unique set of PPs as a {\em job},
 and prioritize them based on number of PPs, ETA, and whether they include data-race PPs,
 We rely on state-space estimation \cite{estimation}
@@ -181,12 +180,10 @@ we prefer to add multiple smaller jobs which have a higher chance of completing 
 $A =$ \GetPPSet{$j_0$} $\cup$ $\alpha$ and
 $B =$ \GetPPSet{$j_0$} $\cup$ $\beta$.
 If $A$ and $B$ are bug-free, they will in turn add $AB$ later.
-%We take care to avoid duplicating any superset state spaces with PPs on multiple data races.
 The condition on line 1 ensures that we avoid duplicating any state spaces with multiple data-race PPs;
 for example, $AB$ is reachable by multiple paths through its different subsets, but should be added only once.
 
 Furthermore, we do not always strictly increase the number of PPs when we find a new data race.
-%When \quicksand~receives a data race report, it adds two new jobs to its workqueue:
 For each instruction involved in a data race, \quicksand~adds two new jobs:
 a ``small'' job to preempt on that instruction only (line 5),
 and a ``big'' job to preempt on that instruction as well as each PP used by the reporting job (line 2).
@@ -195,12 +192,11 @@ Hence,
 %together with the logic in \sect{\ref{sec:classifying}},
 each {\em pair} of racing accesses will spawn four new jobs, as shown in Figure~\ref{fig:new-dr-jobs}.
 %
-The rationale of spawning multiple jobs is that we don't know in advance which will be most fruitful: %which will be most fruitful is not known in advance:
+The rationale of spawning multiple jobs is that we don't know in advance which will be most fruitful:
 while the big job risks not completing in time,
 the small job risks missing the data race entirely if the original PPs were required to expose it.
 % TODO CAMREADY: Put numbers here.
 In practice, we observed some bugs found quickly by these small jobs, and other bugs missed by the small jobs found eventually by the big jobs.
-%which motivates the need for Iterative Deepening to prioritize the jobs at runtime.
 This phenomenon motivates Iterative Deepening to prioritize the jobs at run-time.
 
 \begin{figure}[t]
@@ -214,7 +210,6 @@ The new state spaces may expose a failure, in which case we report a data-race b
 or complete successfully, indicating a benign or false-positive data race.
 They may also uncover a new data-race candidate entirely, %in some alternate interleaving,
 in which case we may iteratively advance to a superset state space containing PPs for both racing access pairs.
-%Because Iterative Deepening is
 Being constrained by a CPU budget,
 we may time out before completing a data race's associated state space,
 in which case we report a potential false positive that the user must handle (\sect{\ref{sec:future}}).
@@ -256,14 +251,10 @@ so that their ETAs have some time to stabilize.
 
 We classify data-race candidates as {\em single-order} or {\em both-order} \cite{portend}
 based on whether the MC observed the racing instructions ordered one or both ways in the original state space,
-Single-order candidates are more likely to be false positives,
+Single-order candidates are more likely to be false positives (\sect{\ref{sec:overview-dr}}),
 although preempting during the access itself is necessary to say for sure.
 Hence, we add PPs for both types of candiates, and heuristically prioritize jobs with both-order data-race PPs
 (indicated by the HeuristicPriority($\alpha$) call in Algorithm~\ref{alg:handledatarace}).
-%Jobs with both-order data-race PPs are prioritized higher,
-%because single-order candidates are more likely to be false-positives.
-%(though before preempting during the access itself, we cannot say for sure, hence the heuristic).
-%so we prioritize jobs with both-order data-race PPs.
 For single-order races, we do not initially add a PP for the later access at all:
 if preempting on the first access can reorder the race, it will be upgraded to both-order in the new state space, and we will add the second PP then.
 %should it be needed, preempting on the first access will suffice to upgrade the race to both-order.

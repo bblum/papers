@@ -29,6 +29,7 @@ A proof sketch of the contrapositive statement follows.
 \begin{theorem}[Convergence]
 If a bug can be exposed by any thread interleaving possible by preempting on all instructions during a specific test,
 Iterative Deepening will eventually test an equivalent interleaving which exposes the same bug.
+	\label{thm:convergence}
 \end{theorem}
 \begin{proof}
 The proof has two parts:
@@ -111,8 +112,6 @@ We call this a {\em malloc-recycle data race \revision{candidiate}}.
 To the human eye, this is obviously a false positive: reordering lines 4-7 before lines 1-2 will change {\tt malloc}'s return value, causing {\tt x} and {\tt y} to no longer collide.
 Here, Thread 2's logic usually corresponds to an initialization pattern \cite{eraser}, but for generality we have added a {\tt publish} action on line 6.
 
-% This class of false positive is unique to heap-allocated memory, among all ways threads could communicate. By contrast, global memory has unlimited lifetime, and message-passing primitives enforce a must-happens-before relationship which precludes the race.
-
 %However,
 When limited to a single test execution, suppressing any data race \revision{candidate}~matching this pattern is unsound.
 Consider the more unusual program in Figure~\ref{fig:recycle-bug},
@@ -122,8 +121,10 @@ Here, reordering lines 6-7 before line 3 will allow {\tt x} and {\tt x2} to race
 \begin{figure}[t]
 	\small
 \begin{tabular}{rll}
-	%& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \} *x;}} \\
-	%& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \} *y;~~~~~~~~~~}} \\
+	% TODO: Can cut struct defns for space.
+	& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \} *x;}} \\
+	& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \} *y;~~~~~~~~~~}} \\
+	\\
 	& {\bf Thread 1} & {\bf Thread 2} \\
 	1 & \texttt{\hilight{brickred}{x->foo = ...;}} & \\
 	2 & \texttt{\hilight{olivegreen}{free}(x);} \\
@@ -152,16 +153,6 @@ Here, reordering lines 6-7 before line 3 will allow {\tt x} and {\tt x2} to race
 it would miss the bug in this adversarial program.}
 \label{fig:recycle-bug}
 \end{figure}
-
-%%Because concurrent {\tt malloc} is often implemented with an internal lock, under a {\em pure} happens-before analysis,
-%Note that under a {\em pure happens-before} analysis,
-%these accesses are not considered concurrent % at all
-%because of {\tt malloc}'s internal locking events,
-%and would not result in such false positives.
-%However, pure happens-before can miss many real bugs \cite{hybriddatarace,tsan},
-%so in our context it is more appropriate to use the
-%{\em limited happens-before} relation in a hybrid approach with lockset tracking.
-%the hybrid approach combining lockset tracking and the {\em limited} happens-before relation is not vulnerable to false negatives,
 
 Fortunately, when data-race detection is combined with DPOR and Iterative Deepening, pruning all malloc-recycle candidates is sound, even considering adversarial programs such as Figure~\ref{fig:recycle-bug}.
 This makes it unnecessary to verify such \revision{candidates}~by actively adding more preemptions,
@@ -208,8 +199,6 @@ can race without fitting the malloc-recycle pattern.
 \end{proof}
 \renewcommand\proofname{Proof}
 
-Note that we do not require PPs on the internal lock of {\tt malloc} or {\tt free},
-which are ideal candidates to ignore via {\tt without\_function} (\sect{\ref{sec:landslide}}) to reduce state space size.
 
 We implemented a simple check in \landslide~to recognize the malloc-recycle pattern:
 %We mechanically recognize when {\tt x} and {\tt y} correspond to different abstract allocations despite colliding on address,
@@ -219,3 +208,27 @@ We implemented a simple check in \landslide~to recognize the malloc-recycle patt
 each heap allocation is given a unique ID,
 and when evaluating whether two heap accesses can race,
 the IDs of their containing blocks must match.
+Note that \revision{this proof does}~not require PPs on \revision{{\tt malloc}'s internal lock},
+%the internal lock of {\tt malloc} or {\tt free},
+which is an ideal candidate to ignore via {\tt without\_function} (\sect{\ref{sec:landslide}}) to reduce state space size.
+
+\revision{This class of false positive is unique to heap-allocated memory among all ways threads could communicate.
+By contrast, global memory has unlimited lifetime,
+and message-passing primitives enforce an ordering which precludes the race. %(even under Limited HB).
+Finally, note that as long as concurrent {\tt malloc} is implemented with an internal lock,
+these false positives are of concern only under a Limited HB analysis (\sect{\ref{sec:overview-dr}}).
+Nevertheless,
+%our previous proof's
+Theorem~\ref{thm:convergence}'s need for the Limited HB definition justifies our choice of it over Pure HB.
+% TODO CAMREADY: Cite the tech report proofs, which I think call out the use of limited HB in the proof more explicitly.
+}
+
+%%Because concurrent {\tt malloc} is often implemented with an internal lock, under a {\em pure} happens-before analysis,
+%Note that under a {\em pure happens-before} analysis,
+%these accesses are not considered concurrent % at all
+%because of {\tt malloc}'s internal locking events,
+%and would not result in such false positives.
+%However, pure happens-before can miss many real bugs \cite{hybriddatarace,tsan},
+%so in our context it is more appropriate to use the
+%{\em limited happens-before} relation in a hybrid approach with lockset tracking.
+%the hybrid approach combining lockset tracking and the {\em limited} happens-before relation is not vulnerable to false negatives,
