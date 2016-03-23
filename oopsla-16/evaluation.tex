@@ -226,20 +226,21 @@ and ultimately concludes 10 CPU-hours with \revision{151}\% as many bugs in tota
 However, converting SSS-MC's early CPU-time advantage into faster wall-clock performance remains an open research problem \cite{parallel-dpor}.
 In Figure~\ref{fig:dowefindbugsfaster}(b), we give \quicksand~full credit for its inherent parallelism, and it outperforms SSS-MC for any fixed budget of wall-clock time.}
 
-\revision{
-%{\bf Variance.}
-% TODO CAMREADY: Probably will need at least a 3rd run of dis.
-Because \quicksand~can be nondeterministic in its scheduling of state spaces,
-we ran the QS-DR tests a second time to quantify the variance.
 % TODO CAMREADY
-% We found the maximum area between any two QS-DR curves to be
-We found the area between the two QS-DR curves to be
-% TODO
-{\bf XX\%}
-of the area between QS-DR and SSS-MC-ICB (the next closest),
-% TODO cite
-which we consider an insignificant amount of variance.
-}
+%\revision{
+%%{\bf Variance.}
+%% TODO CAMREADY: Probably will need at least a 3rd run of dis.
+%Because \quicksand~can be nondeterministic in its scheduling of state spaces,
+%we ran the QS-DR tests a second time to quantify the variance.
+%% TODO CAMREADY
+%% We found the maximum area between any two QS-DR curves to be
+%We found the area between the two QS-DR curves to be
+%% TODO
+%{\bf XX\%}
+%of the area between QS-DR and SSS-MC-ICB (the next closest),
+%% TODO cite
+%which we consider an insignificant amount of variance.
+%}
 
 
 % TODO: Fix up this paragraph after preempt-everywhere results come in.
@@ -276,27 +277,30 @@ we consider this strong evidence that new low-level synchronization code must be
 					% TODO: update to be ShMem not DPOR
 											% TODO: recount with ICB
 				% #test  sssmc   icb      qs      dronly  nondets  FRMs   timeout comp.SSes DRPPs untested DRPPs
-		{\tt bcast}	& 79	& 7	& TODO	& 11	& 4	& 4	& 51	& 0	& -	& 912	& 107	\\
-		{\tt join} 	& 79	& 14 	&	& 24	& 10	& 6	& 333	& 5	& 60.8	& 781	& 292	\\
-		{\tt mx} 	& 79	& 1	&	& 10	& 9	& 1	& 7	& 0	& -	& 829	& 1	\\
-		{\tt sem} 	& 79	& 10	&	& 16	& 6	& 5	& 140	& 29	& 73.3	& 753	& 279	\\
-		{\tt signal} 	& 79	& 4	&	& 10	& 7	& 6	& 180	& 10	& 54.2	& 1118	& 391	\\
-		{\tt rwlock} 	& 79	& 26	&	& 28	& 2	& 2	& 125	& 19	& 29.6	& 915	& 634	\\
+			% TODO: If possible, add a column for how many false negatives (incorrect verif claims) ShMem had.
+		{\tt bcast}	& 79	& 7	& 7	& 11	& 4	& 4	& 51	& 0	& -	& 912	& 107	\\
+		{\tt join} 	& 79	& 14 	& 14	& 24	& 10	& 6	& 333	& 5	& 60.8	& 781	& 292	\\
+		{\tt mx} 	& 79	& 1	& 1	& 10	& 9	& 1	& 7	& 0	& -	& 829	& 1	\\
+		{\tt sem} 	& 79	& 10	& 11	& 16	& 6	& 5	& 140	& 29	& 73.3	& 753	& 279	\\
+		{\tt signal} 	& 79	& 4	& 4	& 10	& 7	& 6	& 180	& 10	& 54.2	& 1118	& 391	\\
+		{\tt rwlock} 	& 79	& 26	& 27	& 28	& 2	& 2	& 125	& 19	& 29.6	& 915	& 634	\\
 		\hline
-		{\tt sched} 	& 59	& 1	&	& 7	& 6	& 4	& 0	& 0	& -	& 144	& 3	\\
-		{\tt alarm} 	& 44	& 5	&	& 21	& 17	& 3	& 35 	& 22	& 9.1	& 115	& 89	\\
-		{\tt wait} 	& 52	& 23	&	& 30	& 7	& 1	& 31	& 8	& 28.0	& 142	& 31	\\
+		{\tt sched} 	& 59	& 1	& 1	& 7	& 6	& 4	& 0	& 0	& -	& 144	& 3	\\
+		{\tt alarm} 	& 44	& 5	& 16	& 21	& 17	& 3	& 35 	& 22	& 9.1	& 115	& 89	\\
+		{\tt wait} 	& 52	& 23	& 23	& 30	& 7	& 1	& 31	& 8	& 28.0	& 142	& 31	\\
 		\hline
-		{\bf Total}	& 629	& 91	&	& 157	& 68	& 32	& 902	& 93	& 42.6 	& 5709	& 1827	\\
+		{\bf Total}	& 629	& 91	& 104	& 157	& 68	& 32	& 902	& 93	& 42.6 	& 5709	& 1827	\\
 	\end{tabular}
 	\end{center}
 	\caption{Summary of bugs and data races found by each test program.
-		% TODO
-		DPOR is the control; QS is \quicksand.
+		% TODO: Add Shared-Mem
+		DPOR/ICB are the controls; QS is \quicksand.
 		``DR bugs'' counts among \quicksand's bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}});
 	among those, ``Nondeterministic DR bugs'' counts how many candidates required MC integration to identify (\sect{\ref{sec:eval-dr}}).
 	``Malloc DRs'' counts how many malloc-recycle false positives we suppressed (\sect{\ref{sec:eval-dr}}).
-	``Mutual timeouts'' counts how often both SSS-MC and \quicksand~timed out with no bug found;
+	% TODO CAMREADY: count timeouts for ICB instead?
+	``Mutual timeouts'' counts how often both SSS-MC-DPOR and \quicksand~timed out with no bug found;
+	% TODO CAMREADY: update avg tested subsets to be from the ICB timeouts
 	among those, ``Average tested subset SSes'' counts how many partial verifications \quicksand~provided on average for each test (\sect{\ref{sec:eval-sssmc}}).
 	``Total DR PPs'' counts how many unique data-racing instructions we identified among tests where we found no bugs;
 	among those, ``Untested DR PPs'' counts how many could not be checked in the time limit (\sect{\ref{sec:future}}).
@@ -408,6 +412,15 @@ while the other two lag behind
 due to redundant work (\sect{\ref{sec:future}}).
 \revision{While QS-Sync-Only and SSS-MC-ICB are competitive with each other},
 using data-race PPs increases our \revision{verification capacity}~by 4.25x.
+
+% TODO
+% Actually, while SSS-MC-Shared-Mem proved competitive with \quicksand~at finding data-race-related bugs,
+% its heuristic to ignore threads' own stack accesses introduces unsoundness.
+% <Move contents of footnote here.>
+% Indeed, SSS-MC-Shared-Mem claimed a full verification on 999999 tests for which \quicksand~found bugs!
+% % Hence, no SSS-MC strategy competes with quicksand for truly sound verification
+% Hence, only SSS-MC-DPOR and SSS-MC-ICB compete with \quicksand for sound verification, and they are thoroughly outperformed.
+% Between data-race bugs and verifications, \quicksand~is shown to provide the best of both worlds.
 
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{totalverifs-squashed.pdf}
