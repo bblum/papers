@@ -231,6 +231,8 @@ In Figure~\ref{fig:dowefindbugsfaster}(b), we give \quicksand~full credit for it
 % TODO CAMREADY: Probably will need at least a 3rd run of dis.
 Because \quicksand~can be nondeterministic in its scheduling of state spaces,
 we ran the QS-DR tests a second time to quantify the variance.
+% TODO CAMREADY
+% We found the maximum area between any two QS-DR curves to be
 We found the area between the two QS-DR curves to be
 % TODO
 {\bf XX\%}
@@ -366,7 +368,7 @@ These completions guarantee that, if the test program could expose a bug,
 it would only be found by a new data-race PP not discovered yet, or by a superset combination of PPs not reached.
 \revision{
 %While obviously not as strong as full verification,
-Prior work \cite{sealing} has argued the value of such {\em compositional testing} when full verification is intractable,
+Prior work \cite{sealing} has argued the value of similar {\em compositional testing} when full verification is intractable,
 deferring to the user's expertise to judge the value of each subset of PPs verified.
 }
 
