@@ -58,6 +58,8 @@ one cannot be reordered to be in the middle of the other (i.e, lines 3-4 MHB lin
 Hence, MHB is not necessarily transitive.
 In the latter case, the MHB relation is established by the mutex's blocking mechanism used during contention.
 
+In our main paper, we refer to this relation as Limited HB.
+
 \begin{definition}[Shared memory conflict]
 A pair of memory accesses between two threads to the same address where at least one of them is a write.
 \end{definition}
@@ -103,8 +105,9 @@ A shared memory conflict where furthermore:
 \end{itemize}
 \end{definition}
 
-The same as in the paper, we distinguish between data-race {\em candidates} and data-race {\em bugs}.
-In this proof we are concerned solely with candidates, and wheter they can be observed to race or are false positives.
+The same as in the paper, we distinguish between data-race {\em candidates} (or {\em potential} data races) and data-race {\em bugs}.
+For brevity, we now use ``data race'' to refer both to true races and to potential data-race candidates identified by MHB.
+In this proof we are concerned solely with candidates, and whether they can be observed to race or are false positives.
 It is up to the MC to decide whether true data races are benign or buggy.
 
 \begin{definition}[False positive data race]
