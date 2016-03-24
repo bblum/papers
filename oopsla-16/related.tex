@@ -89,12 +89,13 @@ and cannot incorporate data-race PPs not statically coded in advance}.
 \label{sec:related-dr}
 
 %Too many related projects to list have made contributions to the
-Many advances have been made on the false-positive data race problem since it was first introduced in \cite{eraser}.
+Many advances have been made on the false-positive potential data race problem since it was first introduced in \cite{eraser}.
 \cite{hybriddatarace} and \cite{tsan}
 %combine the lockset and happens-before analyses into a hybrid technique,
 \revision{introduce Limited Happens-Before}, %(\sect{\ref{sec:overview-dr}})},
 which we employ,
 \revision{while \cite{predictive-dr} introduces the Causally-Precedes relation for a sound yet incomplete analysis (\sect{\ref{sec:overview-dr}})}.
+
 \revision{Several tools \cite{droidracer,cafa,unnamed-android} have recently emerged to target Android applications},
 %DroidRacer \cite{droidracer} and CAFA \cite{cafa} target
 %%event-driven
@@ -102,7 +103,7 @@ which we employ,
 using domain-specific heuristics (orthogonal to our method) to reduce false positives. % cut for space?
 Like \landslide, DataCollider \cite{datacollider} \revision{finds data races in}~kernel code.
 IFRit \cite{ifrit}
-improves performance using an interference analysis,
+improves the performance of HB using an interference analysis,
 which could allow future work to avoid tracing every memory access.
 %although in our context, we cannot admit false negatives (\sect{\ref{sec:totalverif}}).
 % No, IDGAF about pure happens before.

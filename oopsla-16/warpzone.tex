@@ -47,7 +47,7 @@ making partial verification of larger tests possible.
 {\bf Integration with static data-race analysis.}
 In \sect{\ref{sec:eval-sssmc}}, we evaluated SSS-MC's ability to find data-race-induced failures
 by configuring a static predicate to preempt on any non-stack memory access.
-This introduced up to thousands of new PPs on each new test execution, with a prohibitive performance impact.
+This introduced hundreds of new PPs on each new test execution, with a prohibitive performance impact.
 While this performance could be improved by
 %relaxing the preemption strategy,
 instead using a static or single-pass analysis to find data-race candidate PPs in advance \cite{portend},
