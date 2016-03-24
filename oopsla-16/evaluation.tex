@@ -122,10 +122,9 @@ and \waitsimple, for process lifecycle system calls\footnote{
 The source code of all 9 test cases is available at
 {\em [submitted as supplementary material]}.
 For all tests, we used {\tt without\_function} to blacklist PPs on {\tt malloc}'s internal lock.
-In total, our evaluation comprises 629 unique tests (pairs of a test program and a Pintos or P2),
+In total, our evaluation comprises 629 unique tests (i.e., pairs of a test program and a Pintos or P2),
 % at least 157 of which could expose bugs.
-at least 165 of which will expose bugs under one or more MC trials. % QS bugs + bugs where SSSMC found but QS didnt
-% TODO: update this number with any new bugs found by PREEMPT_EVERYWHERE
+at least 173 of which will expose bugs under one or more MC trials. % QS bugs + bugs where SSSMC found but QS didnt
 
 %\begin{table}[t]
 %	\begin{tabular}{l|l|l}
@@ -175,14 +174,14 @@ configurations of stand-alone \landslide~on the same test suite:
 	\item {\bf SSS-MC-DPOR}: Single state space using the maximal PP set from \sect{\ref{sec:initial-pp}}, explored with DPOR \cite{dpor},
 	\item {\bf SSS-MC-ICB}: With PPs as above, but instead using ICB \cite{chess-icb} with BPOR \cite{bpor} to find bugs faster, and
 	\item {\bf SSS-MC-Shared-Mem}: % TODO: better name?
-		Using ICB+BPOR, configured to insert PPs on any shared memory access
-		(determined at runtime, excluding threads' accesses to their own stacks),
+		Using ICB+BPOR, configured to preempt on any shared memory access \cite{inspect}
+		(decided at runtime, excluding threads' accesses to their own stacks),
 		which in principle includes all possible data-race PPs.
 \end{itemize}
 Because parallelizing DPOR/ICB during SSS-MC is an open research problem \cite{parallel-dpor},
 we optimistically gave control experiments a linear speedup of 10 hours per test with 1 CPU.
 %To match this,
-\quicksand~reports the CPU-time spent in addition to the wall-clock time for a direct comparison
+\quicksand~reports the CPU-time spent in addition to the wall-clock time for a resource-fair comparison
 (although, with the growing importance of multicore for performance, \quicksand's inherent parallelism is a convenient benefit).
 %Finally,
 All tests ran on 12-core 3.2 GHz Xeon W3670 machines. %with 12GB of RAM.
@@ -228,8 +227,8 @@ and ultimately concludes 10 CPU-hours with \revision{151}\% as many bugs in tota
 \revision{Before the break-even point at 200 seconds,
 \quicksand~lags behind the SSS-MC approaches due to additional start-up overhead from its tenfold parallelism.
 However, converting SSS-MC's early CPU-time advantage into faster wall-clock performance remains an open research problem \cite{parallel-dpor}.
-In Figure~\ref{fig:dowefindbugsfaster}(b), we give \quicksand~full credit for its inherent parallelism,
-and with a 10 core allocation, it outperforms SSS-MC for any fixed budget of wall-clock time.}
+Figure~\ref{fig:dowefindbugsfaster}(b) gives \quicksand~full credit for its inherent parallelism:
+with a 10 core allocation, it outperforms SSS-MC for any fixed budget of wall-clock time.}
 
 % TODO CAMREADY
 %\revision{
@@ -240,10 +239,10 @@ and with a 10 core allocation, it outperforms SSS-MC for any fixed budget of wal
 %% TODO CAMREADY
 %% We found the maximum area between any two QS-DR curves to be
 %We found the area between the two QS-DR curves to be
-%% TODO
+%% TODO CAMREADY
 %{\bf XX\%}
 %of the area between QS-DR and SSS-MC-ICB (the next closest),
-%% TODO cite
+%% TODO cite CAMREADY
 %which we consider an insignificant amount of variance.
 %}
 
@@ -366,12 +365,15 @@ and is hence more suitable for MC with data-race PPs.}
 {\bf Partial verification.}
 When a MC job times out, the user may prefer a brief summary of what parts of the test were verified, rather than writing off all the CPU time as a waste.
 %Beyond using the state space estimator to guess the percent coverage,
-We know of no approach to quantify the probability
-that a bug would be exposed by an untested interleaving,
-but \quicksand~at least reports which subsets of PPs resulted in state spaces that did complete in time.
+%We know of no approach to quantify the probability
+%that a bug would be exposed by an untested interleaving,
+While recent work \cite{randomized-scheduler} attempts to quantify the probability
+that an untested interleaving would expose a bug,
+\quicksand~instead reports which subsets of PPs resulted in state spaces that did complete in time.
 %\quicksand~does not attempt any such quantitative guarantee,
 %but can at least report
-On 129 tests, the SSS-MC control experiment timed out after 10 hours with no bugs found.
+% TODO: Fix to be ICB not DPOR.
+On 129 tests, SSS-MC-DPOR timed out after 10 hours with no bugs found.
 Among these tests, \quicksand~found bugs in 36.
 For the other 93, we show the number of state spaces \quicksand~was able to complete in the ``Average tested subset SSes'' column of Table~\ref{tab:drbugs}.
 %and the number of unique PPs among them.
@@ -406,6 +408,12 @@ In total, SSS-MC-Shared-Mem claimed to verify 21 tests
 in which QS-DR ultimately found bugs,
 which further calls into question the rest of its completions.
 
+% NB. TODO CAMREADY. If a reviewer asks, "How come SSSMC-ShM completed so many state spaces,
+% even though last section you argued that so many PPs slows it down terribly?"
+% The answer is, "Actually, it's not that SSSMC-ShM magically got fast again for the verification experiment;
+% it's that SSSMC-ShM and Quicksand are *BOTH* slow to achieve full completion.
+% Quicksand can get bogged down in a combinatorial explosion of different subsets of PPs,
+% having a zillion jobs on its hands. Future work should improve this with https://github.com/bblum/landslide/issues/216 ."
 
 %\quicksand's total verifications
 %%before a given elapsed CPU consumption.

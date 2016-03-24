@@ -53,16 +53,19 @@ On the other hand, when the CPU budget is large enough to fully test all data-ra
 we prove that this constitutes a total verification of all possible thread schedules.
 %Short of deciding in advance to preempt on every single instruction \cite{spin}, this was not previously possible without data-race preemption points.
 \revision{To achieve the same level of verification, prior model checkers must decide}~in advance to preempt on every single memory access \cite{spin}, \revision{which is computationally prohibitive for
-%even moderately-sized
-larger tests.
+even moderately-sized
+%larger
+tests.
 Our approach provides the best of both worlds:
 by estimating the size of the test on-the-fly, \quicksand~can find bugs quickly in large tests {\em and} provide fast total verification for small ones.}
 
 
 We evaluate \quicksand~by testing \numstudence~student thread libraries and kernels from the undergraduate operating systems classes at Carnegie Mellon University, University of California at Berkeley, and University of Chicago.
 %We show many advantages over both conventional stateless model checking and single-pass data-race analysis.
-We find many of the same bugs found by the conventional approach faster using subsets of preemption points,
-and that data-race preemption points quickly expose many new bugs that prior model checkers could not find at all.
+%We find many of the same bugs found by the conventional approach faster using subsets of preemption points,
+We find that data-race preemption points quickly expose many new bugs that prior model checkers could not find at all,
+and that they enable full verification of many more tests than before.
+%and that they enable full verification of many racy, but non-failing, tests.
 
 Our contributions are as follows:
 \begin{enumerate}

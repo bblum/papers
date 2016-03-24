@@ -78,8 +78,6 @@
 %\titlebanner{banner above paper title}        % These are ignored unless
 %\preprintfooter{short description of paper}   % 'preprint' option specified.
 
-% TODO: remove all changebars before submission
-%\setcounter{changebargrey}{0}
 %\newcommand\revision[1]{\begin{samepage}\cbstart#1\cbend\end{samepage}}
 %\newcommand\revision[1]{\cbstart#1\cbend}
 \newcommand\revision[1]{#1}
@@ -105,8 +103,12 @@ Most prior tools are limited to preempting only on synchronization APIs,
 which reduces the space further, but can miss unsynchronized thread communication bugs.
 %
 Data race detection, another concurrency testing approach, focuses on suspicious memory access pairs during a single test execution.
-It avoids concerns of state space size, but is prone to false positives:
-spurious reports of access pairs that cannot be reordered to produce a bug.
+It avoids concerns of state space size,
+%but is prone to false positives:
+%spurious reports of access pairs that cannot be reordered to produce a bug.
+%but data races do not always correspond to observable failures.
+but may report races that do not lead to observable failures,
+which jeopardizes a user's willingness to use the analysis.
 
 \revision{We present \quicksand, a new stateless model checking framework}~which
 manages the exploration of many state spaces using different preemption points.

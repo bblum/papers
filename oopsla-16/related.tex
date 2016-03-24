@@ -53,7 +53,7 @@ Both SPIN and Inspect fix their set of PPs in advance, so could be
 extended with Iterative Deepening in future work.
 %so cannot check implementations directly.
 
-{\bf \revision{Reduction}~techniques.} Various improvements or alternatives to DPOR have been developed, such as Dynamic Interface Reduction \cite{demeter},
+{\bf \revision{Reduction}~techniques.} Various improvements or alternatives to DPOR have been developed, such as Optimal DPOR \cite{optimal-dpor}, Dynamic Interface Reduction \cite{demeter},
 %Maximal Causality Reduction \cite{mcr},
 %DPOR for relaxed memory models \cite{tsopso},
 %SAT-directed MC \cite{satcheck},
@@ -99,7 +99,7 @@ as both approaches provide a partial verification
 when full completion is intractable (\sect{\ref{sec:future}}).
 However, ICB is limited to a fixed set of PPs,
 \revision{cannot estimate remaining time to total verification,
-and cannot incorporate data-race PPs not statically coded in advance}.
+and can incorporate data-race PPs only when statically coded in advance}.
 %and to our knowledge no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
 
 \subsection{Data Race Detection}

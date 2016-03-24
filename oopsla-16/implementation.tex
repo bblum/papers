@@ -86,6 +86,6 @@ The MC messages after testing each interleaving to report updated progress and E
 and whenever a new data-race candidate or bug is found.
 \quicksand~in turn replies whether to resume/suspend (due to too high ETA), or quit (due to timeout).
 We suspend jobs simply by making the MC wait on a message-passing reply.
-Should \quicksand~later re-schedule a suspended job, we send a message to continue,
-resuming it where it left off.
+Should \quicksand~later re-schedule a suspended job, it sends a message to continue,
+resuming the job where it left off.
 %otherwise, we resume it only after time runs out, causing it to exit.
