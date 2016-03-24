@@ -170,8 +170,9 @@ We achieve better bug-finding results than either single-pass data-race detectio
 %, we find bugs faster in smaller subset state spaces, %% not true, or at least, not by very much
 %when the maximal state space is too large to explore
 finding new bugs with data-race PPs that could not be exposed by preempting only on synchronization APIs.
-By using \numstudence~student operating system implementation projects as our test suite, we also show the potential benefit as a debugging platform in educational settings.
 Moreover, when all data-race PPs can be fully tested within the CPU budget, we provide a verification as strong as if every single instruction had been used as a PP.
+Between data-race bugs and verifications, \quicksand~is shown to provide the best of both worlds.
+By using \numstudence~student operating system implementation projects as our test suite, we also show the potential benefit as a debugging platform in educational settings.
 
 %Although \landslide~itself is not publicly available due to its dependency on the non-free simulator \simics, \quicksand~is open-source and its interface can be adapted to fit any similar tool.
 \quicksand~is open-source and its interface can be adapted to fit any tool similar to \landslide.

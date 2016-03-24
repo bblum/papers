@@ -203,7 +203,10 @@ we additionally show a wall-clock comparison in (b) to highlight the impact of \
 		\revision{
 	\begin{tabular}{p{0.48\textwidth}}
 	\includegraphics[width=0.48\textwidth]{dowefindbugsfaster-squashed.pdf} \\
-		(a) Bugs found as a function of elapsed CPU time. Overall, a more resource-fair comparison than (b),
+		% TODO CAMREADY "as a function of elapsed"
+		(a) Bugs found by elapsed CPU time. Overall,
+		% TODO CAMREADY "a more resource-fair"
+		a more direct comparison than (b),
 		although \quicksand's start-up overhead is exaggerated, as the SSS-MC tests are not parallelized. \\
 		\\
 	\includegraphics[width=0.48\textwidth]{dowefindbugsfaster-wallclock.pdf} \\
@@ -223,8 +226,6 @@ we additionally show a wall-clock comparison in (b) to highlight the impact of \
 \revision{Compared to the best SSS-MC series, \quicksand~finds}~more bugs within any CPU budget greater than \revision{200}~seconds,
 and ultimately concludes 10 CPU-hours with \revision{151}\% as many bugs in total.
 \revision{Before the break-even point at 200 seconds,
-% TODO
-% (for SSS-MC-ICB) or XXX seconds (for SSS-MC-Shared-Mem)
 \quicksand~lags behind the SSS-MC approaches due to additional start-up overhead from its tenfold parallelism.
 However, converting SSS-MC's early CPU-time advantage into faster wall-clock performance remains an open research problem \cite{parallel-dpor}.
 In Figure~\ref{fig:dowefindbugsfaster}(b), we give \quicksand~full credit for its inherent parallelism,
@@ -251,7 +252,9 @@ and with a 10 core allocation, it outperforms SSS-MC for any fixed budget of wal
 The left half of Table~\ref{tab:drbugs}
 breaks down the number and types of bugs found by each test program.
 In \mxtest, in which we do not trust the lock implementation's correctness,
-the control experiment found dramatically fewer bugs (just 1)\footnote{
+% TODO CAMREADY: Fix, SSSMC-ShM finds 2 mx bugs.
+the control experiments
+found dramatically fewer bugs (just 1)\footnote{
 	The one bug SSS-MC found was in a fully-assembler lock implementation. {\tt yield()}'s return value clobbered a value stored in {\tt \%eax}, which could lead to a failure after two repeated contentions. Preempting only on {\tt yield()} (in the contention loop) was sufficient to find the bug.}.
 %Intuitively, this is due to our control experiment being able to preempt only on the boundaries of the API which
 %Though for many applications of MC, assuming a correct lock implementation is sufficient,
@@ -269,12 +272,10 @@ we consider this strong evidence that new low-level synchronization code must be
 %Intuitively, this line shows that for programs with only benign data races,
 %\quicksand~can afford the extra overhead of verifying them while still slightly edging out SSS-MC.
 
-% TODO: fix this table.
 \begin{table*}[t]
 	\begin{center}
 		\small
 	\begin{tabular}{r|c||c|c|c|c|c|c||c|c||c|c}
-		% TODO: Update SSSMC column to have more favourable ICB numbers.
 		& {\bf Num.} & {\bf DPOR} & {\bf ICB} & {\bf QS} & {\bf DR} & {\bf Nondet.} & {\bf Malloc} & {\bf Mutual} & {\bf Avg. tested} & {\bf Total} & {\bf Untested} \\
 		{\bf Test} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR bugs} & {\bf DRs} & {\bf timeouts} & {\bf subset SSes} & {\bf DR PPs} & {\bf DR PPs} \\
 		\hline
@@ -298,7 +299,7 @@ we consider this strong evidence that new low-level synchronization code must be
 	\end{tabular}
 	\end{center}
 	\caption{Summary of bugs and data races found by each test program.
-		% TODO: Add Shared-Mem
+		% TODO CAMREADY: Add Shared-Mem
 		DPOR/ICB are the controls; QS is \quicksand.
 		``DR bugs'' counts among \quicksand's bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}});
 	among those, ``Nondeterministic DR bugs'' counts how many candidates required MC integration to identify (\sect{\ref{sec:eval-dr}}).
@@ -357,8 +358,7 @@ In principle, DPOR and BPOR should identify and prune any equivalences arising f
 However, in practice,
 %we found that
 the sheer number of accesses during each new execution
-% TODO
-%(often hundreds)
+(often thousands)
 added significant performance overhead to the MC when computing DPOR and backtracking.
 Iterative Deepening avoids this overhead by waiting until runtime to identify fewer, more relevant PPs dynamically,
 and is hence more suitable for MC with data-race PPs.}
@@ -392,28 +392,38 @@ deferring to the user's expertise to judge the value of each subset of PPs verif
 %In Table~\ref{tab:allbugs} ....
 
 {\bf Full verification.}
-% TODO: Discuss how ICB sucks even more.
 For 153 of our 629 tests, \quicksand~was able to provide the total verification guarantee described in \sect{\ref{sec:totalverif}}.
-In Figure~\ref{fig:totalverif} we plot the cumulative distribution of \quicksand's total verifications
-%before a given elapsed CPU consumption.
-% TODO TODO TODO decide whether to include dis or not
-\revision{against those provided by SSS-MC-Shared-Mem\footnote{
-	% TODO TODO TODO if not plot this curve, move this discussion into main body
-	\revision{In kernel or thread library code, a thread's own stack accesses may not always be private. %assumption may not hold.
-	For example, many P2 condvars use stack-allocated list nodes to track waiting threads.
-	SSS-MC-Shared-Mem's verifications are only sound in the absence of such sharing!
-	\quicksand~detects these dynamically, without needing to discriminate between stack and heap.}
-	%Expanding the statically-coded PPs to include stack accesses would make SSS-MC-Shared-Mem's performance even worse.
-	% Especially for testing kernel-level code, deciding which of a thread's memory accesses are shared versus private is nonstraightforward, as threads may share data structures allocated on their own stacks for synchronization. Hence, the common heuristic of ignoring stack accesses as private (which we employ for this control experiment) introduces some unsoundndess.
-}.
-\quicksand~outperforms SSS-MC, being able to verify safety for
-% TODO
-{\bf 9999x}
-as many tests in 10 CPU-hours.
-We attribute this again to the overhead of the sheer number of statically-coded PPs that SSS-MC-Shared-Mem must use,
-as well as to the work which ICB necessarily repeats when increasing its preemption bound.}
+In Figure~\ref{fig:totalverif} we plot the cumulative distribution of
+%total
+verifications provided by each approach.
+Though SSS-MC-Shared-Mem appears to outperform \quicksand, its safety guarantee is unsound,
+as many tests break its assumption of stack-allocated memory being private.
+For example, many P2 condvars use stack-allocated list nodes to track waiting threads.
+While SSS-MC-Shared-Mem must avoid excessive PPs on every private stack access for performance,
+\quicksand~detects these dynamically, without needing to discriminate between stack and heap.
+In total, SSS-MC-Shared-Mem claimed to verify 21 tests
+(across 7 of the 9 test cases)
+in which QS-DR ultimately found bugs,
+which further calls into question the rest of its completions.
 
-Among these verified tests, 36 contained no data-race candidates whatsoever,
+
+%\quicksand's total verifications
+%%before a given elapsed CPU consumption.
+%\revision{against those provided by SSS-MC-Shared-Mem\footnote{
+%	\revision{In kernel or thread library code, a thread's own stack accesses may not always be private. %assumption may not hold.
+%	For example, many P2 condvars use stack-allocated list nodes to track waiting threads.
+%	SSS-MC-Shared-Mem's verifications are only sound in the absence of such sharing!
+%	\quicksand~detects these dynamically, without needing to discriminate between stack and heap.}
+%	%Expanding the statically-coded PPs to include stack accesses would make SSS-MC-Shared-Mem's performance even worse.
+%	% Especially for testing kernel-level code, deciding which of a thread's memory accesses are shared versus private is nonstraightforward, as threads may share data structures allocated on their own stacks for synchronization. Hence, the common heuristic of ignoring stack accesses as private (which we employ for this control experiment) introduces some unsoundndess.
+%}.
+%\quicksand~outperforms SSS-MC, being able to verify safety for
+%{\bf 9999x}
+%as many tests in 10 CPU-hours.
+%We attribute this again to the overhead of the sheer number of statically-coded PPs that SSS-MC-Shared-Mem must use,
+%as well as to the work which ICB necessarily repeats when increasing its preemption bound.}
+
+Among QS-DR's verified tests, 36 contained no data-race candidates whatsoever,
 so the same verification could be provided
 %by SSS-MC
 \revision{with synchronization PPs only.
@@ -426,7 +436,6 @@ due to redundant work (\sect{\ref{sec:future}}).
 \revision{While QS-Sync-Only and SSS-MC-ICB are competitive with each other},
 using data-race PPs increases our \revision{verification capacity}~by 4.25x.
 
-% TODO
 % Actually, while SSS-MC-Shared-Mem proved competitive with \quicksand~at finding data-race-related bugs,
 % its heuristic to ignore threads' own stack accesses introduces unsoundness.
 % <Move contents of footnote here.>
@@ -436,9 +445,13 @@ using data-race PPs increases our \revision{verification capacity}~by 4.25x.
 % Between data-race bugs and verifications, \quicksand~is shown to provide the best of both worlds.
 
 \begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{totalverifs-squashed.pdf}
+	\includegraphics[width=0.48\textwidth]{totalverifs-squashed-with-unsound-shm.pdf}
 	\caption{Cumulative distribution of tests \quicksand~fully verified (\sect{\ref{sec:totalverif}}).
-	Some tests had no data-race candidates, and hence could also be verified by SSS-MC.}
+	%SSS-MC-Shared-Mem completed 1.37x as many tests, but 
+	SSS-MC-Shared-Mem is unsound: 21 tests it completed hid bugs previously found in Figure~\ref{fig:dowefindbugsfaster}.
+	%previously found (Figure~\ref{fig:dowefindbugsfaster}).
+	%Some tests had no data-race candidates, and hence could also be verified by .}
+	36 data-race-free tests were also soundly verified by QS-Sync-Only, SSS-MC-DPOR, and SSS-MC-ICB.}
 	\label{fig:totalverif}
 \end{figure}
 

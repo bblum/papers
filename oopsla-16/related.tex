@@ -42,7 +42,10 @@ SPIN \cite{spin} specializes in verifying synchronization primitive implementati
 although it requires code to be written in the PROMELA language.
 %However, SPIN is stateful rather than stateless, and explicitly storing visited program states rather than using DPOR limits the size of programs that can be practically tested.
 %
-Inspect \cite{inspect} instruments source code by inserting wrapper calls around all accesses to potentially-shared data.
+Inspect \cite{inspect} instruments source code by
+%inserting wrapper calls around
+instrumenting
+all accesses to potentially-shared data.
 It identifies such instructions in advance with an over-approximating static alias analysis,
 while \landslide~\cite{landslide} traces the memory locations of accesses at runtime.
 Both SPIN and Inspect fix their set of PPs in advance, so could be
@@ -50,7 +53,6 @@ Both SPIN and Inspect fix their set of PPs in advance, so could be
 extended with Iterative Deepening in future work.
 %so cannot check implementations directly.
 
-% TODO: Expand on MCR and SATcheck.
 {\bf \revision{Reduction}~techniques.} Various improvements or alternatives to DPOR have been developed, such as Dynamic Interface Reduction \cite{demeter},
 %Maximal Causality Reduction \cite{mcr},
 %DPOR for relaxed memory models \cite{tsopso},
