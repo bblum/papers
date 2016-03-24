@@ -51,16 +51,31 @@ extended with Iterative Deepening in future work.
 %so cannot check implementations directly.
 
 % TODO: Expand on MCR and SATcheck.
-{\bf \revision{Reduction}~techniques.} Various improvements or alternatives to DPOR have been developed, such as Dynamic Interface Reduction \cite{demeter}, Maximal Causality Reduction \cite{mcr},
+{\bf \revision{Reduction}~techniques.} Various improvements or alternatives to DPOR have been developed, such as Dynamic Interface Reduction \cite{demeter},
+%Maximal Causality Reduction \cite{mcr},
 %DPOR for relaxed memory models \cite{tsopso},
-SAT-directed MC \cite{satcheck},
+%SAT-directed MC \cite{satcheck},
 \revision{and R4 for event-driven applications \cite{r4}}.
 These are all compatible with our technique.
+%
 Recent work \cite{tsopso} has extended DPOR for relaxed memory models \cite{memory-consistency-models},
 which we do not yet account for in our proofs (\sect{\ref{sec:soundness}}).
+%
+SATCheck \cite{satcheck} and Maximal Causality Reduction \cite{mcr} replace DPOR by
+%encoding the program's behaviour as a SAT or SMT formula,
+%then using a solver to search for schedules guaranteed to expose new behaviour.
+using a SAT or SMT solver to search for schedules guaranteed to expose new behaviour.
+%These approaches provide improved
+They improve
+reduction by considering values read and written to identify additional independences,
+while DPOR considers only addresses.
+They generate new schedules at
+%the granularity of each memory access,
+memory access granularity,
+which Iterative Deepening could allow to be relaxed for large tests in future work.
+%
 Parrot \cite{parrot} combines MC with a partially-determinizing runtime for further reduction, but still, fewer than half the non-trivial \revision{tests}~in their evaluation could be completed,
 \revision{which motivates \quicksand's CPU-budget-oriented approach.}
-%providing a strong argument for \quicksand.
 
 \revision{{\bf Restricting preemptions.}
 Preemption Sealing \cite{sealing} pre\-sents a mechanism similar to the {\tt within\_function} command (\sect{\ref{sec:landslide}}) for users to manually restrict preemptions.
