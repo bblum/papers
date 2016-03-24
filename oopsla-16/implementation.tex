@@ -7,21 +7,34 @@
 We chose \landslide~\cite{landslide} as our MC tool due to its ability to trace execution at the granularity of individual instructions and memory accesses, which dynamic data-race detection requires.
 \landslide~implements DPOR \cite{dpor},
 state space estimation \cite{estimation}, and a hybrid
+lockset/Limited HB
 data-race analysis \cite{hybriddatarace}.
-\revision{It can optionally replace DPOR with Iterative Context Bounding (ICB) \cite{chess-icb},
-for which it uses Bounded Partial Order Reduction (BPOR) \cite{bpor} for a similar sound reduction,
-although we leave incorporating ICB with Iterative Deepening to future work (\sect{\ref{sec:future}})}.
-It avoids state space cycles (e.g. ad-hoc synchronization with {\tt yield} or {\tt xchg} loops) with a heuristic similar to Fair-Bounded Search \cite{bpor}.
+\revision{It can optionally replace DPOR with ICB \cite{chess-icb},
+for which it uses Bounded Partial Order Reduction \cite{bpor} for a similar reduction,
+%although we leave incorporating ICB with Iterative Deepening to future work (\sect{\ref{sec:future}})}.
+though \quicksand~does not employ this feature (\sect{\ref{sec:future}})}.
+It avoids state space cycles
+%(e.g. ad-hoc synchronization with {\tt yield} or {\tt xchg} loops)
+\revision{(e.g. spin
+%or {\tt yield}
+loops)}~with
+a heuristic similar to Fair-Bounded Search \cite{bpor}.
 % joshua wants "segfault" to be "memory access error (i.e., segmentation fault, or bus error)"
-Its bug-detection metrics are assertion failure, deadlock, segfault, heap checking \cite{valgrind}, and a heuristic infinite loop check.
-It can test both userspace and kernel code (although it is limited to timer nondeterminism),
+Its bug-detection metrics are assertion failure, deadlock, segfault, use-after-free \cite{valgrind}, and (heuristically) infinite loops.
+%a heuristic infinite loop check.
+
+\revision{\landslide}~can test both userspace and kernel code (although it is limited to timer nondeterminism),
 and runs programs in a full-system hardware simulator \cite{simics}.
+\revision{The simulator allows \landslide~to track memory accesses and check for heap errors on uninstrumented binaries,
+although for performance, a similar MC under \quicksand~could use compiler instrumentation instead.
+It also provides a convenient backtracking mechanism to avoid the need to re-simulate common execution prefixes among many interleavings.}
 
 {\bf Restricting PPs with stack trace predicates.}
 When testing a particular module in a large codebase,
 the user is likely to be uninterested in PPs arising from other modules.
 Rather than preempting indiscriminately on any synchronization call, regardless of the call-site,
-\landslide~provides a configuration command, {\tt within\_function}, for identifying which call-sites matter.
+prior work introduced Preemption Sealing \cite{sealing} for identifying which call-sites matter.
+\landslide~provides this feature through a configuration command, {\tt within\_function}.
 %Most MC tools preempt indiscriminately on any synchronization call, regardless of the call-site.
 %However, when testing a particular module in a large codebase,
 %the user is likely to be uninterested in PPs arising from other modules.
@@ -29,23 +42,30 @@ Rather than preempting indiscriminately on any synchronization call, regardless 
 Before inserting a PP, \landslide~requires at least one argument to {\tt within\_function} to appear in the current thread's stack trace.
 %Similarly, the {\tt without\_function} directive indicates a blacklist,
 %serving as the dual of {\tt within\_function}.
-The {\tt without\_\allowbreak{}function} directive \revision{serves as}~the dual of {\tt within\_function}, indicating a blacklist.
-We use this feature to restrict the scope of some tests in our evaluation (\sect{\ref{sec:testsuite}}),
-\revision{similarly to Preemption Sealing from prior work \cite{sealing}}.
+The {\tt without\_\allowbreak{}function} directive is the dual of {\tt within\_function}, indicating a blacklist.
+We use these to restrict the scope of some tests in our evaluation (\sect{\ref{sec:testsuite}}).
+%\revision{similarly to Preemption Sealing from prior work \cite{sealing}}.
 %Multiple invocations can be used; later ones take precedence.
 %\cite{landslide} provides further detail on this feature.
 
 {\bf Data races in lock implementations.}
-Data race tools in prior work \cite{tsan,portend} recognize the implementations of synchronization primitives to avoid spuriously flagging memory accesses therein. %resulting from the lock implementation itself.
-Assuming that the lock implementation is already correct enables more productive data-race analysis on the rest of the codebase.
-Otherwise, with testing limited to one execution,
-%even if one wishes to test for lock bugs,
-data-race analysis would flag every access pair in the lock implementation. %, requiring human attention to verify.
-However, Iterative Deepening removes the need for human attention to verify them. %can automatically verify a large quantity of data-race candidates as benign.
-Hence, we extended \landslide~to
+Data race tools in prior work \cite{tsan,portend} recognize the implementations of synchronization primitives to avoid spuriously flagging memory accesses %therein. %resulting from the lock implementation itself.
+that implement them.
+Assuming that the lock implementation is already correct enables more productive data-race analysis on the rest of the codebase,
+% TODO CAMREADY: Cite simsa thesis
+while the locks themselves can be verified separately.
+%Otherwise, %with testing limited to one execution,
+%%even if one wishes to test for lock bugs,
+%\revision{a single-pass}~data-race analysis would flag every access pair in the lock implementation. %, requiring human attention to verify.
+%However, Iterative Deepening removes the need for human attention to verify them. %can automatically verify a large quantity of data-race candidates as benign.
+%While most tests in our evaluation assume correct locks,
+We included a mutex test in our evaluation
+to showcase \quicksand's ability to verify synchronization primitives with data-race PPs
+(\sect{\ref{sec:testsuite}}).
+To support this test, we extended \landslide~to
 %with an option
-optionally make its data race analysis consider accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()},
-which we use to test mutexes (\sect{\ref{sec:testsuite}}).
+optionally make its data race analysis consider accesses from {\tt mutex\_lock()} and {\tt mutex\_unlock()}.
+%which we use to test mutexes (\sect{\ref{sec:testsuite}}).
 %(Accesses from other synchronization functions, such as {\tt cond\_wait()}, would either be included already, or be protected by an internal mutex.)
 
 \subsection{Quicksand}

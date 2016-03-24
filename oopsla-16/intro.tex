@@ -12,8 +12,9 @@ capturing
 %and controlling
 this nondeterminism in a finite state space.
 Unfortunately, these state spaces explode exponentially in the size of the input program.
-Reduction techniques such as Dynamic Partial Order Reduction \cite{dpor} and Maximal Causality Reduction \cite{mcr} expand the limits of feasible test completion,
-and search ordering strategies such as Iterative Context Bounding \cite{chess-icb} allow bugs to be found sooner in a given space should they exist.
+%Reduction
+Techniques such as Dynamic Partial Order Reduction \cite{dpor} and Maximal Causality Reduction \cite{mcr} expand the limits of feasible test completion,
+and search ordering strategies such as Iterative Context Bounding \cite{chess-icb} \revision{encourage}~bugs to be found sooner in a given space should they exist.
 
 However, all stateless model checkers to date are bound by a fixed set of {\em preemption points}: code locations that define the granularity at which threads interleave.
 For example, \textsc{CHESS} \cite{chess} preempts only on synchronization operations and library calls, which can miss lock-free shared memory races.
@@ -23,7 +24,7 @@ are able to preempt threads before any shared memory access.
 Such fine granularity would automatically check each data race for the possibility of failure, but risks timing out before the state space can be completed. %makes full state space completion intractable for even modestly-sized tests.
 Choosing preemption points is a tradeoff between schedule coverage and feasibility of completion,
 but even with state-of-the-art reduction techniques,
-any choice made in advance must necessarily leave some tests unaffordably large \cite{parrot,mcr}.
+\revision{fixing the degree of coverage}~in advance necessarily leaves some tests unaffordably large \cite{parrot,mcr}.
 %This work shows how to avoid making that tradeoff decision in advance.
 
 We present \quicksand,
@@ -31,8 +32,8 @@ a model checking framework for deciding at runtime which preemption points to te
 according to which resulting state spaces are most likely to fit a prescribed CPU budget.
 It uses data-race analysis \cite{eraser} to dynamically find new preemption points which expose bugs not reachable by preempting on API calls alone.
 When prior \revision{approaches}~would time out on large tests by trying several preemption points simultaneously,
-\quicksand~\revision{identifies this pitfall in advance using state space estimation \cite{estimation},
-and instead}~tests smaller state spaces based on subsets of those points.
+\quicksand~\revision{identifies this pitfall in advance using state space size estimation \cite{estimation},
+and instead}~tests smaller state spaces based on subsets of those preemption points.
 \revision{Often, testing these}~smaller state spaces can even find the same bugs sooner.
 
 %\revision{Hence, recent approaches favor
@@ -68,7 +69,7 @@ Our contributions are as follows:
 	\item {\em Iterative Deepening}, a new \revision{algorithm}~for combining data-race analysis with stateless model checking, and \quicksand, an open-source implementation;
 	\item A proof of convergence, showing that should it be possible in the given CPU budget,
 		fully testing every discovered data-race preemption point is equivalent to testing all possible thread schedules;
-	\item A new tactic for eliminating one class of false-positive data races,
+	\item A new tactic for eliminating one class of false-positive data race candidates,
 		which cannot soundly be used in a single-pass analysis,
 		but which we prove correct when used with Iterative Deepening;
 	\item A large evaluation in which \quicksand~compares favourably to stand-alone data-race detection and stateless model checking approaches, finding new bugs that would be missed by either alone.

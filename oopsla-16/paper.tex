@@ -82,9 +82,9 @@
 %\setcounter{changebargrey}{0}
 %\newcommand\revision[1]{\begin{samepage}\cbstart#1\cbend\end{samepage}}
 %\newcommand\revision[1]{\cbstart#1\cbend}
-%\newcommand\revision[1]{#1}
+\newcommand\revision[1]{#1}
 \definecolor{purple}{RGB}{192,0,192}
-\newcommand\revision[1]{\hilight{purple}{#1}}
+%\newcommand\revision[1]{\hilight{purple}{#1}}
 
 \title{Stateless Model Checking with Data-Race Preemption Points}
 
@@ -120,7 +120,7 @@ and uncovers new bugs not reachable by prior model checkers.
 It also enables full verification of all possible schedules when every data race is verified as benign within the CPU budget.
 In our evaluation, \quicksand~found
 %with data-race preemption points
-1.5x as many bugs and verified 4.3x as many tests compared to the best prior model checking approach. %stateless model checking without data-race preemption points.
+1.5x as many bugs and verified 4.3x as many tests compared to \revision{prior model checking approaches}. %stateless model checking without data-race preemption points.
 %Our evaluation shows this technique is
 %more effective than single-state-space model checking
 %%both at finding more bugs and at completing more state spaces when no bug exists.

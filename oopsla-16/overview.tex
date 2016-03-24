@@ -7,8 +7,13 @@ We review the background in stateless model checking and data-race analysis usin
 
 Stateless model checking \cite{verisoft} is a testing technique for systematically exploring the possible thread interleavings of a concurrent program.
 A stateless model checker executes the program repeatedly, each time according to a new thread interleaving, until the state space (or the CPU budget) is exhausted.
+During each execution, it forces threads to execute serially, thereby confining the program's nondeterminism to controlled thread switches.
+
 Rather than identifying suspicious conditions which may include false alarms, the approach of many static analyses \cite{racerx,coverity},
-stateless model checkers focus on concrete observed failures such as assertions, deadlocks, and segfaults.
+stateless model checkers focus on concrete observed failures such as assertions, deadlocks, segfaults, and use-after-free.
+For example, data races \revision{do not always lead to failures}, but represent suspicious violations of common locking discipline.
+Although C++ defines all data races as undefined behaviour \cite{boehm-memorymodels},
+this work focuses on reporting races to the user only when accompanied by direct evidence of a failure.
 
 \begin{figure}[t]
 	\small
@@ -56,6 +61,7 @@ To mitigate the exponential explosion,
 Dynamic Partial Order Reduction \cite{dpor} identifies equivalent execution sequences according to Mazurkiewicz trace theory \cite{mazurkiewicz},
 and tests at least one execution from each equivalence class.
 Intuitively, if two thread transitions between preemption points do not conflict on any shared resource access, reordering them produces an equivalent interleaving, i.e., the same program behaviour.
+Iterative Context Bounding \cite{chess-icb}, another popular technique, heuristically reorders the search to prioritize interleavings with fewer preemptions first, according to the insight that most bugs require few preemptions to uncover.
 Nevertheless, state spaces are still exponentially-sized in the number of conflicting transitions.
 
 This motivates {\em Iterative Deepening}, our new technique for heuristically adjusting the preemption points at runtime.
@@ -68,13 +74,56 @@ and decide on-the-fly whether to pursue each test, or to defer it in favour of o
 \subsection{Data Race Detection}
 \label{sec:overview-dr}
 
+\begin{figure}[t]
+	\small
+\begin{tabular}{c}
+	\revision{
+\begin{tabular}{rll}
+	& \multicolumn{2}{c}{\texttt{int x = 0; bool y = false; mutex\_t mx;}} \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
+	1 & \texttt{\hilight{brickred}{x++;}~// A1} & \\
+	2 & \texttt{mutex\_lock(\&mx);} & \\
+	3 & \texttt{mutex\_unlock(\&mx);} & \\
+	4 & & \texttt{mutex\_lock(\&mx);} \\
+	5 & & \texttt{mutex\_unlock(\&mx);} \\
+	6 & & \texttt{\hilight{brickred}{x++;}~// A2} \\
+\end{tabular}
+}
+\\
+\revision{\normalsize (a) True potential data race.}
+% TODO CAMREADY: put another line break here
+\\
+\revision{
+\begin{tabular}{rll}
+	%& \multicolumn{2}{c}{\texttt{int x = 0; bool y = false; mutex\_t mx;}} \\
+	%& {\bf Thread 1} & {\bf Thread 2} \\
+	1 & \texttt{\hilight{brickred}{x++;}~// B1} & \\
+	2 & \texttt{mutex\_lock(\&mx);} & \\
+	3 & \texttt{y = true;} & \\
+	4 & \texttt{mutex\_unlock(\&mx);} & \\
+	5 & & \texttt{mutex\_lock(\&mx);} \\
+	6 & & \texttt{bool tmp = y;} \\
+	7 & & \texttt{mutex\_unlock(\&mx);} \\
+	8 & & \texttt{if (tmp) \hilight{brickred}{x++;}~// B2} \\
+	%8 & & \texttt{if (tmp)} \\
+	%9 & & \texttt{~~~~\hilight{brickred}{x++;}~// B2} \\
+\end{tabular}
+}
+\\
+\revision{\normalsize (b) No data race in any interleaving.}
+\end{tabular}
+\caption{\revision{Data-race analyses may be prone to either {\em false negatives} or {\em false positives}.
+Applying HB to program (a) will miss the potential race possible between A1/A2 in an alternate interleaving,
+while using Limited HB on (b) will produce a false alarm on B1/B2.}}
+\label{fig:hb-example}
+\end{figure}
+
 Data race analysis \cite{eraser} identifies pairs of unsynchronized memory accesses between threads.
 Two instructions are said to race if
 they both access the same memory address,
 at least one is a write,
 the threads do not hold the same lock,
 and no synchronization enforces an order on the thread transitions \revision{(the {\em Happens-Before} relation)}.
-Data races \revision{do not always lead to failures}, but represent suspicious violations of common locking discipline.
 In Figure~\ref{fig:example}, lines 3 and 5 each race with 2 and 6, and line 6 races with 8.
 
 \revision{
@@ -97,8 +146,8 @@ None of the state spaces in Figure~\ref{fig:id} contain this interleaving,
 as none of the mutex/yield preemptions split lines 2 and 6 across different transitions.
 
 \revision{
-	{\bf Variants of Happens-Before (HB).}
-	Most prior work focuses on {\em Pure HB} \cite{lamport-clocks} as the order relation between accesses.
+	{\bf Variants of Happens-Before.}
+	Most prior work focuses on {\em Happens-Before} (HB) \cite{lamport-clocks} as the order relation between accesses.
 \cite{predictive-dr} and \cite{hybriddatarace} identify a problem with this approach:
 it cannot identify access pairs separated by an unrelated lock operation which could race in an alternate interleaving,
 as shown in the example program in Figure~\ref{fig:hb-example}(a).
@@ -110,61 +159,23 @@ However, consider the similar program in Figure~\ref{fig:hb-example}(b),
 in which the access pair ceases to exist in the alternate interleaving.
 Limited HB will report all potential races, avoiding false negatives \cite{tsan},
 but at the cost of necessarily reporting some such {\em false positives}.
-Finally, the {\em Causally-Precedes} relation \cite{predictive-dr} strikes a middle ground,
-extending Pure HB to additionally report a subset of potential races while soundly avoiding false positives.
+
+Finally, the {\em Causally-Precedes} relation \cite{predictive-dr} %strikes a middle ground,
+extends HB to additionally report a subset of potential races while soundly avoiding false positives.
+It tracks conflicting accesses in intervening
+critical sections to determine whether lock events are unrelated to a potential race.
+Causally-Precedes will identify the potential race in Figure~\ref{fig:hb-example}(a), as the two critical sections do not conflict,
+although it can still miss true potential races in other cases.
 
 Stand-alone data-race analyses must avoid inundating the user with false alarms \cite{racerx}.
-However, this work incorporates data-race analysis in an internal feedback loop,
-using MC to automatically check each potential race
-and reporting to the user only directly observed failures.
+%However,
+This work incorporates data-race analysis in an internal feedback loop,
+using model checking to automatically test each potential race
+and report only directly observed failures to the user.
 %Our convergence theorem requires identifying all potential data-races to provide total verification (\sect{\ref{sec:totalverif}})
 %% TODO CAMREADY: cite our soundness proofs tech report in this paragraph as well
 Hence, we employ Limited HB in this paper},
 accepting some overhead from false positives for the sake of total verification (\sect{\ref{sec:totalverif}}).
-
-\begin{figure}[t]
-	\small
-\begin{tabular}{c}
-	\revision{
-\begin{tabular}{rll}
-	& \multicolumn{2}{c}{\texttt{int x = 0; bool y = false; mutex\_t mx;}} \\
-	& {\bf Thread 1} & {\bf Thread 2} \\
-	1 & \texttt{\hilight{brickred}{x++;}~// A1} & \\
-	2 & \texttt{mutex\_lock(\&mx);} & \\
-	3 & \texttt{mutex\_unlock(\&mx);} & \\
-	4 & & \texttt{mutex\_lock(\&mx);} \\
-	5 & & \texttt{mutex\_unlock(\&mx);} \\
-	6 & & \texttt{\hilight{brickred}{x++;}~// A2} \\
-\end{tabular}
-}
-\\
-\revision{\normalsize (a) True potential data race.}
-\\
-\\
-\revision{
-\begin{tabular}{rll}
-	%& \multicolumn{2}{c}{\texttt{int x = 0; bool y = false; mutex\_t mx;}} \\
-	%& {\bf Thread 1} & {\bf Thread 2} \\
-	1 & \texttt{\hilight{brickred}{x++;}~// B1} & \\
-	2 & \texttt{mutex\_lock(\&mx);} & \\
-	3 & \texttt{y = true;} & \\
-	4 & \texttt{mutex\_unlock(\&mx);} & \\
-	5 & & \texttt{mutex\_lock(\&mx);} \\
-	6 & & \texttt{bool tmp = y;} \\
-	7 & & \texttt{mutex\_unlock(\&mx);} \\
-	8 & & \texttt{if (tmp) \hilight{brickred}{x++;}~// B2} \\
-	%8 & & \texttt{if (tmp)} \\
-	%9 & & \texttt{~~~~\hilight{brickred}{x++;}~// B2} \\
-\end{tabular}
-}
-\\
-\revision{\normalsize (b) No data race in any interleaving.}
-\end{tabular}
-\caption{\revision{Data-race analyses may be prone to either {\em false negatives} or {\em false positives}.
-Applying Pure HB to program (a) will miss the potential race possible between A1/A2 in an alternate interleaving,
-while using Limited HB on (b) will produce a false alarm on B1/B2.}}
-\label{fig:hb-example}
-\end{figure}
 
 % Old explanation.
 %Prior work \cite{hybriddatarace} distinguishes between {\em pure happens-before} \cite{lamport-clocks},
@@ -181,23 +192,27 @@ For the rest of the paper, we will abbreviate {\em preemption point} (PP),
 \revision{{\em happens-before} (HB)},
 {\em model checking} (MC),
 {\em single-state-space model checking} (SSS-MC), % (i.e., the approach of prior work),
-{\em Dynamic Partial Order Reduction} (DPOR), and {\em state space estimate} (ETA).
+{\em Dynamic Partial Order Reduction} (DPOR),
+{\em Iterative Context Bounding} (ICB),
+and {\em state space estimate} (ETA).
 
 SSS-MC indicates the approach of prior tools:
 the set of PPs is fixed in advance, and the tool commits to testing every interleaving available with those PPs.
 Many techniques can skip equivalent interleavings or order the search to uncover bugs faster \cite{dpor,demeter,chess-icb,gambit,smc-empirical-study},
 but new PPs cannot be added, nor ineffective ones removed, by any dynamic analysis.
 
-Although all data races are undefined behaviour in C and C++ \cite{boehm-memorymodels},
-we distinguish between data-race {\em candidates} and data-race {\em bugs}.
+We distinguish between data-race {\em candidates} and data-race {\em bugs}.
 \revision{We refer to racing (or potentially-racing) memory access pairs as}~{\em data race candidates}.
-Should a future interleaving, preempting during such accesses,
+Should %a future interleaving,
+preempting during such accesses
 lead to \revision{an observable}~failure, then we report a {\em data-race bug}.
-Otherwise, if the access pair can be reordered \revision{to be simultaneous}, but does not produce a failure under any interleaving, it is a {\em benign data race} (with respect to the test input).
+Otherwise, if the access pair can be reordered,
+%\revision{to be simultaneous},
+but does not produce a failure under any interleaving, it is a {\em benign data race} (with respect to the test input).
 If they cannot be reordered at all, due to some other communication \revision{such as in Figure~\ref{fig:hb-example}(b)}, it is a {\em false positive}.
 
 We also identify the {\em minimal} and {\em maximal state space} for each test.
-The {\em minimal state space} includes only thread switches arising from normal execution (Figure~\ref{fig:id}, A).
+The {\em minimal state space} includes only thread switches arising from no preemptions (Figure~\ref{fig:id}, A).
 The {\em maximal state space} is the one tested by SSS-MC: all statically-available PPs are enabled (Figure~\ref{fig:id}, D).
 %However, should new data-race PPs be added during a test, the new maximal state space will be the one including those as well.
 %% don't say this ^ -- because when you add dr pps, they add in pairs and there would be multiple maximals, at least until they each get explored and subseuqnetly add a pp of the other of the pair.
