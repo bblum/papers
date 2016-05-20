@@ -1,0 +1,77 @@
+We agree with reviewer A's concern about possible bias in the set of
+benchmarks. To address this, we will add some analysis of the types of bugs
+found. For example, in the Iterative Context Bounding control experiment, 82
+bugs were found with preemption bound 1, 15 with bound 2, and 2 with bound 3.
+This is consistent with the distribution in [1] and shows our bugs are not
+biased towards requiring high preemption bounds.
+
+Our focus on maximizing completed state spaces is motivated by [2], in which
+developers prefer compositional testing (manually restricting a test's scope
+to complete faster), which suggests that full completions of partial state
+spaces are easier for humans to interpret than partial completions of full
+spaces. Our evaluation also shows that subset state spaces generally uncover
+bugs faster (QS-Sync-Only vs SSS-MC-DPOR). However, your suggestion to
+sometimes complete larger jobs first, thereby pruning any subsumed smaller
+jobs, is an insightful optimization which we could implement in future work.
+
+If the race detector produces a candidate where only one of two orders is
+feasible, the MC will subsequently classify it as a false positive.
+
+To address reviewer B, we choose new preemption points to add for each
+data-race candidate, one for each racing instruction. This produces several
+new jobs, each with a different combination of the new ones with existing
+ones. For the sake of soundness, which assumes an infinite CPU budget, it
+would suffice to randomly choose among new jobs until all are exhausted, or
+even to always choose the biggest (maximal) job and ignore subset jobs.
+Section 5's proofs assume this simple approach (call it Algorithm 0).
+Algorithm 1 in section 3 optimizes algorithm 0 for finite CPU budgets to
+prioritize finding bugs faster. Sorry for the confusion and we will clarify
+this, including Algorithm 0 explicitly.
+
+Regarding the suggestion of Maximal Causality Reduction [3], we were not able
+to do a direct comparison because that paper has no open-source
+implementation. We agree it is not necessarily orthogonal to our approach, but
+could be combined in future work when an implementation becomes available.
+
+We will clarify in our introduction that we assume sequentially-consistent
+hardware, although in principle our work could be extended to weak memory
+models using the techniques in [4].
+
+Regarding Figure 3, the contrived program is just an example to explain the
+background. We agree other approaches exist which can solve this case.
+
+Reviewer C insightfully observes that Figure 7's count of bugs excludes
+data-race candidates from the control experiments. This is the mentioned
+philosophical difference about data races versus concrete failures; to address
+this, we will add a table listing how many data races the control experiments
+reported, and how many of those Quicksand refuted as false positives.
+
+Reviewer D mentions that both HB and Limited HB will find all data races when
+combined with model checking. We suspected this was true, but were only able
+to prove the case for Limited HB. If you could provide a citation which proves
+the case of regular HB combined with model checking, we are interested to read
+it and would gladly include it for cam-ready. However, one further advantage
+of Limited HB is that it reports candidates sooner, allowing Quicksand to test
+them immediately, at the expense of more false positives. We will add a
+discussion of this trade-off.
+
+Regarding our malloc-recycle solution, we tried your suggestion to never
+reallocate memory, but this unacceptably impacted the performance of some
+malloc-heavy tests. Our proof allows eliminating these data-race candidates
+without hacking the allocator.
+
+Thanks for the clarification about FastTrack and CHESS; we will improve our
+discussion of those tools.
+
+Finally, reviewers A and D both criticized the formalism for unclear
+definitions and notation. We agree and will work to improve the foundation and
+notation definitions for cam-ready. For example, in the definition of MHB, we
+define "cannot be reordered" in terms of the ability for threads to be
+scheduled at prior preemption points, with no intermediate blocking operation
+by the latter thread (this coincides with DPOR's approach to identify
+alternate interleavings to explore).
+
+[1] Musuvathi and Qadeer, Iterative Context Bounding, PLDI07
+[2] Ball et al, Preemption Sealing, TACAS10
+[3] Huang, Maximal Causality Reduction, PLDI15 ([24] in the paper/reviews)
+[4] Zhang et al, DPOR for relaxed memory, PLDI15
