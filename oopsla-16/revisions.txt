@@ -1,0 +1,25 @@
+==== mandatory ====
+
+[ ] Acknowledge seqcst assumption ("explain why assumption is reasonable")
+	"Future work could extend our implementation and proofs using the techniques in [Zhang PLDI15]."
+
+[ ] Pure HB vs limited HB
+
+[ ] Explain more precisely how you choose new preemption points to add. ("algorithm 0")
+
+[ ] Related work (huang PLDI15 and fasttrack/chess)
+
+[ ] "philosophical difference about data races versus concrete failures"
+	[ ] be more explicit in narrative
+	[ ] Include the number of data races in the experimental results in addition to bugs found.
+
+==== promised but optional ====
+
+[ ] Add ICB bound statistics on bugs found
+
+[ ] add future work: complete bigger jobs first sometimes, to prune smaller ones
+	(prob just for maximal state space)
+
+[ ] Figure 2 needs work
+
+[ ] Work on formalism/definitions
