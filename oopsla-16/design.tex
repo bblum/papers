@@ -128,84 +128,6 @@ which could potentially be improved in future work (\sect{\ref{sec:future}}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Choosing the best job}
-
-With a limited CPU budget, we must avoid running tests that are likely to be fruitless.
-Hence, we separate the available PP sets into a set of {\em suspended} jobs (partially-explored state spaces with high ETAs),
-and a set of {\em pending} jobs (untested ones with unknown ETAs).
-When the MC reports an ETA too high for some job,
-we compare with other pending and suspended jobs to find another one more likely to complete in time.
-%
-Our method,
-%for doing so,
-listed in Algorithm~\ref{alg:shouldworkblock}, is the heart of Iterative Deepening.
-%\footnote{
-%Though its worst-case performance is $O(mn)$ in the
-%%number of pending and suspended jobs,
-%sizes of $\mathcal{P}$ and $\mathcal{S}$,
-%in practice the non-constant portion beyond line 4 runs very infrequently
-%and is negligible compared to the exponentially-sized state spaces.}.
-Its main feature is understanding that if \GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$},
-and $j_1$ is suspended,
-then $j_2$'s state space is guaranteed to be strictly larger, so $j_2$ will take at least as long.
-Hence we should avoid testing $j_2$ unless $j_1$ is later resumed and its ETA improves after further execution. %over time.
-%reveals that it might finish in time after all.
-Similarly, whenever a job finds a bug, we cancel all pending superset jobs, as they might find only the same bug.
-
-\begin{algorithm}[t]
-	\SetKwInOut{Input}{Input}
-	%\textbf{Function} GetBestJob($j_0$, PendingJobs, SuspendedJobs): \\
-	\Input{$j_0$, the currently-running job}
-	%\Input{$eta$, $j_0$'s predicted completion time}
-	\Input{\PendingJobs, the list of pending jobs, sorted by decreasing heuristic priority}
-	\Input{\SuspendedJobs, the list of already-suspended jobs, sorted by increasing ETA}
-	\Input{$T$, the remaining time in the CPU budget}
-	\If{\GetETA{$j_0$} $<$ HeuristicETAFactor $\times$ $T$}{
-		return $j_0$ // Common case: job is expected to finish.
-	}
-	\ForEach{job $j_P \in$ \PendingJobs}{
-		// Don't run a pending job if a subset of it is already suspended; its ETA would be at least as bad. \\
-		\If {$\forall j_S \in$ \SuspendedJobs, \GetPPSet{$j_S$} $\not\subset$ \GetPPSet{$j_P$}}{
-			return $j_P$
-		}
-	}
-	%// no pending jobs; maybe resume a suspended job \\
-	\ForEach{job $j_S \in$ \SuspendedJobs}{
-		\If{\GetPPSet{$j_0$} $\not\subset$ \GetPPSet{$j_S$}
-			$\land$
-			\GetETA{$j_0$} $>$ \GetETA{$j_S$}}{
-			// If a subset of $j_S$ is also suspended, don't run the larger one first. \\
-			\If{$\forall j_{S2} \in$ \SuspendedJobs, \GetPPSet{$j_{S2}$} $\not\subset$ \GetPPSet{$j_S$}}{
-				return $j_S$
-			}
-		}
-	}
-	return $j_0$ // \GetETA{$j_0$} was bad, but no other $j$ was better.
-	\caption{Suspending exploration of a state space in favour of a potentially smaller one.}
-	\label{alg:shouldworkblock}
-\end{algorithm}
-
-%
-We also account for the inherent inaccuracy of ETA estimates.
-Line 1 heuristically scales up the time remaining to avoid suspending jobs too aggressively
-in case their ETAs are actually overestimated.
-Lines 12-14 account for the
-%bizarre
-possibility that among two suspended jobs,
-%given two jobs,
-%%$j_1,j_2$,
-\GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$}
-but
-\GetETA{$j_1$} $>$ \GetETA{$j_2$}.
-This can arise because estimates tend to get more accurate over time,
-and $j_1$ perhaps ran much longer before suspending.
-% In such scenarios,
-We heuristically assume the smaller job's ETA is more accurate
-to avoid repeatedly resuming larger jobs briefly while their ETAs only become worse
-(it lets us avoid thrashing in \quicksand).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \subsection{Data-race preemption points}
 \label{sec:classifying}
 
@@ -292,6 +214,84 @@ in which case we report a potential false positive that the user must handle (\s
 %(for example, depending on the result of {\tt malloc()}).
 %% especially when malloc is involved.
 %%Figure~\ref{fig:dont-filter-dr-by-address} shows example code where qualifying by memory address will miss the bug.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Choosing the best job}
+
+With a limited CPU budget, we must avoid running tests that are likely to be fruitless.
+Hence, we separate the available PP sets into a set of {\em suspended} jobs (partially-explored state spaces with high ETAs),
+and a set of {\em pending} jobs (untested ones with unknown ETAs).
+When the MC reports an ETA too high for some job,
+we compare with other pending and suspended jobs to find another one more likely to complete in time.
+%
+Our method,
+%for doing so,
+listed in Algorithm~\ref{alg:shouldworkblock}, is the heart of Iterative Deepening.
+%\footnote{
+%Though its worst-case performance is $O(mn)$ in the
+%%number of pending and suspended jobs,
+%sizes of $\mathcal{P}$ and $\mathcal{S}$,
+%in practice the non-constant portion beyond line 4 runs very infrequently
+%and is negligible compared to the exponentially-sized state spaces.}.
+Its main feature is understanding that if \GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$},
+and $j_1$ is suspended,
+then $j_2$'s state space is guaranteed to be strictly larger, so $j_2$ will take at least as long.
+Hence we should avoid testing $j_2$ unless $j_1$ is later resumed and its ETA improves after further execution. %over time.
+%reveals that it might finish in time after all.
+Similarly, whenever a job finds a bug, we cancel all pending superset jobs, as they might find only the same bug.
+
+\begin{algorithm}[t]
+	\SetKwInOut{Input}{Input}
+	%\textbf{Function} GetBestJob($j_0$, PendingJobs, SuspendedJobs): \\
+	\Input{$j_0$, the currently-running job}
+	%\Input{$eta$, $j_0$'s predicted completion time}
+	\Input{\PendingJobs, the list of pending jobs, sorted by decreasing heuristic priority}
+	\Input{\SuspendedJobs, the list of already-suspended jobs, sorted by increasing ETA}
+	\Input{$T$, the remaining time in the CPU budget}
+	\If{\GetETA{$j_0$} $<$ HeuristicETAFactor $\times$ $T$}{
+		return $j_0$ // Common case: job is expected to finish.
+	}
+	\ForEach{job $j_P \in$ \PendingJobs}{
+		// Don't run a pending job if a subset of it is already suspended; its ETA would be at least as bad. \\
+		\If {$\forall j_S \in$ \SuspendedJobs, \GetPPSet{$j_S$} $\not\subset$ \GetPPSet{$j_P$}}{
+			return $j_P$
+		}
+	}
+	%// no pending jobs; maybe resume a suspended job \\
+	\ForEach{job $j_S \in$ \SuspendedJobs}{
+		\If{\GetPPSet{$j_0$} $\not\subset$ \GetPPSet{$j_S$}
+			$\land$
+			\GetETA{$j_0$} $>$ \GetETA{$j_S$}}{
+			// If a subset of $j_S$ is also suspended, don't run the larger one first. \\
+			\If{$\forall j_{S2} \in$ \SuspendedJobs, \GetPPSet{$j_{S2}$} $\not\subset$ \GetPPSet{$j_S$}}{
+				return $j_S$
+			}
+		}
+	}
+	return $j_0$ // \GetETA{$j_0$} was bad, but no other $j$ was better.
+	\caption{Suspending exploration of a state space in favour of a potentially smaller one.}
+	\label{alg:shouldworkblock}
+\end{algorithm}
+
+%
+We also account for the inherent inaccuracy of ETA estimates.
+Line 1 heuristically scales up the time remaining to avoid suspending jobs too aggressively
+in case their ETAs are actually overestimated.
+Lines 12-14 account for the
+%bizarre
+possibility that among two suspended jobs,
+%given two jobs,
+%%$j_1,j_2$,
+\GetPPSet{$j_1$} $\subset$ \GetPPSet{$j_2$}
+but
+\GetETA{$j_1$} $>$ \GetETA{$j_2$}.
+This can arise because estimates tend to get more accurate over time,
+and $j_1$ perhaps ran much longer before suspending.
+% In such scenarios,
+We heuristically assume the smaller job's ETA is more accurate
+to avoid repeatedly resuming larger jobs briefly while their ETAs only become worse
+(it lets us avoid thrashing in \quicksand).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
