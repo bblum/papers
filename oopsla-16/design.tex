@@ -21,7 +21,7 @@ We focus on run-time data-race detection~\cite{hybriddatarace,tsan,ifrit} as the
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\cbstart
+\revisionx{
 \subsection{Changing State Spaces}
 \label{sec:algorithm0}
 
@@ -71,8 +71,7 @@ are based on this simple version of Iterative Deepening.
 However, in tests where full verification is not feasible,
 focusing on the maximal state space alone is likely to be fruitless.
 %
-Hence, we prioritize all subset jobs
-\cbend
+Hence, we prioritize all subset jobs}
 based on number of PPs, ETA, and whether they include data-race PPs,
 We rely on state-space estimation \cite{estimation}
 to predict which jobs are likely to complete within a reasonable time,
@@ -82,10 +81,10 @@ so an inexpert user can provide only their total CPU budget as a test parameter,
 and to enable completing appropriately-sized jobs within that budget.
 We seek to maximize completed state spaces,
 as each one serves as a guarantee that all interleavings possible with its PPs were tested.
-\cbstart
+\revisionx{
 The next three subsections will show how we schedule these smaller jobs
 based on their PP sets and ETAs.
-\cbend
+}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
