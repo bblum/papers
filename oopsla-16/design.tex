@@ -6,9 +6,74 @@ Iterative Deepening
 %likewise
 makes progressively deeper searches of the state space until the CPU budget is exhausted.
 In this context, the depth is the number of PPs used.
-Hence, our tool \quicksand~schedules multiple MC instances in parallel to simultaneously test many different subsets of the available PPs.
-We refer to each unique set of PPs as a {\em job},
-and prioritize them based on number of PPs, ETA, and whether they include data-race PPs,
+Hence,
+%our tool
+\quicksand~schedules multiple MC instances in parallel to
+%simultaneously
+test many different subsets of the available PPs,
+We refer to each unique set of PPs as a {\em job}.
+
+Note that Iterative Deepening is a {\em wrapper} algorithm around stateless MC.
+A MC tool is still used to test each state space, and other reduction techniques are still applicable.
+Moreover, because Iterative Deepening treats the set of preemption points as mutable,
+it can add new preemption points reactively based on any runtime analysis.
+We focus on run-time data-race detection~\cite{hybriddatarace,tsan,ifrit} as the mechanism for finding new preemption candidates.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\cbstart
+\subsection{Changing State Spaces}
+\label{sec:algorithm0}
+
+To introduce the Iterative Deepening algorithm,
+we first show a simple approach for handling new PPs in the absence of any CPU budget restriction.
+%show how we prioritize smaller state spaces based on ETAs.
+
+{\bf Na\"ive approach.}
+Given unlimited CPU time for testing,
+we would always switch to the new maximal state space whenever adding a new PP.
+The maximal state space is guaranteed to subsume all execution sequences reachable in any subset state space,
+so considering any incomplete subset of the known PPs will be duplicate work.
+Algorithm~\ref{alg:algorithm0} demonstrates this na\"ive approach.
+It would be seeded with the set of all statically-known synchronization API PPs,
+and invoked whenever a new data race PP is added.
+%
+Our proofs in \sect{\ref{sec:totalverif}},
+being concerned with the verification guarantee provided when \quicksand~completes within the CPU budget,
+are based on this simple version of Iterative Deepening.
+%
+
+\newcommand\AllPPs{\ensuremath{\mathcal{A}}}
+\newcommand\PendingJobs{\ensuremath{\mathcal{P}}}
+\newcommand\SuspendedJobs{\ensuremath{\mathcal{S}}}
+\newcommand\GetETA[1]{ETA(#1)}
+\newcommand\GetPPSet[1]{PPSet(#1)}
+
+\begin{algorithm}[t]
+	\SetKwInOut{Input}{Input}
+	%\textbf{Function} GetBestJob($j_0$, PendingJobs, SuspendedJobs): \\
+	\Input{$j$, the currently-running job}
+	%\Input{$eta$, $j_0$'s predicted completion time}
+	\Input{\AllPPs, the set of all known preemption points} %, sorted by decreasing heuristic priority}
+	%\Input{\SuspendedJobs, the list of already-suspended jobs, sorted by increasing ETA}
+	%\Input{$T$, the remaining time in the CPU budget}
+	\eIf{$\exists p \in \AllPPs . p \not\in \GetPPSet{j}$}{
+		return NewJob(\AllPPs) // New maximal state space
+	}{
+		return $j$ // $j$ is still maximal
+	}
+	\caption{Na\"ive Iterative Deepening method}
+	\label{alg:algorithm0}
+\end{algorithm}
+
+
+{\bf Prioritizing smaller jobs.}
+However, in tests where full verification is not feasible,
+focusing on the maximal state space alone is likely to be fruitless.
+%
+Hence, we prioritize all subset jobs
+\cbend
+based on number of PPs, ETA, and whether they include data-race PPs,
 We rely on state-space estimation \cite{estimation}
 to predict which jobs are likely to complete within a reasonable time,
 before actually testing a large fraction of interleavings for each.
@@ -17,12 +82,10 @@ so an inexpert user can provide only their total CPU budget as a test parameter,
 and to enable completing appropriately-sized jobs within that budget.
 We seek to maximize completed state spaces,
 as each one serves as a guarantee that all interleavings possible with its PPs were tested.
-
-Note that Iterative Deepening is a {\em wrapper} algorithm around stateless MC.
-A MC tool is still used to test each state space, and other reduction techniques are still applicable.
-Moreover, because Iterative Deepening treats the set of preemption points as mutable,
-it can add new preemption points reactively based on any runtime analysis.
-We focus on run-time data-race detection~\cite{hybriddatarace,tsan,ifrit} as the mechanism for finding new preemption candidates.
+\cbstart
+The next three subsections will show how we schedule these smaller jobs
+based on their PP sets and ETAs.
+\cbend
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -67,10 +130,6 @@ which could potentially be improved in future work (\sect{\ref{sec:future}}).
 
 \subsection{Choosing the best job}
 
-\newcommand\PendingJobs{\ensuremath{\mathcal{P}}}
-\newcommand\SuspendedJobs{\ensuremath{\mathcal{S}}}
-\newcommand\GetETA[1]{ETA(#1)}
-\newcommand\GetPPSet[1]{PPSet(#1)}
 With a limited CPU budget, we must avoid running tests that are likely to be fruitless.
 Hence, we separate the available PP sets into a set of {\em suspended} jobs (partially-explored state spaces with high ETAs),
 and a set of {\em pending} jobs (untested ones with unknown ETAs).
