@@ -5,17 +5,39 @@
 
 [ ] Pure HB vs limited HB
 
-[ ] Explain more precisely how you choose new preemption points to add. ("algorithm 0")
+[x] Explain more precisely how you choose new preemption points to add. ("algorithm 0")
+	[x] refactor prose in section 3
+	[x] write naive approach paragraph
+	[x] write algorithm 2 (nee: "algorithm 0")
 
 [ ] Related work (huang PLDI15 and fasttrack/chess)
+	fasttrack:
+		say we implement djit+
+		say why fasttrack alg is not appropriate, it reports only the first write/write(?) race (check this)
+	chess
+		remove 'factually incorrect' claim
+		spend more time in intro introducing the SSSMC-Shared-Mem approach which Inspect does and which is possible with chess
+	pct
+		improve discussion somehow...
 
 [ ] "philosophical difference about data races versus concrete failures"
 	[ ] be more explicit in narrative
 	[ ] Include the number of data races in the experimental results in addition to bugs found.
 
-==== promised but optional ====
+==== promised ====
 
 [ ] Add ICB bound statistics on bugs found
+
+[ ] "citations take up too much space" remove isbn/url/doi etc
+
+[ ] reviewer D comments
+	You are seriously glossing over the fact that you are ignoring weak memory models.
+		Just say: we assume sequentially consistent hardware, the rest is future work, or something like that (In intro)
+	characterization of HB vs. Limited HB is highly misleading
+		clarify advantage of limited hb
+	brief mention of why can't hack allocator to never reuse memory
+
+==== optional ====
 
 [ ] add future work: complete bigger jobs first sometimes, to prune smaller ones
 	(prob just for maximal state space)
