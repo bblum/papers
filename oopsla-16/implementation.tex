@@ -6,7 +6,9 @@
 
 We chose \landslide~\cite{landslide} as our MC tool due to its ability to trace execution at the granularity of individual instructions and memory accesses, which dynamic data-race detection requires.
 \landslide~implements DPOR \cite{dpor},
-state space estimation \cite{estimation}, and a hybrid
+state space estimation \cite{estimation},
+\revisionx{the DJIT+ HB data-race analysis \cite{djit,fasttrack},}
+and a hybrid
 lockset/Limited HB
 data-race analysis \cite{hybriddatarace}.
 \revision{It can optionally replace DPOR with ICB \cite{chess-icb},

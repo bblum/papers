@@ -26,7 +26,7 @@ which alone provides soundness only for race-free programs.}
 {\bf Message-passing.} Other stateless model checkers, such as SAMC \cite{samc}, MaceMC \cite{macemc}, MoDist \cite{modist}, ETA \cite{dbug-retreat}, and Concuerror \cite{optimal-dpor},
 limit thread communication to a message-passing API to more effectively test distributed systems.
 This eliminates the need for data-race analysis, but restricts the class of programs that can be tested.
-Nevertheless, Iterative Deepening is applicable to these tools.
+%Nevertheless, Iterative Deepening is applicable to these tools.
 
 {\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs.
 However, the resulting state space explosion demands that any such tool either
@@ -105,14 +105,28 @@ and can incorporate data-race PPs only when statically coded in advance}.
 \subsection{Data Race Detection}
 \label{sec:related-dr}
 
+\revisionx{{\bf Happens-Before.}}
 %Too many related projects to list have made contributions to the
 Many advances have been made on the false-positive potential data race problem since it was first introduced in \cite{eraser}.
 \cite{hybriddatarace} and \cite{tsan}
 %combine the lockset and happens-before analyses into a hybrid technique,
 \revision{introduce Limited Happens-Before}, %(\sect{\ref{sec:overview-dr}})},
-which we employ,
-\revision{while \cite{predictive-dr} introduces the Causally-Precedes relation for a sound yet incomplete analysis (\sect{\ref{sec:overview-dr}})}.
+which
+\revisionx{\quicksand~uses to achieve its best bug-finding result.
+Other tools such as DJIT+ \cite{djit} and FastTrack \cite{fasttrack} opt for the precise Happens-Before analysis,
+which produces no false positives but is prone to more false negatives as shown in \sect{\ref{sec:overview-dr}}.
+FastTrack, the most recent development in this approach,
+optimizes the representation of variable write vector clocks for performance,
+which guarantees to detect at least the first race on each variable.
+However, as we are interested in classifying data race candidates as {\em benign} or {\em buggy},
+this optimization would be unsound for total verification if the first race on a variable were benign.
+Hence, we implement precise HB as defined by DJIT+.
+Finally, \cite{predictive-dr} recently introduced the Causally-Precedes relation for a precise analysis which covers some common false negative cases
+such as our example in Figure~\ref{fig:hb-example}(a).
+}
+%\revision{while \cite{predictive-dr} introduces the Causally-Precedes relation for a sound yet incomplete analysis (\sect{\ref{sec:overview-dr}})}.
 
+\revisionx{{\bf Other domains.}}
 \revision{Several tools \cite{droidracer,cafa,unnamed-android} have recently emerged to target Android applications},
 %DroidRacer \cite{droidracer} and CAFA \cite{cafa} target
 %%event-driven
@@ -123,9 +137,9 @@ IFRit \cite{ifrit}
 improves the performance of HB using an interference analysis,
 which could allow future work to avoid tracing every memory access.
 %although in our context, we cannot admit false negatives (\sect{\ref{sec:totalverif}}).
-% No, IDGAF about pure happens before.
 %FastTrack \cite{fasttrack} optimizes the performance of pure happens-
 
+\revisionx{{\bf Replay analysis.}}
 Closer to our work, replay analysis \cite{recordreplaydrs} also suppresses false positives by testing multiple thread interleavings.
 %after finding data race candidates.
 This work compares the program states immediately after the access pair for differences,

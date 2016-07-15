@@ -146,9 +146,8 @@ preempting just before an instruction identified as part of a data race.
 None of the state spaces in Figure~\ref{fig:id} contain this interleaving,
 as none of the mutex/yield preemptions split lines 2 and 6 across different transitions.
 
-\revision{
 	{\bf Variants of Happens-Before.}
-	Most prior work focuses on {\em Happens-Before} (HB) \cite{lamport-clocks} as the order relation between accesses.
+	Most prior work focuses on {\em Happens-Before} (HB) \cite{lamport-clocks,djit,fasttrack} as the order relation between accesses.
 \cite{predictive-dr} and \cite{hybriddatarace} identify a problem with this approach:
 it cannot identify access pairs separated by an unrelated lock operation which could race in an alternate interleaving,
 as shown in the example program in Figure~\ref{fig:hb-example}(a).
@@ -175,8 +174,11 @@ using model checking to automatically test each potential race
 and report only directly observed failures to the user.
 %Our convergence theorem requires identifying all potential data-races to provide total verification (\sect{\ref{sec:totalverif}})
 %% TODO CAMREADY: cite our soundness proofs tech report in this paragraph as well
-Hence, we employ Limited HB in this paper},
-accepting some overhead from false positives for the sake of total verification (\sect{\ref{sec:totalverif}}).
+%Hence, we employ Limited HB in this paper},
+%accepting some overhead from false positives for the sake of total verification (\sect{\ref{sec:totalverif}}).
+\revisionx{Hence, we can accept some overhead from Limited HB's false positives for the sake of finding data-race candidates more quickly.
+In \sect{\ref{sec:eval}} we will evaluate how HB and Limited HB each influence \quicksand's bug-finding and verification speed.
+}
 
 % Old explanation.
 %Prior work \cite{hybriddatarace} distinguishes between {\em pure happens-before} \cite{lamport-clocks},
