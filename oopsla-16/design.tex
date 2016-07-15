@@ -33,7 +33,7 @@ we first show a simple approach for handling new PPs in the absence of any CPU b
 Given unlimited CPU time for testing,
 we would always switch to the new maximal state space whenever adding a new PP.
 The maximal state space is guaranteed to subsume all execution sequences reachable in any subset state space,
-so considering any incomplete subset of the known PPs will be duplicate work.
+so considering any incomplete subset of the known PPs would be duplicate work.
 Algorithm~\ref{alg:algorithm0} demonstrates this na\"ive approach.
 It would be seeded with the set of all statically-known synchronization API PPs,
 and invoked whenever a new data race PP is added.
