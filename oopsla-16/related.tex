@@ -113,14 +113,15 @@ Many advances have been made on the false-positive potential data race problem s
 \revision{introduce Limited Happens-Before}, %(\sect{\ref{sec:overview-dr}})},
 which
 \revisionx{\quicksand~uses to achieve its best bug-finding result.
-Other tools such as DJIT+ \cite{djit} and FastTrack \cite{fasttrack} opt for the precise Happens-Before analysis,
+Other tools such as DJIT+ \cite{djit} and FastTrack \cite{fasttrack} opt for the precise Happens-Before relation first defined by Lamport \cite{lamport-clocks},
 which produces no false positives but is prone to more false negatives as shown in \sect{\ref{sec:overview-dr}}.
-FastTrack, the most recent development in this approach,
+FastTrack
+%, the most recent development in this approach,
 optimizes the representation of variable write vector clocks for performance,
 which guarantees to detect at least the first race on each variable.
 However, as we are interested in classifying data race candidates as {\em benign} or {\em buggy},
 this optimization would be unsound for total verification if the first race on a variable were benign.
-Hence, we implement precise HB as defined by DJIT+.
+Hence, we implement precise HB with write vector clocks as defined by DJIT+.
 Finally, \cite{predictive-dr} recently introduced the Causally-Precedes relation for a precise analysis which covers some common false negative cases
 such as our example in Figure~\ref{fig:hb-example}(a).
 }
