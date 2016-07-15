@@ -152,12 +152,12 @@ as none of the mutex/yield preemptions split lines 2 and 6 across different tran
 it cannot identify access pairs separated by an unrelated lock operation which could race in an alternate interleaving,
 as shown in the example program in Figure~\ref{fig:hb-example}(a).
 We call such unreported access pairs {\em false negatives}.
+However, consider the similar program in Figure~\ref{fig:hb-example}(b),
+in which the access pair ceases to exist in the alternate interleaving.
 \cite{hybriddatarace} introduces the {\em Limited HB} relation,
 which will report such potential races
 by considering only blocking operations like {\tt cond\_wait} to enforce the order.
-However, consider the similar program in Figure~\ref{fig:hb-example}(b),
-in which the access pair ceases to exist in the alternate interleaving.
-Limited HB will report all potential races, avoiding false negatives \cite{tsan},
+Limited HB will report all potential races, avoiding \revisionx{many} false negatives \cite{tsan},
 but at the cost of necessarily reporting some such {\em false positives}.
 
 Finally, the {\em Causally-Precedes} relation \cite{predictive-dr} %strikes a middle ground,
@@ -167,9 +167,12 @@ critical sections to determine whether lock events are unrelated to a potential 
 Causally-Precedes will identify the potential race in Figure~\ref{fig:hb-example}(a), as the two critical sections do not conflict,
 although it can still miss true potential races in other cases.
 
-Stand-alone data-race analyses must avoid inundating the user with false alarms \cite{racerx}.
+\revisionx{Being dynamic analyses, both HB and Limited HB may suffer false negatives when a racy access pair is not executed at all in a specific interleaving.
+Limited HB offers the advantage of identifying a potential race as long as the access pair is observed under any interleaving,
+rather than requiring the accesses to be adjacent in time, as HB would.}
+While stand-alone data-race analyses must avoid inundating the user with false alarms \cite{racerx},
 %However,
-This work incorporates data-race analysis in an internal feedback loop,
+we incorporate data-race analysis in an internal feedback loop,
 using model checking to automatically test each potential race
 and report only directly observed failures to the user.
 %Our convergence theorem requires identifying all potential data-races to provide total verification (\sect{\ref{sec:totalverif}})

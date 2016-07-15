@@ -125,6 +125,7 @@ When limited to a single test execution, suppressing any data race \revision{can
 Consider the more unusual program in Figure~\ref{fig:recycle-bug},
 in which the memory is recycled the same way, but the racing access's address is not tied to {\tt malloc}'s return value.
 Here, reordering lines 6-7 before line 3 will allow {\tt x} and {\tt x2} to race.
+\revisionx{One way to avoid such collisions would be to use a hacked allocator during testing which never recycles memory, but this could unacceptably impact performance in {\tt malloc}-heavy tests.}
 
 \begin{figure}[t]
 	\small

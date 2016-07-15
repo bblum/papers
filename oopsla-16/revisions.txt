@@ -28,14 +28,14 @@
 
 [ ] Add ICB bound statistics on bugs found
 
-[ ] "citations take up too much space" remove isbn/url/doi etc
+[x] "citations take up too much space" remove isbn/url/doi etc
 
-[ ] reviewer D comments
-	You are seriously glossing over the fact that you are ignoring weak memory models.
+[x] reviewer D comments
+	[x] You are seriously glossing over the fact that you are ignoring weak memory models.
 		Just say: we assume sequentially consistent hardware, the rest is future work, or something like that (In intro)
-	characterization of HB vs. Limited HB is highly misleading
+	[x] characterization of HB vs. Limited HB is highly misleading
 		clarify advantage of limited hb
-	brief mention of why can't hack allocator to never reuse memory
+	[x] brief mention of why can't hack allocator to never reuse memory
 
 ==== optional ====
 
