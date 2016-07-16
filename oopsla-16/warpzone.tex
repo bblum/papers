@@ -23,6 +23,8 @@ but we believe future implementations
 %of Iterative Deepening
 could incorporate cross-job memoization
 to prune some or all such repeated work.
+\revisionx{Prioritizing the maximal state space in particular could also improve completion times:
+whenever the maximal job finishes with no new data-races, future implementations could immediately prune all subset jobs and declare a total verification.}
 
 {\bf Finer-grained PP subsets.}
 \quicksand~was able to partially guarantee safety for some PPs in 89\% of tests with too-large maximal state spaces.

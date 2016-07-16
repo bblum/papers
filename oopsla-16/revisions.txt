@@ -39,7 +39,7 @@
 
 ==== optional ====
 
-[ ] add future work: complete bigger jobs first sometimes, to prune smaller ones
+[x] add future work: complete bigger jobs first sometimes, to prune smaller ones
 	(prob just for maximal state space)
 
 [ ] Figure 2 needs work
