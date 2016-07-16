@@ -89,17 +89,25 @@ as well as developers' willingness to limit a test case's scope so the resulting
 %a partially-complete exploration of a huge state space.
 Probabilistic Concurrency Testing (PCT) \cite{randomized-scheduler}
 is a randomized algorithm that can quantify the probability of uncovering bugs.
-PCT is optimized for tests with impossibly large state spaces,
-while for more approachable tests,
-its incompatibility with DPOR would significantly delay completion.
+PCT \revisionx{targets} tests with impossibly large state spaces,
+\revisionx{eschewing DPOR's depth-first search model to
+%ensure it can
+quickly sample a broad cross-section of large state spaces.
+However, it proposes no alternate reduction algorithm to make up for its incompatibility with DPOR,
+so is unsuitable for verification of medium-sized tests.}
+%while for more approachable tests,
+%its incompatibility with DPOR would significantly delay completion.
 Future work could use ETAs to heuristically switch between DPOR and PCT}.
+%
 Finally, ICB \cite{chess-icb} is most similar to our work,
 as both approaches provide a partial verification
 %on some subset of interleavings
 when full completion is intractable (\sect{\ref{sec:future}}).
-However, ICB is limited to a fixed set of PPs,
+However, ICB
+%is limited to a fixed set of PPs,
 \revision{cannot estimate remaining time to total verification,
 and can incorporate data-race PPs only when statically coded in advance}.
+\revisionx{Our results in \sect{\ref{sec:eval-sssmc}} outperform both such configurations of ICB.}
 %and to our knowledge no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
 
 \subsection{Data Race Detection}
