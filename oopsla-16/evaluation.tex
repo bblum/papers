@@ -362,6 +362,34 @@ added significant performance overhead to the MC when computing DPOR and backtra
 Iterative Deepening avoids this overhead by waiting until runtime to identify fewer, more relevant PPs dynamically,
 and is hence more suitable for MC with data-race PPs.}
 
+\revisionx{
+To ensure that our corpus of P2 and Pintos bugs gives an unbiased comparison between \quicksand~and ICB,
+we also counted the preemption bounds necessary for ICB to find each of its bugs.
+Table~\ref{tab:icb-bounds} shows the distribution of these bounds,
+which is consistent with the results of \cite{chess-icb}.
+%justifies that our portrayal of ICB is fair.
+%and shows no bias towards requiring high preemption bounds.
+}
+
+\begin{table}[h]
+	\begin{center}
+		\revisionx{
+		\small
+	\begin{tabular}{r|c|c}
+		{\bf Bound} & {\bf SSS-MC-ICB} & {\bf SSS-MC-Shared-Mem} \\
+		\hline
+		0	& 2	& 1	\\
+		1	& 82	& 86	\\
+		2	& 15	& 32	\\
+		3	& 2	& 3	\\
+		4+	& 0	& 0	\\
+	\end{tabular}
+		}
+	\end{center}
+	\label{tab:icb-bounds}
+	\caption{\revisionx{Distribution of preemption bounds among bugs found by ICB \cite{chess-icb} control experiments. (Bound 0 means the bug was found by switching threads only on {\tt yield()}s.)}}
+\end{table}
+
 {\bf Partial verification.}
 When a MC job times out, the user may prefer a brief summary of what parts of the test were verified, rather than writing off all the CPU time as a waste.
 %Beyond using the state space estimator to guess the percent coverage,
