@@ -92,7 +92,7 @@ is a randomized algorithm that can quantify the probability of uncovering bugs.
 PCT \revisionx{targets} tests with impossibly large state spaces,
 \revisionx{eschewing DPOR's depth-first search model to
 %ensure it can
-quickly sample broad cross-sections of large state spaces.
+instead sample broad cross-sections of large state spaces.
 However, it proposes no alternate reduction algorithm to make up for its incompatibility with DPOR,
 so is unsuitable for verification of medium-sized tests.}
 %while for more approachable tests,
@@ -125,7 +125,7 @@ Other tools such as DJIT+ \cite{djit} and FastTrack \cite{fasttrack} opt for the
 which produces no false positives but is prone to more false negatives as shown in \sect{\ref{sec:overview-dr}}.
 FastTrack
 %, the most recent development in this approach,
-optimizes the representation of variable write vector clocks for performance,
+optimizes the representation of variable write clocks for performance,
 which guarantees to detect at least the first race on each variable.
 However, as we are interested in classifying data race candidates as {\em benign} or {\em buggy},
 this optimization would be unsound for total verification if the first race on a variable were benign.

@@ -227,13 +227,14 @@ we additionally show a wall-clock comparison in (b) to highlight the impact of \
 %We quickly pull ahead of SSS-MC, and ultimately conclude with 179\% as many bugs in total.
 %The break-even point is at a negligible 90 seconds.
 \revision{Compared to \revisionx{SSS-MC-ICB (the fastest among the control experiments),} \quicksand~finds}~more bugs within any CPU budget greater than \revision{200}~seconds.
-\revisionx{Compared to SSS-MC-Shared-Mem (the best SSS-MC approach in the long term),} we ultimately concludes 10 CPU-hours with \revisionx{125\%} as many bugs in total \revisionx{when using Limited HB}.
+\revisionx{Compared to SSS-MC-Shared-Mem (the best SSS-MC approach in the long term), \quicksand's Limited HB version} ultimately concludes 10 CPU-hours with \revisionx{125\%} as many bugs in total.
 \revision{Before the break-even point at 200 seconds,
 \quicksand~lags behind \revisionx{SSS-MC-ICB} due to additional start-up overhead from its tenfold parallelism.
 However, converting SSS-MC's early CPU-time advantage into faster wall-clock performance remains an open research problem \cite{parallel-dpor}.
 Figure~\ref{fig:dowefindbugsfaster}(b) gives \quicksand~full credit for its inherent parallelism:
 with a 10 core allocation, it outperforms SSS-MC
 for any fixed budget of wall-clock time.}
+\revisionx{After 1 hour of wall-clock time, tenfold \quicksand~performs 158\% as well as SSS-MC-ICB.}
 
 % TODO CAMREADY
 %\revision{
@@ -371,7 +372,7 @@ and is hence more suitable for MC with data-race PPs.}
 To ensure that our corpus of P2 and Pintos bugs gives an unbiased comparison between \quicksand~and ICB,
 we also counted the preemption bounds necessary for ICB to find each of its bugs.
 Table~\ref{tab:icb-bounds} shows the distribution of these bounds,
-which is consistent with the results of \cite{chess-icb}.
+which is consistent with the results of \cite{chess-icb}, showing no bias towards bugs that would be harder for ICB to find.
 %justifies that our portrayal of ICB is fair.
 %and shows no bias towards requiring high preemption bounds.
 }
@@ -393,8 +394,8 @@ which is consistent with the results of \cite{chess-icb}.
 	\end{tabular}
 		}
 	\end{center}
+	\caption{\revisionx{Distribution of preemption bounds among bugs found by ICB control experiments. (Bound 0 means the bug was found by switching threads only on {\tt yield()}s.)}}
 	\label{tab:icb-bounds}
-	\caption{\revisionx{Distribution of preemption bounds among bugs found by ICB \cite{chess-icb} control experiments. (Bound 0 means the bug was found by switching threads only on {\tt yield()}s.)}}
 \end{table}
 
 {\bf Partial verification.}
@@ -491,9 +492,11 @@ using data-race PPs increases our \revision{verification capacity}~by 4.25x.
 
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{totalverifs-v2.pdf}
-	\caption{Cumulative distribution of tests \quicksand~fully verified (\sect{\ref{sec:totalverif}}).
+	\caption{Cumulative distribution of tests fully verified
+	\revisionx{by QS-Limited-HB, QS-Pure-HB, and SSS-MC-Shared-Mem}
+	(\sect{\ref{sec:totalverif}}).
 	%SSS-MC-Shared-Mem completed 1.37x as many tests, but 
-	SSS-MC-Shared-Mem is unsound: 21 tests it completed hid bugs previously found in Figure~\ref{fig:dowefindbugsfaster}.
+	%SSS-MC-Shared-Mem is unsound: 21 tests it completed hid bugs previously found in Figure~\ref{fig:dowefindbugsfaster}.
 	%previously found (Figure~\ref{fig:dowefindbugsfaster}).
 	%Some tests had no data-race candidates, and hence could also be verified by .}
 	36 data-race-free tests were also soundly verified by QS-Sync-Only, SSS-MC-DPOR, and SSS-MC-ICB.}

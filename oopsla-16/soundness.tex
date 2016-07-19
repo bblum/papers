@@ -113,7 +113,7 @@ Hence, Iterative Deepening will eventually test a state space containing the equ
 \subsection{Suppressing ``malloc-recycle'' false positives}
 \label{sec:recycle}
 
-We identify a particular class of false positive data-race candidates in which the associated memory was recycled by re-allocation between the two accesses.
+We identify a particular class of false positive data-race candidates \revisionx{under Limited HB} in which the associated memory was recycled by re-allocation between the two accesses.
 Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can expose such behaviour.
 If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 7 will be flagged as a \revision{potential}~data race.
 We call this a {\em malloc-recycle data race \revision{candidiate}}.

@@ -35,8 +35,8 @@ we would always switch to the new maximal state space whenever adding a new PP.
 The maximal state space is guaranteed to subsume all execution sequences reachable in any subset state space,
 so considering any incomplete subset of the known PPs would be duplicate work.
 Algorithm~\ref{alg:algorithm0} demonstrates this na\"ive approach.
-It would be seeded with the set of all statically-known synchronization API PPs,
-and invoked whenever a new data race PP is added.
+It is seeded with the set of all statically-known synchronization API PPs,
+and invoked whenever a new data-race candidate is found.
 %
 Our proofs in \sect{\ref{sec:totalverif}},
 being concerned with the verification guarantee provided when \quicksand~completes within the CPU budget,
