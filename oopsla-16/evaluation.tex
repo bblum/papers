@@ -264,8 +264,7 @@ found dramatically fewer bugs (just 1)\footnote{
 	The one bug SSS-MC found was in a fully-assembler lock implementation. {\tt yield()}'s return value clobbered a value stored in {\tt \%eax}, which could lead to a failure after two repeated contentions. Preempting only on {\tt yield()} (in the contention loop) was sufficient to find the bug.}.
 %Intuitively, this is due to our control experiment being able to preempt only on the boundaries of the API which
 %Though for many applications of MC, assuming a correct lock implementation is sufficient,
-% TODO CAMREADY cite simsa thesis
-Though it often suffices to assume correctly-implemented locks,
+Though it often suffices to assume correctly-implemented locks \cite{dbug-thesis},
 we consider this strong evidence that new low-level synchronization code must be verified with data-race PPs.
 %TODO CAMREADY: Run a mutex expt where "all atomic instrs" are PPs. See how many bugs are missed anyway.
 % Wwe re-ran the \mxtest control experiment with \landslide~hard-coded to preempt on any atomic instruction
