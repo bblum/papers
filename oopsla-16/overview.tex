@@ -206,8 +206,10 @@ so bug reports must be prioritized by severity of effects. %how likely they may 
 However, other prior work argues that data races are always bugs \cite{miscompile-benign,data-races-are-evil},
 largely due to the possibility of compiler or hardware reordering of racy accesses.
 %
+C++ declares any race between two non-atomic locations to be undefined behaviour \cite{cpp-foundation}.
 We take the former camp:
 we consider a data race a bug only when it results in a visible failure state (e.g., crash or deadlock).
+(From a C++ perspective, we assume all concurrent accesses are implemented by {\tt std::atomic}.)
 We bypass concerns of compiler reordering by checking programs at the executable level;
 for a study of hardware reordering in the context of DPOR, we refer the reader to \cite{tsopso}.
 }

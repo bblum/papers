@@ -23,7 +23,7 @@ On the other hand, SPIN \cite{spin} %and Inspect \cite{inspect}
 %are able to preempt
 preempts threads before any shared memory access.
 Such fine granularity would automatically check each data race for the possibility of failure, but risks timing out before the state space can be completed. %makes full state space completion intractable for even modestly-sized tests.
-\revisionx{Some tools, such as CHESS and Inspect \cite{inspect} can strike a middle ground using compiler instrumentation to statically add preemption points on memory accesses.
+\revisionx{Some tools, such as CHESS and Inspect \cite{inspect} can strike a middle ground by using compiler instrumentation to statically add preemption points on memory accesses.
 Nevertheless,}
 choosing preemption points is a tradeoff between schedule coverage and feasibility of completion:
 %but
@@ -74,8 +74,8 @@ and that they enable full verification of many more tests than before.
 Our contributions are as follows:
 \begin{enumerate}
 	\item {\em Iterative Deepening}, a new \revision{algorithm}~for combining data-race analysis with stateless model checking, and \quicksand, an open-source implementation;
-	\item A proof of convergence \revisionx{for sequentially-consistent memory models}, showing that should it be possible in the given CPU budget,
-		fully testing every discovered data-race preemption point is equivalent to testing all possible thread schedules;
+	\item A proof of convergence, showing that should it be possible in the given CPU budget,
+		fully testing every discovered data-race preemption point is equivalent to testing all possible thread schedules \revisionx{(assuming a sequentially-consistent memory model)};
 	\item A new tactic for eliminating one class of false-positive data race candidates,
 		which cannot soundly be used in a single-pass analysis,
 		but which we prove correct when used with Iterative Deepening;
