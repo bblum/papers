@@ -163,6 +163,7 @@ at least 173 of which will expose bugs under one or more MC trials. % QS bugs + 
 
 \revision{
 \subsection{Experimental Setup}
+\label{sec:eval-setup}
 
 To evaluate the benefits of data-race PPs and Iterative Deepening separately, we ran the test suite under \quicksand~in \revisionx{three} different configurations, each of which was given a 1-hour budget and 10 CPUs for each test.
 \begin{itemize}
@@ -280,41 +281,37 @@ we consider this strong evidence that new low-level synchronization code must be
 \begin{table*}[t]
 	\begin{center}
 		\small
-	\begin{tabular}{r|c||c|c|c|c|c|c||c|c||c|c}
-		& {\bf Num.} & {\bf DPOR} & {\bf ICB} & {\bf QS} & {\bf DR} & {\bf Nondet.} & {\bf Malloc} & {\bf Mutual} & {\bf Avg. tested} & {\bf Total} & {\bf Untested} \\
-		{\bf Test} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR bugs} & {\bf DRs} & {\bf timeouts} & {\bf subset SSes} & {\bf DR PPs} & {\bf DR PPs} \\
+		\revisionx{
+	\begin{tabular}{r|c||c|c|c|c|c||c|c||c|c}
+		& {\bf Num.} & {\bf QS-LHB} & {\bf QS-PHB} & {\bf ICB} & {\bf DPOR} & {\bf ShMem} & {\bf LHB DR} & {\bf Nondet.} & {\bf Mutual} & {\bf Avg. tested} \\
+		{\bf Test} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR bugs} & {\bf timeouts} & {\bf subset SSes} \\
 		\hline
-		% FIXME CAMREADY: update FRMs
-					% TODO: update to be ShMem not DPOR
-											% TODO: recount with ICB
-				% #test  sssmc   icb      qs      dronly  nondets  FRMs   timeout comp.SSes DRPPs untested DRPPs
-			% TODO: If possible, add a column for how many false negatives (incorrect verif claims) ShMem had.
-		{\tt bcast}	& 79	& 7	& 7	& 11	& 4	& 4	& 51	& 0	& -	& 912	& 107	\\
-		{\tt join} 	& 79	& 14 	& 14	& 24	& 10	& 6	& 333	& 5	& 60.8	& 781	& 292	\\
-		{\tt mx} 	& 79	& 1	& 1	& 10	& 9	& 1	& 7	& 0	& -	& 829	& 1	\\
-		{\tt sem} 	& 79	& 10	& 11	& 16	& 6	& 5	& 140	& 29	& 73.3	& 753	& 279	\\
-		{\tt signal} 	& 79	& 4	& 4	& 10	& 7	& 6	& 180	& 10	& 54.2	& 1118	& 391	\\
-		{\tt rwlock} 	& 79	& 26	& 27	& 28	& 2	& 2	& 125	& 19	& 29.6	& 915	& 634	\\
+				% XXX FIXME: Need rerun nondet dr expt!
+				% #test  qs-lhb  qs-phb   icb     dpor    everyw  dronly  nondets timeout comp.SSes
+		{\tt bcast}	& 79	& 8	& 8	& 5	& 6	& 7	& 2	& 4	& 7	& 112.3	\\
+		{\tt join} 	& 79	& 23	& 20	& 13	& 13 	& 14	& 11	& 6	& 11	& 75.9	\\
+		{\tt mx} 	& 79	& 10	& 9	& 1	& 1	& 12	& 9	& 1	& 0	& -	\\
+		{\tt sem} 	& 79	& 17	& 16	& 12	& 11	& 12	& 7	& 5	& 36	& 93.4	\\
+		{\tt signal} 	& 79	& 10	& 8	& 5	& 5	& 11	& 6	& 6	& 45	& 59.0	\\
+		{\tt rwlock} 	& 79	& 27	& 26	& 25	& 23	& 28	& 4	& 2	& 43	& 88.3	\\
 		\hline
-		{\tt sched} 	& 59	& 1	& 1	& 7	& 6	& 4	& 0	& 0	& -	& 144	& 3	\\
-		{\tt alarm} 	& 44	& 5	& 16	& 21	& 17	& 3	& 35 	& 22	& 9.1	& 115	& 89	\\
-		{\tt wait} 	& 52	& 23	& 23	& 30	& 7	& 1	& 31	& 8	& 28.0	& 142	& 31	\\
+		{\tt sched} 	& 59	& 7	& 7	& 1	& 1	& 8	& 6	& 4	& 2	& 13.0	\\
+		{\tt alarm} 	& 44	& 21	& 12	& 16	& 5	& 29	& 17	& 3	& 16	& 8.1	\\
+		{\tt wait} 	& 52	& 30	& 27	& 23	& 23	& 1	& 7	& 1	& 13	& 32.8	\\
 		\hline
-		{\bf Total}	& 629	& 91	& 104	& 157	& 68	& 32	& 902	& 93	& 42.6 	& 5709	& 1827	\\
+		{\bf Total}	& 629	& 153	& 133	& 101	& 88	& 122	& 69	& 32	& 173	& 69.5 	\\
 	\end{tabular}
+		}
 	\end{center}
-	\caption{Summary of bugs and data races found by each test program.
-		% TODO CAMREADY: Add Shared-Mem
-		DPOR/ICB are the controls; QS is \quicksand.
-		``DR bugs'' counts among \quicksand's bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}});
+	\caption{Summary of bugs
+	%and data races
+	found by each test program.
+		\revisionx{QS-LHB and QS-PHB are \quicksand; ICB/DPOR/ShMem are the controls (\sect{\ref{sec:eval-setup}}).}
+		``LHB DR bugs'' counts among \revisionx{QS-Limited-HB's} bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}});
 	among those, ``Nondeterministic DR bugs'' counts how many candidates required MC integration to identify (\sect{\ref{sec:eval-dr}}).
-	``Malloc DRs'' counts how many malloc-recycle false positives we suppressed (\sect{\ref{sec:eval-dr}}).
-	% TODO CAMREADY: count timeouts for ICB instead?
-	``Mutual timeouts'' counts how often both SSS-MC-DPOR and \quicksand~timed out with no bug found;
+	``Mutual timeouts'' counts how often both \revisionx{QS-Limited-HB and SSS-MC-ICB} timed out with no bug found;
 	% TODO CAMREADY: update avg tested subsets to be from the ICB timeouts
 	among those, ``Average tested subset SSes'' counts how many partial verifications \quicksand~provided on average for each test (\sect{\ref{sec:eval-sssmc}}).
-	``Total DR PPs'' counts how many unique data-racing instructions we identified among tests where we found no bugs;
-	among those, ``Untested DR PPs'' counts how many could not be checked in the time limit (\sect{\ref{sec:future}}).
 		}
 	\label{tab:drbugs}
 \end{table*}
@@ -377,7 +374,7 @@ which is consistent with the results of \cite{chess-icb}, showing no bias toward
 %and shows no bias towards requiring high preemption bounds.
 }
 
-\begin{table}[h]
+\begin{table}[t]
 	\begin{center}
 		\revisionx{
 		\small
@@ -481,6 +478,12 @@ while the other two lag behind}
 due to redundant work (\sect{\ref{sec:future}}).
 \revision{While QS-Sync-Only and SSS-MC-ICB are competitive with each other},
 using data-race PPs increases our \revision{verification capacity}~by 4.25x.
+\revisionx{Finally, assuming sequentially-consistent hardware,
+QS-Pure-HB classified many % TODO: how many
+true data races as benign, %(non-failing),
+while the SSS-MC-ICB approach could at best report such races to the user.
+We count these cases in Table~\ref{tab:drstatistix}.
+}
 
 % Actually, while SSS-MC-Shared-Mem proved competitive with \quicksand~at finding data-race-related bugs,
 % its heuristic to ignore threads' own stack accesses introduces unsoundness.
@@ -507,15 +510,55 @@ using data-race PPs increases our \revision{verification capacity}~by 4.25x.
 {\bf Happens-Before comparison.}
 Ultimately, using Limited HB for finding data-race candidates allowed \quicksand~to find more bugs, while
 the ``pure'' Happens-Before analysis improved \quicksand's performance on verifications.
-This trade-off is attributable to the fact that QS-Limited-HB need not wait to test many alternate thread interleavings before a potential data-race candidate is confirmed; rather, it can add new jobs to start testing potential races immediately.
+This trade-off is attributable to the fact that QS-Limited-HB need not wait to test many alternate thread interleavings before a potential data-race candidate is confirmed; rather, it can add new jobs to start testing potential races immediately\footnote{
+	\revisionx{Table~\ref{tab:drbugs} corroborates: the difference is most dramatic in {\tt alarm}, the test where \quicksand~struggled most to finish even small subset jobs.}
+	}.
 On the other hand, QS-Limited-HB can get overwhelmed by too many false positives, needing to refute such candidates by testing new state spaces,
 while QS-Pure-HB can refute false positives {\em en passant} by testing alternate interleavings in its original state spaces.
 %In both cases, the performance differences seem to become significant only after about 10 minutes of CPU time,
-%which suggests % TODO
+%which suggests... I don't actually know!
 This suggests that
 %each approach has merit, and that
 MCs which feature data-race analysis should implement both modes and offer the user to choose based on their testing philosophy.
 }
+
+\begin{table}[t]
+	\begin{center}
+		\small
+	\begin{tabular}{r||c|c|c||c}
+		& {\bf Total} & {\bf \revisionx{Benign}} & {\bf Untested} & {\bf Malloc} \\
+		{\bf Test} & {\bf DR PPs} & {\bf \revisionx{DRs}} & {\bf DR PPs} & {\bf DRs} \\
+		\hline
+		% FIXME CAMREADY: update FRMs
+				% DRPPs   benign                  untested FRMs
+		% TODO: recount dr pps for pure hb
+		% TODO: count dr pps in totalverifs for benign
+		% TODO: recount untesteds for pure hb
+		{\tt bcast}	& 912	& \revisionx{1337}	& 107	& 51	\\
+		{\tt join} 	& 781	& \revisionx{1337}	& 292	& 333	\\
+		{\tt mx} 	& 829	& \revisionx{1337}	& 1	& 7	\\
+		{\tt sem} 	& 753	& \revisionx{1337}	& 279	& 140	\\
+		{\tt signal} 	& 1118	& \revisionx{1337}	& 391	& 180	\\
+		{\tt rwlock} 	& 915	& \revisionx{1337}	& 634	& 125	\\
+		\hline
+		{\tt sched} 	& 144	& \revisionx{1337}	& 3	& 0	\\
+		{\tt alarm} 	& 115	& \revisionx{1337}	& 89	& 35	\\
+		{\tt wait} 	& 142	& \revisionx{1337}	& 31	& 31	\\
+		\hline
+		{\bf Total}	& 5709	& \revisionx{1337}	& 1827	& 902	\\
+	\end{tabular}
+	\end{center}
+	\caption{
+		\revisionx{Additional data race statistics.}
+		% TODO: update this for pure-hb and add a column,
+		``Total DR PPs'' counts how many unique data-racing instructions \revisionx{QS-Pure-HB identified}.
+		Among those,
+		\revisionx{``Benign DRs'' counts how many we refuted as non-failing (\sect{\ref{sec:eval-sssmc}}), while}
+		``Untested DR PPs'' counts how many could not be checked in the time limit (\sect{\ref{sec:future}}).
+		``Malloc DRs'' counts how many \revisionx{false positive PPs QS-Limited-HB} suppressed (\sect{\ref{sec:eval-dr}}).
+		}
+	\label{tab:drstatistix}
+\end{table}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -527,7 +570,7 @@ Beyond finding new bugs and completing full verifications with data-race PPs, we
 
 {\bf Suppressing ``malloc-recycle'' false positives.}
 In \sect{\ref{sec:recycle}} we showed the soundness of suppressing data race reports between two heap accesses when the surrounding memory was re-allocated in between.
-In Table~\ref{tab:drbugs}, the column ``Malloc-recycle DRs'' shows the total number of such data-race candidates for each test program.
+In Table~\ref{tab:drstatistix}, the column ``Malloc-recycle DRs'' shows the total number of such data-race candidates for each test program.
 In total, 902 data-races fit the malloc-recycle pattern across all tests,
 only 69 of which were observed to avoid the re-allocation in an alternate interleaving.
 Our proof in \sect{\ref{sec:recycle}} guarantees the safety of pruning all 833 other state spaces.

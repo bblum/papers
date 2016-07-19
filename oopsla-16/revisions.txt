@@ -28,14 +28,17 @@
 
 [ ] "philosophical difference about data races versus concrete failures"
 	[ ] be more explicit in narrative
+		[ ] describe in intro/bgnd
+		[x] describe in eval
 	[ ] Include the number of data races in the experimental results in addition to bugs found.
 		[ ] fix the stupid table
 			left side
-				[ ] fix count of ICB bugs etc.
-				[ ] put new columns of bug counts for new expts
+				[x] fix count of ICB bugs etc.
+				[x] put new columns of bug counts for new expts
+				[x] fix "avg tested sses" to be for icb timeouts, not dpor
 			right side
-				[ ] split right side into individual section
-				[ ] fix "avg tested sses" to be for icb timeouts, not dpor
+				[x] split right side into individual section
+				[ ] get correct numbers for total/benign/untested DRs under pure hb
 
 ==== promised ====
 
