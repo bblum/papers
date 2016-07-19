@@ -27,8 +27,8 @@
 		improve discussion somehow...
 
 [ ] "philosophical difference about data races versus concrete failures"
-	[ ] be more explicit in narrative
-		[ ] describe in intro/bgnd
+	[x] be more explicit in narrative
+		[x] describe in intro/bgnd
 		[x] describe in eval
 	[ ] Include the number of data races in the experimental results in addition to bugs found.
 		[ ] fix the stupid table

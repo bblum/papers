@@ -168,7 +168,7 @@ at least 173 of which will expose bugs under one or more MC trials. % QS bugs + 
 To evaluate the benefits of data-race PPs and Iterative Deepening separately, we ran the test suite under \quicksand~in \revisionx{three} different configurations, each of which was given a 1-hour budget and 10 CPUs for each test.
 \begin{itemize}
 		\revisionx{
-	\item {\bf QS-Limited-HB}: \quicksand~using Limited-HB to add data-race PPs,
+	\item {\bf QS-Limited-HB}: \quicksand~using Limited-HB for its data-race analysis,
 	\item {\bf QS-Pure-HB}: \quicksand~using pure HB instead, and
 		}
 	\item {\bf QS-Sync-Only}: \quicksand~with PPs still seeded as described in \sect{\ref{sec:initial-pp}}, but never adding new PPs from reported data-race candidates.
@@ -253,30 +253,6 @@ for any fixed budget of wall-clock time.}
 %which we consider an insignificant amount of variance.
 %}
 
-
-% TODO: Fix up this paragraph after preempt-everywhere results come in.
-The left half of Table~\ref{tab:drbugs}
-breaks down the number and types of bugs found by each test program.
-In \mxtest, in which we do not trust the lock implementation's correctness,
-% TODO CAMREADY: Fix, SSSMC-ShM finds 2 mx bugs.
-\revisionx{SSS-MC-ICB and SSS-MC-DPOR}
-found dramatically fewer bugs (just 1)\footnote{
-	The one bug SSS-MC found was in a fully-assembler lock implementation. {\tt yield()}'s return value clobbered a value stored in {\tt \%eax}, which could lead to a failure after two repeated contentions. Preempting only on {\tt yield()} (in the contention loop) was sufficient to find the bug.}.
-%Intuitively, this is due to our control experiment being able to preempt only on the boundaries of the API which
-%Though for many applications of MC, assuming a correct lock implementation is sufficient,
-Though it often suffices to assume correctly-implemented locks \cite{dbug-thesis},
-we consider this strong evidence that new low-level synchronization code must be verified with data-race PPs.
-%TODO CAMREADY: Run a mutex expt where "all atomic instrs" are PPs. See how many bugs are missed anyway.
-% Wwe re-ran the \mxtest control experiment with \landslide~hard-coded to preempt on any atomic instruction
-% (as well as on the mutex API boundaries).
-% Still, this smarter configuration for SSS-MC found only 99999999999 bugs of \quicksand's 13.
-
-%% RIP this.
-%Furthermore, we plotted another line from this dataset, QS-no-DR-bugs,
-%which represents only the bugs found in state spaces without any data-race PPs (like QS-no-DR-PPs, but paying any overhead for using data-race PPs).
-%Intuitively, this line shows that for programs with only benign data races,
-%\quicksand~can afford the extra overhead of verifying them while still slightly edging out SSS-MC.
-
 \begin{table*}[t]
 	\begin{center}
 		\small
@@ -314,6 +290,29 @@ we consider this strong evidence that new low-level synchronization code must be
 		}
 	\label{tab:drbugs}
 \end{table*}
+
+% TODO: Fix up this paragraph after preempt-everywhere results come in.
+The left half of Table~\ref{tab:drbugs}
+breaks down the number and types of bugs found by each test program.
+In \mxtest, in which we do not trust the lock implementation's correctness,
+% TODO CAMREADY: Fix, SSSMC-ShM finds 2 mx bugs.
+\revisionx{SSS-MC-ICB and SSS-MC-DPOR}
+found dramatically fewer bugs (just 1)\footnote{
+	The one bug SSS-MC found was in a fully-assembler lock implementation. {\tt yield()}'s return value clobbered a value stored in {\tt \%eax}, which could lead to a failure after two repeated contentions. Preempting only on {\tt yield()} (in the contention loop) was sufficient to find the bug.}.
+%Intuitively, this is due to our control experiment being able to preempt only on the boundaries of the API which
+%Though for many applications of MC, assuming a correct lock implementation is sufficient,
+Though it often suffices to assume correctly-implemented locks \cite{dbug-thesis},
+we consider this strong evidence that new low-level synchronization code must be verified with data-race PPs.
+%TODO CAMREADY: Run a mutex expt where "all atomic instrs" are PPs. See how many bugs are missed anyway.
+% Wwe re-ran the \mxtest control experiment with \landslide~hard-coded to preempt on any atomic instruction
+% (as well as on the mutex API boundaries).
+% Still, this smarter configuration for SSS-MC found only 99999999999 bugs of \quicksand's 13.
+
+%% RIP this.
+%Furthermore, we plotted another line from this dataset, QS-no-DR-bugs,
+%which represents only the bugs found in state spaces without any data-race PPs (like QS-no-DR-PPs, but paying any overhead for using data-race PPs).
+%Intuitively, this line shows that for programs with only benign data races,
+%\quicksand~can afford the extra overhead of verifying them while still slightly edging out SSS-MC.
 
 % TODO CAMREADY: Compare QS-ETAs to QS-Random to evaluate "smaller is better" claim.
 {\bf Finding the same bugs faster.}
