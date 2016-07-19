@@ -469,14 +469,13 @@ verifications provided by each approach.
 %as well as to the work which ICB necessarily repeats when increasing its preemption bound.}
 
 % TODO: Update for pure HB (need a re-run of a subset of completed sssmc tests to confirm they still have no pure hb drs, even if they had limited hb drs)
-Among QS-Limited-HB's verified tests, 36 contained no data-race candidates whatsoever,
+Among \revisionx{QS-Limited-HB's} verified tests, 36 contained no data-race candidates whatsoever,
 so the same verification could be provided
 %by SSS-MC
 \revision{with synchronization PPs only.
 We plot the verifications by QS-Sync-Only, SSS-MC-DPOR and SSS-MC-ICB as well:
 among these, the otherwise more antiquated SSS-MC-DPOR performs best,
-while the other two lag behind
-}
+while the other two lag behind}
 %\quicksand~is slower than SSS-MC-DPOR
 due to redundant work (\sect{\ref{sec:future}}).
 \revision{While QS-Sync-Only and SSS-MC-ICB are competitive with each other},
@@ -510,6 +509,9 @@ On the other hand, QS-Limited-HB can get overwhelmed by too many false positives
 while QS-Pure-HB can refute false positives {\em en passant} by testing alternate interleavings in its original state spaces.
 %In both cases, the performance differences seem to become significant only after about 10 minutes of CPU time,
 %which suggests % TODO
+This suggests that
+%each approach has merit, and that
+MCs which feature data-race analysis should implement both modes and offer the user to choose based on their testing philosophy.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
