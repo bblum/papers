@@ -192,6 +192,26 @@ In \sect{\ref{sec:eval}} we will evaluate how HB and Limited HB each influence \
 %in which a potential racing access pair is not reported, even though it could lead to a bug.
 %We use the limited happens-before analysis, accepting some overhead from false positives for the sake of total verification (\sect{\ref{sec:totalverif}}).
 
+\revisionx{
+{\bf Philosophy of bugs.}
+% two camps: all races are bugs; citations:
+% and, races must be classified; citations: replay analysis, portend,
+While there is a vast body of work on how to detect data races to begin with,
+judging data races once found is a matter of philosophical debate unto itself.
+Some recent tools classify races depending on how they impact program behaviour \cite{recordreplaydrs,portend}, overlooking {\em benign} races in search of more dangerous ones.
+%In particular,
+\cite{racerx} acknowledges that a program may have too many races for a user to worry about,
+so bug reports must be prioritized by severity of effects. %how likely they may cause failures or security vulnerabilities.
+%
+However, other prior work argues that data races are always bugs \cite{miscompile-benign,data-races-are-evil},
+largely due to the possibility of compiler or hardware reordering of racy accesses.
+%
+We take the former camp:
+we consider a data race a bug only when it results in a visible failure state (e.g., crash or deadlock).
+We bypass concerns of compiler reordering by checking programs at the executable level;
+for a study of hardware reordering in the context of DPOR, we refer the reader to \cite{tsopso}.
+}
+
 \subsection{Terminology}
 
 For the rest of the paper, we will abbreviate {\em preemption point} (PP),
