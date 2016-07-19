@@ -3,7 +3,13 @@
 [x] Acknowledge seqcst assumption ("explain why assumption is reasonable")
 	"Future work could extend our implementation and proofs using the techniques in [Zhang PLDI15]."
 
-[ ] Pure HB vs limited HB
+[x] change prose regarding sssmc shared mem
+
+[x] Pure HB vs limited HB
+	[x] rename QS DR to QS LHB / QS PHB
+	[x] add an 'evaluation question' "How does hb approach compare"
+	[x] general narrative changes
+
 
 [x] Explain more precisely how you choose new preemption points to add. ("algorithm 0")
 	[x] refactor prose in section 3
@@ -23,6 +29,13 @@
 [ ] "philosophical difference about data races versus concrete failures"
 	[ ] be more explicit in narrative
 	[ ] Include the number of data races in the experimental results in addition to bugs found.
+		[ ] fix the stupid table
+			left side
+				[ ] fix count of ICB bugs etc.
+				[ ] put new columns of bug counts for new expts
+			right side
+				[ ] split right side into individual section
+				[ ] fix "avg tested sses" to be for icb timeouts, not dpor
 
 ==== promised ====
 
@@ -45,3 +58,7 @@
 [ ] Figure 2 needs work
 
 [ ] Work on formalism/definitions
+
+[ ] figure 9 make an alternate version for pure hb candidates (need run new tests probably)
+
+[ ] fix totalverifs dataset for DPOR/ICB because purehb verif might add more ctrl-totalverif grupos
