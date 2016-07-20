@@ -27,12 +27,12 @@ Our evaluation answers the following questions:
 			\item Does \quicksand~provide more full verifications of bug-free programs more quickly?
 			}
 			\revisionx{
-			\item How does the choice between HB and Limited-HB affect bug-finding and verification performance?
+			\item How does the choice between HB and Limited HB affect bug-finding and verification performance?
 			}
 		\end{enumerate}
 	\item Does MC improve the accuracy of data-race detection?
 		\begin{enumerate}
-		\item Does \quicksand~avoid false positives compared to a single-execution \revisionx{Limited-HB} data race analysis?
+		\item Does \quicksand~avoid false positives compared to a single-execution \revisionx{Limited HB} data race analysis?
 				% Explain later as:
 				% How many data-race candidates were verified as benign
 				% But to be fair, you have to count how many DRs are reported as "couldn't test these, check yourself" at the end.
@@ -168,7 +168,7 @@ at least 173 of which will expose bugs under one or more MC trials. % QS bugs + 
 To evaluate the benefits of data-race PPs and Iterative Deepening separately, we ran the test suite under \quicksand~in \revisionx{three} different configurations, each of which was given a 1-hour budget and 10 CPUs for each test.
 \begin{itemize}
 		\revisionx{
-	\item {\bf QS-Limited-HB}: \quicksand~using Limited-HB for its data-race analysis,
+	\item {\bf QS-Limited-HB}: \quicksand~using Limited HB for its data-race analysis,
 	\item {\bf QS-Pure-HB}: \quicksand~using pure HB instead, and
 		}
 	\item {\bf QS-Sync-Only}: \quicksand~with PPs still seeded as described in \sect{\ref{sec:initial-pp}}, but never adding new PPs from reported data-race candidates.
