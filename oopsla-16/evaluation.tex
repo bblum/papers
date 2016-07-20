@@ -524,33 +524,31 @@ MCs which feature data-race analysis should implement both modes and offer the u
 \begin{table}[t]
 	\begin{center}
 		\small
+		\revisionx{
 	\begin{tabular}{r||c|c|c||c}
 		& {\bf Total} & {\bf \revisionx{Benign}} & {\bf Untested} & {\bf Malloc} \\
 		{\bf Test} & {\bf DR PPs} & {\bf \revisionx{DRs}} & {\bf DR PPs} & {\bf DRs} \\
 		\hline
-		% FIXME CAMREADY: update FRMs
-				% DRPPs   benign                  untested FRMs
-		% TODO: recount dr pps for pure hb
-		% TODO: count dr pps in totalverifs for benign
-		% TODO: recount untesteds for pure hb
-		{\tt bcast}	& 912	& \revisionx{1337}	& 107	& 51	\\
-		{\tt join} 	& 781	& \revisionx{1337}	& 292	& 333	\\
-		{\tt mx} 	& 829	& \revisionx{1337}	& 1	& 7	\\
-		{\tt sem} 	& 753	& \revisionx{1337}	& 279	& 140	\\
-		{\tt signal} 	& 1118	& \revisionx{1337}	& 391	& 180	\\
-		{\tt rwlock} 	& 915	& \revisionx{1337}	& 634	& 125	\\
+				% DRPPs   benign untested FRMs
+		{\tt bcast}	& 655	& 97	& 150	& 52	\\
+		{\tt join} 	& 566	& 68	& 249	& 338	\\
+		{\tt mx} 	& 911	& 127	& 44	& 7	\\
+		{\tt sem} 	& 783	& 2	& 414	& 166	\\
+		{\tt signal} 	& 936	& 9	& 510	& 180	\\
+		{\tt rwlock} 	& 543	& 1	& 310	& 156	\\
 		\hline
-		{\tt sched} 	& 144	& \revisionx{1337}	& 3	& 0	\\
-		{\tt alarm} 	& 115	& \revisionx{1337}	& 89	& 35	\\
-		{\tt wait} 	& 142	& \revisionx{1337}	& 31	& 31	\\
+		{\tt sched} 	& 65	& 51	& 3	& 0	\\
+		{\tt alarm} 	& 35	& 0	& 29	& 35	\\
+		{\tt wait} 	& 71	& 1	& 28	& 31	\\
 		\hline
-		{\bf Total}	& 5709	& \revisionx{1337}	& 1827	& 902	\\
+		{\bf Total}	& 4565	& 356	& 1737	& 965	\\
 	\end{tabular}
+		}
 	\end{center}
 	\caption{
 		\revisionx{Additional data race statistics.}
-		% TODO: update this for pure-hb and add a column,
-		``Total DR PPs'' counts how many unique data-racing instructions \revisionx{QS-Pure-HB identified}.
+		``Total DR PPs'' counts how many unique data-racing instructions \revisionx{QS-Pure-HB identified} among tests
+		where it found no bugs.
 		Among those,
 		\revisionx{``Benign DRs'' counts how many we refuted as non-failing (\sect{\ref{sec:eval-sssmc}}), while}
 		``Untested DR PPs'' counts how many could not be checked in the time limit (\sect{\ref{sec:future}}).
