@@ -1,3 +1,16 @@
+==== optional ====
+
+[x] add future work: complete bigger jobs first sometimes, to prune smaller ones
+	(prob just for maximal state space)
+
+[ ] Figure 2 needs work
+
+[ ] Work on formalism/definitions
+
+[ ] figure 9 make an alternate version for pure hb candidates (need run new tests probably)
+
+[ ] fix totalverifs dataset for DPOR/ICB because purehb verif might add more ctrl-totalverif grupos
+
 ==== mandatory ====
 
 [x] Acknowledge seqcst assumption ("explain why assumption is reasonable")
@@ -30,15 +43,15 @@
 	[x] be more explicit in narrative
 		[x] describe in intro/bgnd
 		[x] describe in eval
-	[ ] Include the number of data races in the experimental results in addition to bugs found.
-		[ ] fix the stupid table
+	[x] Include the number of data races in the experimental results in addition to bugs found.
+		[x] fix the stupid table
 			left side
 				[x] fix count of ICB bugs etc.
 				[x] put new columns of bug counts for new expts
 				[x] fix "avg tested sses" to be for icb timeouts, not dpor
 			right side
 				[x] split right side into individual section
-				[ ] get correct numbers for total/benign/untested DRs under pure hb
+				[x] get correct numbers for total/benign/untested DRs under pure hb
 
 ==== promised ====
 
@@ -52,16 +65,3 @@
 	[x] characterization of HB vs. Limited HB is highly misleading
 		clarify advantage of limited hb
 	[x] brief mention of why can't hack allocator to never reuse memory
-
-==== optional ====
-
-[x] add future work: complete bigger jobs first sometimes, to prune smaller ones
-	(prob just for maximal state space)
-
-[ ] Figure 2 needs work
-
-[ ] Work on formalism/definitions
-
-[ ] figure 9 make an alternate version for pure hb candidates (need run new tests probably)
-
-[ ] fix totalverifs dataset for DPOR/ICB because purehb verif might add more ctrl-totalverif grupos
