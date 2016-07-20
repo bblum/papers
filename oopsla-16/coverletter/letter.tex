@@ -24,11 +24,11 @@ Thank you for your helpful reviews. Following is a list of revisions we have mad
 		\item Added paragraph in section 2.1 (page 3), discussing SC assumption, and dicsussing potential future work to incorporate [Zhang 2015]. The assumption is justified by the fact that most tools from prior work make the same assumption, and that the assumption's worst case compromises verification at worst, but not bug-finding potential.
 		\item Add mention of SC assumption in the introduction (page 2),
 		when introducing the proofs in section 5 (page 7),
-		and when discussing verification results in section 6.3 (page 11).
+		and when discussing verification results in section 6.3 (page 12).
 	\end{itemize}
 	\item {\bf Implement and compare with precise Happens-Before (HB).}
 	\begin{itemize}
-		\item Feature implemented and experiments performed. Results are presented as a new data series in Figures 7(a), 7(b), and 8, and as a new column in Table 1 (pages 10 and 12).
+		\item Feature implemented and experiments performed. Results are presented as a new data series in Figures 7(a), 7(b), and 8, and as a new column in Table 1 (pages 10-12).
 		\item Mentioned implementation of new data-race analysis mode in section 4.1 (page 6).
 		\item Added new evaluation question in the introduction to section 6 (page 9).
 		\item Defined ``QS-Pure-HB'' as a new experimental setup in section 6.2 (page 10). Also clarified between QS-Limited-HB and QS-Pure-HB when discussing Quicksand's results on data-race bugs, where before we just said ``Quicksand'' (pages 9-13).
@@ -50,7 +50,7 @@ Thank you for your helpful reviews. Following is a list of revisions we have mad
 	\item {\bf Philosophical difference between data races and failures.}
 	\begin{itemize}
 		\item Added paragraph in section 2.2 to discuss the philosophical difference explicitly (page 4).
-		\item Added Table 3 in section 6 to count the number of total and verified-benign races during the QS-Pure-HB experiment (page 13). (``Benign DRs'' displays new data; ``Total DR PPs'' and ``Untested DR PPs'' are updated to reflect QS-Pure-HB rather than the old numbers from QS-Limited-HB, and the latter two plus ``Malloc DRs'' have been relocated from Table 1 to here.)
+		\item Added Table 3 in section 6 to count the number of total and verified-benign races during the QS-Pure-HB experiment (page 12). (``Benign DRs'' displays new data; ``Total DR PPs'' and ``Untested DR PPs'' are updated to reflect QS-Pure-HB rather than the old numbers from QS-Limited-HB, and the latter two plus ``Malloc DRs'' have been relocated from Table 1 to here.)
 	\end{itemize}
 \end{enumerate}
 
@@ -69,7 +69,7 @@ We have also made some changes that were not included in the mandatory revisions
 	\item Clarified in section 2.2 that Figure 3 is a contrived example (page 3).
 	\item Clarified in section 2.2 the advantage offered by Limited HB and the possibility of false negatives (page 3).
 	\item Mentioned in section 5.2 the possibility, and downside, of avoiding malloc-recycle false positives by using a hacked allocator (page 8).
-	\item Added analysis of ICB preemption bound distribution in section 6.3 (page 11) and Table 2 (page 12) to defuse concerns about possible bias in our suite of bugs.
+	\item Added analysis of ICB preemption bound distribution in section 6.3 and Table 2 (page 11) to defuse concerns about possible bias in our suite of bugs.
 	\item Mentioned the possibility for future work to occasionally prioritize bigger jobs over small ones in section 7 (page 13).
 	\item Reduced clutter among citations, removing ISBNs, DOIs, ``In Proceedings of the Xth Annual...'', and so on.
 \end{itemize}
