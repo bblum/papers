@@ -4,7 +4,7 @@
 \usepackage[charter]{mathdesign}
 %\usepackage{fullpage}
 
-\title{OOPSLA Round 2 Cover Letter \\ {\large Paper \#177: Stateless Model Checking with Data-Race Preemption Points}}
+\title{OOPSLA Round 2 Cover Letter \\ {\normalsize Paper \#177: Stateless Model Checking with Data-Race Preemption Points}}
 \author{Ben Blum (\textsf{bblum@cs.cmu.edu}) \and Garth Gibson (\textsf{garth@cs.cmu.edu})}
 \date{July 19, 2016}
 
@@ -19,33 +19,64 @@
 Thank you for your helpful reviews. Following is a list of revisions we have made, sorted by which of the mandatory revisions they address.
 
 \begin{enumerate}
-	\item {\bf Acknowledge sequentially-consistent memory assumption.}
+	\item {\bf Acknowledge sequentially-consistent (SC) memory assumption.}
 	\begin{itemize}
-		\item ...
+		\item Added paragraph in section 2.1 (page 3), discussing SC assumption, and dicsussing potential future work to incorporate [Zhang 2015]. The assumption is justified by the fact that most tools from prior work make the same assumption, and that the assumption's worst case compromises verification at worst, but not bug-finding potential.
+		\item Add mention of SC assumption in the introduction (page 2),
+		when introducing the proofs in section 5 (page 7),
+		and when discussing verification results in section 6.3 (page 11).
 	\end{itemize}
-	\item {\bf Implement and compare with precise Happens-Before.}
+	\item {\bf Implement and compare with precise Happens-Before (HB).}
 	\begin{itemize}
-		\item ...
+		\item Feature implemented and experiments performed. Results are presented as a new data series in Figures 7(a), 7(b), and 8, and as a new column in Table 1 (pages 10 and 12).
+		\item Mentioned implementation of new data-race analysis mode in section 4.1 (page 6).
+		\item Added new evaluation question in the introduction to section 6 (page 9).
+		\item Defined ``QS-Pure-HB'' as a new experimental setup in section 6.2 (page 10). Also clarified between QS-Limited-HB and QS-Pure-HB when discussing Quicksand's results on data-race bugs, where before we just said ``Quicksand'' (pages 9-13).
+		\item Added paragraph discussing evaluation results comparing the two HB approaches in section 6.3 (page 12).
 	\end{itemize}
 	\item {\bf Explain how we add new preemption points.}
 	\begin{itemize}
-		\item ...
+		\item Added section 3.1 to introduce the design of Iterative Deepening in more detail (page 4).
+		\item Added Algorithm 1 to show explicitly the ``na\"ive'' approach of adding more preemption points (page 4), to use as a starting point to explain algorithms 2 and 3 more clearly.
+		\item Swapped the order of sections 3.3 and 3.4 (pages 5-6) to improve narrative flow.
 	\end{itemize}
-	\item {\bf Elaborate on related work (MCR and FastTrack).}
+	\item {\bf Elaborate on related work (CHESS, PCT, MCR, and FastTrack).}
 	\begin{itemize}
-		\item ...
+		\item Clarified the capabilities of CHESS in the introduction (page 1).
+		\item Added a paragraph comparing MCR to DPOR in section 2.1 (page 3).
+		\item Expanded explanation of PCT in section 8.1 to clarify incompatibility with DPOR (page 14).
+		\item Expanded section 8.2's introductory paragraph to discuss FastTrack and DJIT+ (pages 14-15).
 	\end{itemize}
 	\item {\bf Philosophical difference between data races and failures.}
 	\begin{itemize}
-		\item ...
+		\item Added paragraph in section 2.2 to discuss the philosophical difference explicitly (page 4).
+		\item Added Table 3 in section 6 to count the number of total and verified-benign races during the QS-Pure-HB experiment (page 13). (``Benign DRs'' displays new data; ``Total DR PPs'' and ``Untested DR PPs'' are updated to reflect QS-Pure-HB rather than the old numbers from QS-Limited-HB, and the latter two plus ``Malloc DRs'' have been relocated from Table 1 to here.)
 	\end{itemize}
 \end{enumerate}
 
 We have also made some changes that were not included in the mandatory revisions, to address other reviewer comments and in one case to fix some bugs in our experiments, as follows:
 
 \begin{itemize}
-	\item ...
+	\item Updated several of the experiments in our evaluation.
+		\begin{itemize}
+			\item Most importantly, we discovered a bug in our implementation of SSS-MC-Shared-Mem which caused it to ignore many shared memory PPs, leading it to find far too few bugs and erroneously declare too many verifications.
+		We fixed the bug and re-ran this experiment, leading to the updated data series shown in Figures 7 and 8 and Table 1;
+		the new results show increased bug-finding capacity (still not as good as Quicksand) and much slower verification speed.
+		We removed the discussion of SSS-MC-Shared-Mem's potential unsoundness from section 6.3 (no longer necessary to justify its position on Figure 8),
+		and updated the overall bug-finding ratio between QS-Limited-HB and SSS-MC from 1.5x to 1.25x (pages 1 and 10).
+			\item We fixed several other minor bugs in our test cases, leading to slightly changed statistics in Table 1 but no significant difference to the layout of our performance graphs.
+		\end{itemize}
+	\item Clarified in section 2.2 that Figure 3 is a contrived example (page 3).
+	\item Clarified in section 2.2 the advantage offered by Limited HB and the possibility of false negatives (page 3).
+	\item Mentioned in section 5.2 the possibility, and downside, of avoiding malloc-recycle false positives by using a hacked allocator (page 8).
+	\item Added analysis of ICB preemption bound distribution in section 6.3 (page 11) and Table 2 (page 12) to defuse concerns about possible bias in our suite of bugs.
+	\item Mentioned the possibility for future work to occasionally prioritize bigger jobs over small ones in section 7 (page 13).
+	\item Reduced clutter among citations, removing ISBNs, DOIs, ``In Proceedings of the Xth annual...'', and so on.
 \end{itemize}
+
+We are still working to improve the formalism, as suggested by Reviewer D,
+although we prioritized the mandatory revisions (especially implementing and evaluating precise HB) for this deadline.
+An improved version of the formalism will be ready for the camera-ready date.
 
 We feel our paper has been much improved since implementing your suggestions, and hope you agree.
 \\
