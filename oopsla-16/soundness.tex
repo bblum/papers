@@ -6,12 +6,12 @@ Our full proofs
 {\em [submitted as supplementary material; will be cited as a tech report in the final version of the paper]}
 discuss our assumptions explicitly and include more formal definitions and structure.
 
-\revisionx{These proofs are built on a DPOR algorithm definition which assumes sequentially-consistent memory hardware.
-%
-% TODO: Aaargh, can't think of how to actually justify this.
-%We believe this assumption is reasonable for the scope of this paper because the main property we require of DPOR is that 
-A recent paper extended DPOR to support weaker memory models \cite{tsopso}, so our proofs could likewise be extended with that version of DPOR in future work.
-We also assume the Limited HB definition for the data-race analysis, leaving the case for precise HB to future work.
+\revisionx{These proofs are built on a DPOR algorithm definition which assumes sequentially-consistent memory hardware,
+as discussed in \sect{\ref{sec:overview-sssmc}}.
+We also assume the Limited HB definition
+for the data-race analysis, as discussed in
+\sect{\ref{sec:overview-dr}}.
+%leaving the case for precise HB to future work.
 }
 
 \renewcommand\proofname{Proof Sketch}

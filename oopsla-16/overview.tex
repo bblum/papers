@@ -72,6 +72,24 @@ we will search among different {\em subsets} of the points.
 Hence, we will test all the state spaces shown in Figure~\ref{fig:id} in parallel,
 and decide on-the-fly whether to pursue each test, or to defer it in favour of others.
 
+\revisionx{
+{\bf Recent advances.}
+Like many prior checkers \cite{chess,dbug-ssv,inspect,portend}, ours implements DPOR for sequentially-consistent hardware.
+In the worst case, these tools may all suffer false negatives as they miss weak-memory-only bugs.
+Recently, Zhang et al. \cite{tsopso} introduced a new formalism with which DPOR can control weak memory nondeterminism,
+such as reordering store buffers.
+Iterative Deepening could use this new technique,
+%We expect this technique would apply directly with Iterative Deepening,
+provided a model checker which implements such reorderings (not yet available to us).
+%We believe this assumption is reasonable for the scope of this paper because the main property we require of DPOR is that
+%A recent paper extended DPOR to support weaker memory models \cite{tsopso}, so our proofs could likewise be extended with that version of DPOR in future work.
+
+Maximal Causality Reduction (MCR) \cite{mcr}, a reduction algorithm which may replace DPOR,
+has also recently shown promising performance improvements over prior model checkers.
+We expect Iterative Deepening to be compatible with MCR,
+and look forward to evaluating the combination when an MCR implementation becomes widely available.
+}
+
 \subsection{Data Race Detection}
 \label{sec:overview-dr}
 
@@ -149,12 +167,13 @@ as none of the mutex/yield preemptions split lines 2 and 6 across different tran
 	{\bf Variants of Happens-Before.}
 	Most prior work focuses on {\em Happens-Before} (HB) \cite{lamport-clocks,djit,fasttrack} as the order relation between accesses.
 \cite{predictive-dr} and \cite{hybriddatarace} identify a problem with this approach:
-it cannot identify access pairs separated by an unrelated lock operation which could race in an alternate interleaving,
-as shown in the example program in Figure~\ref{fig:hb-example}(a).
+it cannot identify access pairs separated by an unrelated lock operation which could race in an alternate interleaving.
+%as shown in the example program in Figure~\ref{fig:hb-example}(a).
+\revisionx{Figure~\ref{fig:hb-example}(a) shows a contrived example program in which HB masks the potential race.}
 We call such unreported access pairs {\em false negatives}.
 However, consider the similar program in Figure~\ref{fig:hb-example}(b),
 in which the access pair ceases to exist in the alternate interleaving.
-\cite{hybriddatarace} introduces the {\em Limited HB} relation,
+O'Callahan et al. \cite{hybriddatarace} introduced the {\em Limited HB} relation,
 which will report such potential races
 by considering only blocking operations like {\tt cond\_wait} to enforce the order.
 Limited HB will report all potential races, avoiding \revisionx{many} false negatives \cite{tsan},
@@ -206,7 +225,7 @@ so bug reports must be prioritized by severity of effects. %how likely they may 
 However, other prior work argues that data races are always bugs \cite{miscompile-benign,data-races-are-evil},
 largely due to the possibility of compiler or hardware reordering of racy accesses.
 %
-C++ declares any race between two non-atomic locations to be undefined behaviour \cite{cpp-foundation}.
+(C++ declares any race between two non-atomic locations to be undefined behaviour \cite{cpp-foundation}.)
 We take the former camp:
 we consider a data race a bug only when it results in a visible failure state (e.g., crash or deadlock).
 (From a C++ perspective, we assume all concurrent accesses are implemented by {\tt std::atomic}.)
