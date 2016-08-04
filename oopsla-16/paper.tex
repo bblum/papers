@@ -21,7 +21,7 @@
 
 
 \documentclass[10pt,times,numbers]{sigplanconf}
-\usepackage[2ndsubmission]{oopsla2016}
+\usepackage[final]{oopsla2016}
 
 % The following \documentclass options may be useful:
 
@@ -79,10 +79,15 @@
 %\titlebanner{banner above paper title}        % These are ignored unless
 %\preprintfooter{short description of paper}   % 'preprint' option specified.
 
+% presubmit revisions
 \newcommand\revision[1]{#1}
 \definecolor{purple}{RGB}{192,0,192}
-\newcommand\revisionx[1]{\hilight{purple}{#1}\xspace}
 %\newcommand\revision[1]{\hilight{purple}{#1}}
+% 2nd round revisions
+%\newcommand\revisionx[1]{\hilight{purple}{#1}\xspace}
+\newcommand\revisionx[1]{#1}
+% cam ready revisions
+\newcommand\revisionz[1]{\hilight{purple}{#1}\xspace}
 
 \title{Stateless Model Checking with Data-Race Preemption Points}
 
