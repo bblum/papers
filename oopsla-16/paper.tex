@@ -38,7 +38,9 @@
 \usepackage{graphicx}
 \usepackage{xspace}
 \usepackage{amsthm}
-\usepackage[colorlinks=true,allcolors=blue,breaklinks,draft=false]{hyperref}
+\usepackage{flushend}
+\usepackage{color}
+\usepackage[colorlinks=false,breaklinks,draft=false]{hyperref}
 \newcommand{\doi}[1]{doi:~\href{http://dx.doi.org/#1}{\Hurl{#1}}}
 
 \newtheorem{lemma}{Lemma}
@@ -91,8 +93,8 @@
 
 \title{Stateless Model Checking with Data-Race Preemption Points}
 
-\authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
-\authorinfo{Garth Gibson}{Carnegie Mellon University}{garth@cs.cmu.edu}
+\authorinfo{Ben Blum}{Carnegie Mellon University, USA}{bblum@cs.cmu.edu}
+\authorinfo{Garth Gibson}{Carnegie Mellon University, USA}{garth@cs.cmu.edu}
 %\authorinfo{\vspace{24pt}}{}{}
 
 \maketitle
@@ -135,6 +137,7 @@ In our evaluation, \quicksand~found
 \end{abstract}
 
 \revision{\category{D.2.4}{Software Engineering}{Software/Program Verification}}
+\keywords{model checking, data races, verification}
 %\category{D.2.5}{Software Engineering}{Testing and Debugging}
 %
 %% general terms are not compulsory anymore,
