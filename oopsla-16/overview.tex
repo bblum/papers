@@ -259,7 +259,7 @@ but does not produce a failure under any interleaving, it is a {\em benign data 
 If they cannot be reordered at all, due to some other communication \revision{such as in Figure~\ref{fig:hb-example}(b)}, it is a {\em false positive}.
 
 We also identify the {\em minimal} and {\em maximal state space} for each test.
-The {\em minimal state space} includes only thread switches arising from no preemptions (Figure~\ref{fig:id}, A).
-The {\em maximal state space} is the one tested by SSS-MC: all statically-available PPs are enabled (Figure~\ref{fig:id}, D).
+The {\em minimal state space} includes only thread switches arising from no preemptions (Figure~\ref{fig:id}(a)).
+The {\em maximal state space} is the one tested by SSS-MC: all statically-available PPs are enabled (Figure~\ref{fig:id}(d)).
 %However, should new data-race PPs be added during a test, the new maximal state space will be the one including those as well.
 %% don't say this ^ -- because when you add dr pps, they add in pairs and there would be multiple maximals, at least until they each get explored and subseuqnetly add a pp of the other of the pair.
