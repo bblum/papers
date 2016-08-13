@@ -225,36 +225,38 @@ we additionally show a wall-clock comparison in (b) to highlight the impact of \
 	\label{fig:dowefindbugsfaster}
 \end{figure}
 
+\newcommand\revz[1]{\revisionz{#1}}
+
 \begin{table*}[t]
 	\begin{center}
 		\small
 		\revisionx{
-	\begin{tabular}{r|c||c|c|c|c|c||c|c||c|c}
-		& {\bf Num.} & {\bf QS-LHB} & {\bf QS-PHB} & {\bf ICB} & {\bf DPOR} & {\bf ShMem} & {\bf LHB DR} & {\bf Nondet.} & {\bf Mutual} & {\bf Avg. tested} \\
-		{\bf Test} & {\bf tested} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf bugs} & {\bf DR bugs} & {\bf timeouts} & {\bf subset SSes} \\
+	\begin{tabular}{r|c||c|c|c|c|c||c|c|c|c||c|c}
+		\multicolumn{2}{c||}{} & \multicolumn{5}{c||}{\bf \revz{Total bugs}} & \multicolumn{4}{c||}{\bf \revz{Data-race bugs}} \\
+		% ---
+		& {\bf Num.} & \multicolumn{2}{c|}{\bf \revz{\quicksand}} & \multicolumn{3}{c||}{\bf \revz{Control (SSS-MC)}}
+		& \multicolumn{2}{c|}{\bf \revz{Limited HB}} & \multicolumn{2}{c||}{\bf \revz{Pure HB}} &
+		%& {\bf LHB DR} & {\bf Nondet.} & & &
+		{\bf Mutual} & {\bf Avg. tested} \\
+		% ---
+		{\bf Test} & {\bf tested} & {\bf LHB} & {\bf PHB} & {\bf ICB} & {\bf DPOR} & {\bf ShMem}
+		& {\bf All} & {\bf Nondet.} & {\bf \revz{All}} & {\bf \revz{Nondet.}}
+		& {\bf timeouts} & {\bf subset SSes} \\
+		% ---
 		\hline
-				% XXX FIXME: Need rerun nondet dr expt!
-				% #test  qs-lhb  qs-phb   icb     dpor    everyw  dronly  nondets timeout comp.SSes
-		{\tt bcast}	& 79	& 8	& 8	& 5	& 6	& 7	& 2	& 4	& 7	& 112.3	\\
-		{\tt join} 	& 79	& 23	& 20	& 13	& 13 	& 14	& 11	& 6	& \revisionz{12}
-													& \revisionz{69.7}	\\
-		{\tt mx} 	& 79	& 10	& 9	& 1	& 1	& 12	& 9	& 1	& 0	& -	\\
-		{\tt sem} 	& 79	& 17	& 16	& 12	& 11	& 12	& 7	& 5	& \revisionz{50}
-													& \revisionz{77.4}	\\
-		{\tt signal} 	& 79	& 10	& 8	& 5	& 5	& 11	& 6	& 6	& 45	& \revisionz{59.6}	\\
-		{\tt rwlock} 	& 79	& 27	& 26	& 25	& 23	& 28	& 4	& 2	& \revisionz{44}
-													& \revisionz{86.3}	\\
+				% #test  qs-lhb  qs-phb           icb             dpor    everyw  dronly  nondets(LHB)    dronly(PHB)    nondets(LHB) mutualtimeout    comp.SSes
+		{\tt bcast}	& 79	& 8	& 8		& 5		& 6	& 7	& 2	& \revz{1}	& \revz{2}	& \revz{1}	& 7		& 112.3	\\
+		{\tt join} 	& 79	& 23	& 20		& 13		& 13 	& 14	& 11	& \revz{4}	& \revz{7}	& \revz{3}	& \revz{12}	& \revz{69.7}	\\
+		{\tt mx} 	& 79	& 10	& 9		& 1		& 1	& 12	& 9	& \revz{1}	& \revz{8}	& \revz{1}	& 0		& -	\\
+		{\tt sem} 	& 79	& 17	& 16		& 12		& 11	& 12	& 7	& \revz{3}	& \revz{6}	& \revz{2}	& \revz{50}	& \revz{77.4}	\\
+		{\tt signal} 	& 79	& 10	& 8		& 5		& 5	& 11	& 6	& \revz{1}	& \revz{3}	& \revz{2}	& 45		& \revz{59.6}	\\
+		{\tt rwlock} 	& 79	& 27	& 26		& 25		& 23	& 28	& 4	& \revz{1}	& \revz{3}	& \revz{0}	& \revz{44}	& \revz{86.3}	\\
 		\hline
-		{\tt sched} 	& 59	& 7	& 7	& 1	& 1	& 8	& 6	& 4	& 2	& 13.0	\\
-		{\tt alarm} 	& 44	& 21	& 12	& 16	& 5	& 29	& 17	& 3	& \revisionz{17}
-													& \revisionz{7.8}	\\
-		{\tt wait} 	& 52	& 30	& 27	& \revisionz{24}
-								& 23	& 1	& 7	& 1	& \revisionz{15}
-													& \revisionz{33.8}	\\
+		{\tt sched} 	& 59	& 7	& 7		& 1		& 1	& 8	& 6	& \revz{4}	& \revz{6}	& \revz{6}	& 2		& 13.0	\\
+		{\tt alarm} 	& 44	& 21	& 12		& 16		& 5	& 29	& 17	& \revz{1}	& \revz{7}	& \revz{6}	& \revz{17}	& \revz{7.8}	\\
+		{\tt wait} 	& 52	& 30	& \revz{26}	& \revz{24}	& 23	& 1	& 7	& \revz{2}	& \revz{2}	& \revz{0}	& \revz{15}	& \revz{33.8}	\\
 		\hline
-		{\bf Total}	& 629	& 153	& 133	& \revisionz{102}
-								& 88	& 122	& 69	& 32	& \revisionz{192}
-													& \revisionz{65.8} 	\\
+		{\bf Total}	& 629	& 153	& \revz{132}	& \revz{102}	& 88	& 122	& 69	& \revz{15}	& \revz{44}	& \revz{21}	& \revz{192}	& \revz{65.8} 	\\
 	\end{tabular}
 		}
 	\end{center}
@@ -262,8 +264,8 @@ we additionally show a wall-clock comparison in (b) to highlight the impact of \
 	%and data races
 	found by each test program.
 		\revisionx{QS-LHB and QS-PHB are \quicksand; ICB/DPOR/ShMem are the controls (\sect{\ref{sec:eval-setup}}).}
-		``LHB DR bugs'' counts among \revisionx{QS-Limited-HB's} bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}});
-	among those, ``Nondeterministic DR bugs'' counts how many candidates required MC integration to identify (\sect{\ref{sec:eval-dr}}).
+		``\revisionz{Data-race} bugs'' counts among \revisionz{\quicksand's} bugs how many required data-race PPs to expose (\sect{\ref{sec:eval-sssmc}});
+	among those, \revisionz{the ``Nondeterministic'' columns show} how many candidates required MC integration to identify (\sect{\ref{sec:eval-dr}}).
 	``Mutual timeouts'' counts how often both \revisionx{QS-Limited-HB and SSS-MC-ICB} timed out with no bug found;
 	among those, ``Average tested subset SSes'' counts how many partial verifications \quicksand~provided on average for each test (\sect{\ref{sec:eval-sssmc}}).
 		}
@@ -626,10 +628,12 @@ This prevents \landslide~from suppressing an observed data race on the first int
 which would falsely classify it as nondeterministic.
 
 \begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{nondet-drs-1-v2.pdf}
+	\includegraphics[width=0.48\textwidth]{nondets.pdf}
 	\caption{Some data-race candidates may not be identified during a single program execution.
 		Using nondeterministic data races as PPs,
-		\quicksand~found 189\% as many data-race bugs compared to using single-pass candidates alone.
+		% lhb: 127.77%
+		% phb: 191.30%
+		\quicksand~found \revisionz{128\% (Limited HB) to 191\% (Pure HB)} as many data-race bugs compared to using single-pass candidates alone.
 	}
 	\label{fig:dr-falsenegs}
 \end{figure}
@@ -640,7 +644,8 @@ The first series represents the bugs found using PPs from single-pass data-race 
 i.e., the state-of-the-art approach used by \cite{racefuzzer,portend}.
 The second series shows all data-race bugs \quicksand~found,
 which includes the former type as well as new bugs involving nondeterministic data-races.
-\quicksand~found 68 data-race bugs in total, only 36 of which could be found with single-pass data-race candidates alone.
+\revisionz{QS-LHB found 69 data-race bugs in total, 54} of which could be found with single-pass data-race candidates alone.
+\revisionz{QS-PHB is even more dependent on nondeterministic data-race PPs, requiring nondeterministic data-race PPs in 21 cases among its 44 total data-race bugs.}
 %In total, we found 189\% as many bugs by using nondeterministic data-race candidates as PPs.
 
 %When proving that [NONDET] dr buges exist, make sure to mention that, although
