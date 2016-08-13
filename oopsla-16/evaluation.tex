@@ -587,16 +587,17 @@ Beyond finding new bugs and completing full verifications with data-race PPs, we
 {\bf Suppressing ``malloc-recycle'' false positives.}
 In \sect{\ref{sec:recycle}} we showed the soundness of suppressing data race reports between two heap accesses when the surrounding memory was re-allocated in between.
 In Table~\ref{tab:drstatistix}, the column ``Malloc-recycle DRs'' shows the total number of such data-race candidates for each test program.
-In total, 902 data-races fit the malloc-recycle pattern across all tests,
-only 69 of which were observed to avoid the re-allocation in an alternate interleaving.
-Our proof in \sect{\ref{sec:recycle}} guarantees the safety of pruning all 833 other state spaces.
+In total, \revisionz{965} data-races fit the malloc-recycle pattern across all tests,
+% NB. Calculated this by grepping QS-LHB id-logs for "for realsies" (see quicksand pp.c).
+only \revisionz{64} of which were observed to avoid the re-allocation in an alternate interleaving.
+Our proof in \sect{\ref{sec:recycle}} guarantees the safety of pruning all \revisionz{901} other state spaces.
 
-Among those 69 true data-races, %which initially fit the malloc-recycle pattern,
+Among those \revisionz{64} true data-races, %which initially fit the malloc-recycle pattern,
 none exposed a new bug when used as a PP.
 This suggests that for other data-race tools,
 suppressing malloc-recycle candidates may be a productive heuristic,
 even if unsound without Iterative Deepening.
-However, \quicksand~was able to correctly identify the 69 violations of that heuristic (among 30 distinct tests),
+However, \quicksand~was able to correctly identify the \revisionz{64} violations of that heuristic (among \revisionz{26} distinct tests),
 and fall back to classifying them with DPOR.
 %which we consider a much stronger verification.
 
