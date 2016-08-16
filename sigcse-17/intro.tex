@@ -1,0 +1,39 @@
+\section{Introduction}
+\label{sec:intro}
+
+% TODO: lol.
+Building real-world multithreaded concurrent programming systems is well-known to be notoriously difficult to design, implement, test, debug, hard to get right, challenging, and error-prone arguably because of the difficulties of finding, reproducing, and fixing concurrency errors, attributable to the astronomically large number of thread interleavings, which arise at random during normal program execution.
+
+In this paper we describe our experience teaching concurrent programming at the operating-system level to advanced undergraduate students at \carnegiemellon (\cmu).
+In \fourten, the Operating Systems Design and Implementation class at \cmu,
+students complete aggressively low-level thread library and kernel projects,
+which run on real hardware,
+in which they implement threads and processes.
+Presented with a kernel specification called \pebbles%
+% TODO camready
+%\cite{kspec}
+, students build a threading and synchronization library that runs in user space on top of a \pebbles-compliant kernel in a two-week project, and subsequently, in a six-week project, write their own multi-threaded kernel implementation.
+During these projects students face demanding synchronization problems, including how to implement locking primitives and how to coordinate the possibly-simultaneous exiting of parent and child processes.
+% Finally, in another two-week project, students implement an extension to their Pebbles kernel. This project changes every semester, and recently has involved supporting symmetric multiprocessing (SMP).
+
+In comparison with other educational kernel projects,
+\pebbles focuses more on ground-up design than on teaching a broad feature set.
+At Stanford, students build kernels following the Pintos architecture \cite{pintos}, and at MIT, using Xv6/JOS \cite{xv6}.
+In both courses, student kernels support multiprocessor execution;
+however, students are also supplied with starter code that already implements thread creation/destruction, context switching, and locking primitives.
+In \fourten, we provide starter code for the machine boot sequence and for a minimal C library (\x{printf()}, \x{malloc()}), leaving students to design threading and scheduling primitives from scratch.
+
+Incorporating SMP into the \fourten curriculum would expand the challenges students face in a single semester.
+However, we wish to avoid compromising the complexity
+%, hardware fidelity,
+and learning experience of the project set.
+One solution would be to ease the burden of debugging concurrency errors.
+Hence, we have built \landslide%
+% TODO camready
+%\cite{landslide}
+, a tool that uses stateless model checking \cite{verisoft,dpor,chess-icb}
+as an alternative to the conventional stress tests.
+%to force kernel threads to take execution paths that expose concurrency bugs.
+\landslide can test student thread libraries fully automatically, and can test kernels provided some manual instrumentation.
+We present our experience sharing \landslide with volunteering students who used it to find bugs in their own code,
+and discuss the possibility for integrating it as a main component of operating systems curricula.
