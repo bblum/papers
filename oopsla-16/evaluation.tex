@@ -402,13 +402,14 @@ When a MC job times out, the user may prefer a brief summary of what parts of th
 %We know of no approach to quantify the probability
 %that a bug would be exposed by an untested interleaving,
 While recent work \cite{randomized-scheduler} attempts to quantify the probability
-that an untested interleaving would expose a bug,
+\revisionz{that a bug remains in some untested interleaving},
+%that an untested interleaving would expose a bug,
 \quicksand~instead reports which subsets of PPs resulted in state spaces that did complete in time.
 %\quicksand~does not attempt any such quantitative guarantee,
 %but can at least report
-On \revisionx{310} tests, \revisionx{SSS-MC-ICB} timed out after 10 hours with no bugs found.
-Among these tests, \quicksand~found bugs in \revisionx{47}.
-For the other \revisionx{263}, we show the number of state spaces \quicksand~was able to complete in the ``Average tested subset SSes'' column of Table~\ref{tab:drbugs}.
+On \revisionz{229} tests, \revisionx{SSS-MC-ICB} timed out after 10 hours with no bugs found.
+Among these tests, \quicksand~found bugs in \revisionz{37}.
+For the other \revisionz{192}, we show the number of state spaces \quicksand~was able to complete in the ``Average tested subset SSes'' column of Table~\ref{tab:drbugs}.
 %and the number of unique PPs among them.
 %In 6 cases, \quicksand~also failed to complete anything; beyond these,
 %between 1 and 253 state spaces were completed for each test
@@ -630,7 +631,7 @@ The first series represents the bugs found using PPs from single-pass data-race 
 i.e., the state-of-the-art approach used by \cite{racefuzzer,portend}.
 The second series shows all data-race bugs \quicksand~found,
 which includes the former type as well as new bugs involving nondeterministic data-races.
-\revisionz{QS-LHB found 69 data-race bugs in total, 54} of which could be found with single-pass data-race candidates alone.
+\revisionz{QS-LHB found 69 data-race bugs in total, 15} of which could \revisionz{not} be found with single-pass data-race candidates alone.
 \revisionz{QS-PHB is even more dependent on nondeterministic data-race PPs, requiring nondeterministic data-race PPs in 21 cases among its 44 total data-race bugs.}
 %In total, we found 189\% as many bugs by using nondeterministic data-race candidates as PPs.
 
