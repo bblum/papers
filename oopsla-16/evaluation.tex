@@ -89,7 +89,8 @@ We chose P2s and Pintoses for our test suite because of the relative ease of gen
 varied in size and correctness, and with a diverse set of bug types\footnote{
 Many of the codebases exhibited {\em deterministic} bugs (i.e., encountered on the first interleaving tested).
 We fixed these by hand, before running tests, to ensure that every bug in our study required meaningful work by the MC.}.
-% TODO: Is this ok? Too arrogant?
+% Is this ok? Too arrogant?
+% I guess it's fine!
 We believe that merely finding a small handful of new real-world bugs is largely anecdotal,
 and that our test suite's size allows for a more statistically significant comparison among MC and data-race testing strategies.
 %compared to anecdotally showing a small handful of new bugs that could be found in real-world programs.
@@ -180,7 +181,7 @@ configurations of stand-alone \landslide~on the same test suite:
 \begin{itemize}
 	\item {\bf SSS-MC-DPOR}: Single state space using the maximal PP set from \sect{\ref{sec:initial-pp}}, explored with DPOR \cite{dpor},
 	\item {\bf SSS-MC-ICB}: With PPs as above, but instead using ICB \cite{chess-icb} with BPOR \cite{bpor} to find bugs faster, and
-	\item {\bf SSS-MC-Shared-Mem}: % TODO: better name?
+	\item {\bf SSS-MC-Shared-Mem}:
 		Using ICB+BPOR, configured to preempt on any shared memory access \cite{inspect}
 		(decided at runtime, excluding threads' accesses to their own stacks),
 		which in principle includes all possible data-race PPs.
@@ -285,27 +286,22 @@ with a 10 core allocation, it outperforms SSS-MC
 for any fixed budget of wall-clock time.}
 \revisionx{After 1 hour of wall-clock time, tenfold \quicksand~performs 158\% as well as SSS-MC-ICB.}
 
-% TODO CAMREADY
+% Sorry camready, not gonna do this. It'll have to wait for the thesis.
 %\revision{
 %%{\bf Variance.}
-%% TODO CAMREADY: Probably will need at least a 3rd run of dis.
 %Because \quicksand~can be nondeterministic in its scheduling of state spaces,
 %we ran the QS-Limited-HB and QS-Pure-HB tests a second time to quantify the variance.
-%% TODO CAMREADY
 %% We found the maximum area between any two curves to be
 %We found the area between the two curves to be
-%% TODO CAMREADY
 %{\bf XX\%}
-%of the area between QS-TODO(?)-HB and SSS-MC-Shared-Mem (the next closest),
-%% TODO cite CAMREADY
+%of the area between QS-(?)-HB and SSS-MC-Shared-Mem (the next closest),
+%% would need a citation...
 %which we consider an insignificant amount of variance.
 %}
 
-% TODO: Fix up this paragraph after preempt-everywhere results come in.
 The left half of Table~\ref{tab:drbugs}
 breaks down the number and types of bugs found by each test program.
 In \mxtest, in which we do not trust the lock implementation's correctness,
-% TODO CAMREADY: Fix, SSSMC-ShM finds 2 mx bugs.
 \revisionx{SSS-MC-ICB and SSS-MC-DPOR}
 found dramatically fewer bugs (just 1)\footnote{
 	The one bug SSS-MC found was in a fully-assembler lock implementation. {\tt yield()}'s return value clobbered a value stored in {\tt \%eax}, which could lead to a failure after two repeated contentions. Preempting only on {\tt yield()} (in the contention loop) was sufficient to find the bug.}.
@@ -313,10 +309,7 @@ found dramatically fewer bugs (just 1)\footnote{
 %Though for many applications of MC, assuming a correct lock implementation is sufficient,
 Though it often suffices to assume correctly-implemented locks \cite{dbug-thesis},
 we consider this strong evidence that new low-level synchronization code must be verified with data-race PPs.
-%TODO CAMREADY: Run a mutex expt where "all atomic instrs" are PPs. See how many bugs are missed anyway.
-% Wwe re-ran the \mxtest control experiment with \landslide~hard-coded to preempt on any atomic instruction
-% (as well as on the mutex API boundaries).
-% Still, this smarter configuration for SSS-MC found only 99999999999 bugs of \quicksand's 13.
+% TODO CAMREADY: Report on SSS-MC-Shared-Mem's mutex testing results.
 
 %% RIP this.
 %Furthermore, we plotted another line from this dataset, QS-no-DR-bugs,
@@ -324,7 +317,7 @@ we consider this strong evidence that new low-level synchronization code must be
 %Intuitively, this line shows that for programs with only benign data races,
 %\quicksand~can afford the extra overhead of verifying them while still slightly edging out SSS-MC.
 
-% TODO CAMREADY: Compare QS-ETAs to QS-Random to evaluate "smaller is better" claim.
+% Future work (for thesis maybe?) Compare QS-ETAs to QS-Random to evaluate "smaller is better" claim.
 {\bf Finding the same bugs faster.}
 %To test whether Iterative Deepening is effective even for MC domains without data races, %such as message-passing distributed systems,
 \revision{The QS-Sync-Only experiment tests whether}~Iterative Deepening is effective even for MC domains without data races.
@@ -451,13 +444,6 @@ verifications provided by each approach.
 %in which QS-DR ultimately found bugs,
 %which further calls into question the rest of its completions.
 
-% NB. TODO CAMREADY. If a reviewer asks, "How come SSSMC-ShM completed so many state spaces,
-% even though last section you argued that so many PPs slows it down terribly?"
-% The answer is, "Actually, it's not that SSSMC-ShM magically got fast again for the verification experiment;
-% it's that SSSMC-ShM and Quicksand are *BOTH* slow to achieve full completion.
-% Quicksand can get bogged down in a combinatorial explosion of different subsets of PPs,
-% having a zillion jobs on its hands. Future work should improve this with https://github.com/bblum/landslide/issues/216 ."
-
 %\quicksand's total verifications
 %%before a given elapsed CPU consumption.
 %\revision{against those provided by SSS-MC-Shared-Mem\footnote{
@@ -474,7 +460,6 @@ verifications provided by each approach.
 %We attribute this again to the overhead of the sheer number of statically-coded PPs that SSS-MC-Shared-Mem must use,
 %as well as to the work which ICB necessarily repeats when increasing its preemption bound.}
 
-% TODO: Update for pure HB (need a re-run of a subset of completed sssmc tests to confirm they still have no pure hb drs, even if they had limited hb drs)
 Among \revisionx{QS-Limited-HB's} verified tests, 36 contained no data-race candidates whatsoever,
 so the same verification could be provided
 %by SSS-MC
@@ -487,7 +472,7 @@ due to redundant work (\sect{\ref{sec:future}}).
 \revision{While QS-Sync-Only and SSS-MC-ICB are competitive with each other},
 using data-race PPs increases our \revision{verification capacity}~by 4.25x.
 \revisionx{Finally, assuming sequentially-consistent hardware,
-QS-Pure-HB classified many % TODO: how many
+QS-Pure-HB classified many
 true data races as benign, %(non-failing),
 while the SSS-MC-ICB approach could at best report such races to the user.
 We count these cases in Table~\ref{tab:drstatistix}.
@@ -667,7 +652,6 @@ This result suggests that
 such tools could benefit from a similar feedback loop as is used in Iterative Deepening.
 %i.e., discovering transitively-reachable data races while testing initial ones.
 %although that would still not simultaneously be able to provide total verifications.
-% TODO: read gambit paper
 
 
 % Figure out concretely what the data race tricks are that we do, so we can claim them as contributions in the paper. Then ACTUALLY EVALUATE THEM.
