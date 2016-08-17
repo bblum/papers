@@ -180,7 +180,6 @@ each {\em pair} of racing accesses will spawn four new jobs, as shown in Figure~
 The rationale of spawning multiple jobs is that we don't know in advance which will be most fruitful:
 while the big job risks not completing in time,
 the small job risks missing the data race entirely if the original PPs were required to expose it.
-% TODO CAMREADY: Put numbers here.
 In practice, we observed some bugs found quickly by these small jobs, and other bugs missed by the small jobs found eventually by the big jobs.
 This phenomenon motivates Iterative Deepening to prioritize jobs at run-time.
 
@@ -205,7 +204,7 @@ in which case we report a potential false positive that the user must handle (\s
 %Ideally, the PC would be qualified by a full backtrace, but tracing the stack is too expensive to do for each shared memory access.
 %Instead, \landslide~qualifies the PC with
 %(a) the current thread ID and
-%% FIXME: We don't actually do this.
+%% Oops! We don't actually do this.
 %(b) the most recent {\tt call} instruction.
 %% (a crude approximation of a stack trace)
 %% which are much cheaper, as we carry them around all the time already

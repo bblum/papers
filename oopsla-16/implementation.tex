@@ -54,8 +54,7 @@ We use these to restrict the scope of some tests in our evaluation (\sect{\ref{s
 Data race tools in prior work \cite{tsan,portend} recognize the implementations of synchronization primitives to avoid spuriously flagging memory accesses %therein. %resulting from the lock implementation itself.
 that implement them.
 Assuming that the lock implementation is already correct enables more productive data-race analysis on the rest of the codebase,
-% TODO CAMREADY: Cite simsa thesis
-while the locks themselves can be verified separately.
+while the locks themselves can be verified separately \cite{dbug-thesis}.
 %Otherwise, %with testing limited to one execution,
 %%even if one wishes to test for lock bugs,
 %\revision{a single-pass}~data-race analysis would flag every access pair in the lock implementation. %, requiring human attention to verify.
