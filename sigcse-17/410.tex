@@ -1,0 +1,680 @@
+\section{\fourten}
+\label{sec:410}
+
+\fourten, Operating System Design and Implementation,
+is an upper-level undergraduate class
+designed for juniors and seniors in Computer Science
+and Electrical and Computer Engineering.
+For CS students it is one of five courses which fulfill
+a ``systems programming'' degree requirement.
+%
+The prerequisite course is \twothirteen,
+Introduction to Computer Systems,
+% TODO CAMREADY
+%a course which has been adopted at other
+%universities in the U.S.\ and worldwide
+adapted from Carnegie Mellon University's 15-213
+\cite{sigcse01:CSaPP}.
+This section discusses the course learning objectives,
+outlines the programming projects,
+and mentions some current limitations in the scope
+of the course material.
+
+The course has many learning objectives,
+ranging from acquiring detailed factual knowledge about
+hardware features
+through practicing advanced cognitive processes
+such as open-ended design.
+%%
+%Students study high-level concepts
+%such as
+%\shortversion{least privilege}{protection (least privilege, access control lists vs.\ capabilities)},
+%file-system internals,
+%and log-based storage.
+%%
+%Emphasis is placed on acquiring information from ``primary sources,''
+%including both manufacturer-provided hardware documentation
+%and a non-textbook technical-literature reading assignment.
+%
+The course's distinguishing feature is that
+students begin with a ``blank slate'' rather than a
+kernel-source template or an existing operating system,
+so they must synthesize design requirements from multiple sources
+and must
+choose their own module boundaries and inter-module conventions.
+%
+%Due to the foundational nature of kernel code,
+The assignment design and grading encourage students to
+think about corner cases, including resource exhaustion,
+instead of being satisfied by
+``the right basic idea''
+implementations that handle only auspicious situations.
+%
+Finally, most relevant to this work,
+students %gain substantial experience in
+analyze and write lock-based multi-threaded code and
+thread-synchronization objects.
+They practice detecting and documenting deadlock and race conditions,
+including both thread/thread
+%concurrency
+and thread/interrupt concurrency.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Projects}
+
+In the course of a semester, students work on five
+programming assignments; the first two are individual,
+and the remaining three are the products of two-person
+teams.
+
+\subsubsection{Stack Crawler}
+
+The first project is a backtrace library: %``stack crawler'':
+when invoked by a client program, it displays the
+%program's
+stack symbolically,
+showing function names, strings, floating-point values, etc.
+This project
+%\shortversion{enables}{meets a variety of goals: it enables}
+%students to review key process-model and
+%language-runtime concepts from the
+%prerequisite course;
+%it
+introduces students to our expectations about
+design, analysis, and making choices;
+%finally,
+and
+because C pointers are unsafe, it requires students
+to consider robustness.
+%
+% and we READ THEIR CODE
+% ^^ LOL, classic dave.
+This project is built using a standard C tool chain
+and debugged as students see fit (generally \x{printf()} and GDB).
+
+\subsubsection{Device Drivers and Game}
+
+The second project is a simple game, such as Hangman,
+which runs without an underlying
+operating system.
+We provide students a small C library %with selected C library routines
+(e.g., \x{strcmp()}, \x{memmove()}, \x{printf()}),
+who then write a device-driver library consisting of
+console output (to a memory-mapped text-mode video display),
+keyboard input (interrupt-driven),
+and a countdown timer.
+The game enables students to test their drivers.
+%
+% and the need to write enough code to get into trouble
+%
+
+This project and the remaining ones are written in
+C with a bit of x86-32 assembly code,
+which is then
+compiled and linked into an ELF executable,
+stored into a 1.44-megabyte 3.5-inch floppy-disk image,
+and booted via GRUB.
+If the image is copied to a real floppy or CD,
+%or \shortversion{compact disc,}{embedded into an ``El Torito'' bootable compact disc image,}
+it can be booted on standard PC hardware.
+However, students most often use
+the Simics system emulator \cite{simics} (described below).
+
+\subsubsection{User-space Thread Library}
+
+The third project is implementing a 1:1 thread library for
+user-space programs,
+%essentially a stripped-down
+%version of POSIX Pthreads.
+similar to POSIX Pthreads.
+The primary goal is
+for students to experiment
+with concurrency and atomicity.
+Students begin by designing mutexes using any
+x86-32 atomic instructions they choose.
+%(there is substantial variation across groups).
+They then write other synchronization
+primitives (condition variables, semaphores,
+and reader/writer locks), infrastructure
+components (stack allocation/recycling and
+a thread registry),
+and low-level code to launch and shut down
+threads.
+
+A second goal is encouraging students to
+consider how ingredients are assembled into
+abstractions.
+%% Good rhetoric (below). -- bblum
+There is a semantic gap
+between the library-level \x{thr_create()}
+call (analogous to \x{pthread_create()})
+and the \x{thread_fork} system call provided
+by the underlying kernel,
+which takes no parameters,
+makes no changes to the user's address space,
+and cannot meaningfully
+be invoked from C~code.
+Because these abstractions are so different,
+students must
+understand each as an independent entity while
+deciding how to bridge them.
+A similar deliberate semantic gap exists between
+\x{cond_wait()} and \x{deschedule()} (the system call
+which suspends execution of a thread).
+
+Student library code is linked against small
+test programs provided by the course staff,
+%producing one statically linked ELF executable
+%per test program.}
+%The test programs \shortversion{run on}{are bundled into a RAM-disk
+%image and linked against}
+which then run on a ``reference kernel'' provided in binary form.
+%written by
+%the course staff
+%and provided in binary form.
+The reference kernel's behavior is specified
+% TODO: Anonymize this citation
+in a twelve-page document~\cite{kspec}.
+In addition to providing a reliable execution
+substrate,
+the reference kernel
+schedules user-space threads created by
+student code using a variety of
+interleaving policies.
+%\shortversion{}{In order to aid debugging of concurrency problems,
+%the \x{misbehave()} system call enables
+%students to manually select an interleaving policy.}
+
+\subsubsection{\pebbles Kernel}
+
+For the fourth project, students %two-student teams
+produce a kernel which implements the
+same specification as the reference kernel
+they previously relied on.
+They design and implement some approach to
+synchronizing and blocking threads while
+they are in kernel space,
+%\shortversion{,}{\footnote{
+%Student designs for their kernel's synchronization primitives vary widely.
+%For example, ``top of the class'' students who went on to become teaching assistants have alternately used condition variables but not semaphores, and semaphores but not condition variables.
+%},}
+a simple round-robin scheduler,
+basic virtual memory,
+a program loader,
+%various x86 exception handlers,
+and code for setting up and tearing down
+threads and processes
+(re-using their game-project device drivers).
+These ingredients are combined to yield
+twenty-five system calls,
+which we list in Table~\ref{tab:syscalls}.
+%(life-cycle, thread management, memory management,
+%console I/O, and miscellaneous),
+%which we discuss further in Section~\ref{sec:pebbles}.}
+
+\begin{table}[t]
+	\center \footnotesize
+	\begin{tabular}{|l|p{0.30\textwidth}|}
+		\hline
+		\bf Syscall name & \bf Summary \\
+		\hline
+		\multicolumn{2}{c}{\em Lifecycle management} \\
+		\hline
+		\x{fork} & Duplicates the invoking task, including all memory regions. \\
+		\x{thread_fork} & Creates a thread in the current task.\\
+		\x{exec} & Replaces the current program in the invoking task with a new one. \\
+		\x{set_status} & Records exit status of current task. \\
+		\x{vanish} & Ends execution of the calling thread. \\
+		\x{wait} & Blocks execution until another task terminates; collects its exit status.\\
+		\x{task_vanish}* & Causes all threads of a task to \x{vanish}. \\
+		\hline
+		\multicolumn{2}{c}{\em Thread management} \\
+		\hline
+		\x{gettid} & Returns the ID of the invoking thread. \\
+		\x{yield} & Defers execution to a specified thread. \\
+		\x{deschedule} & Blocks execution of invoking thread. \\
+		\x{make_runnable} & Wakes another \x{deschedule}d thread. \\
+		\x{get_ticks} & Gets timer tick count since bootup. \\
+		\x{sleep} & Blocks for a given number of ticks. \\
+		\x{swexn} & Registers a user-space function as a software exception handler.\\
+		\hline
+		\multicolumn{2}{c}{\em Memory management} \\
+		\hline
+		\x{new_pages} & Allocates a specified memory region. \\
+		\x{remove_pages} & Deallocates same. \\
+		\hline
+		\multicolumn{2}{c}{\em Console I/O} \\
+		\hline
+		\x{getchar}* & Reads one character from kbd input. \\
+		\x{readline} & Reads the next line from kbd input. \\
+		\x{print} & Prints a memory buffer to the console. \\
+		\x{set_term_color} & Sets color for future console output. \\
+		\x{set_cursor_pos} & Sets the console cursor location. \\
+		\x{get_cursor_pos} & Retrieves the console cursor location. \\
+		\hline
+		\multicolumn{2}{c}{\em Miscellaneous} \\
+		\hline
+		\x{ls} & Loads a buffer with the names of files stored in the RAM disk ``file system.'' \\
+		\x{halt} & Ceases execution of the OS. \\
+		\x{misbehave}* & Selects thread-scheduling policy. \\
+		\hline
+	\end{tabular}
+	\caption{The \pebbles specifcation defines 25 system calls. Students are not required to implement ones marked with an asterisk (*), though the reference kernel provides them. }
+	\label{tab:syscalls}
+\end{table}
+
+
+%%% Justify by mentioning average lines of code. -- bblum
+%For most students in the class, this is the
+%largest and most complicated software artifact they
+%have produced.
+%Because the test suite and the grading criteria
+%emphasize robustness and preemptibility of
+%kernel code,
+%there are many cross-cutting concerns.
+%%
+%Because the students are responsible for ensuring
+%the run-time invariants underlying all compiler-generated
+%code in the system (kernel and user-space),
+%they gain experience with debugging at both the
+%algorithm level and the register/bit-field level.
+
+{\bf Lifecycle.} The process lifecycle is loosely based on the
+Unix \x{fork()}/\x{exec()}/\x{wait()} model.
+We adopt the Mach~\cite{DBLP:conf/usenix/AccettaBBGRTY86}
+distinction between ``tasks,''
+which are resource containers,
+and threads,
+each of which executes within a single task.
+This differs from %partitioning is a different approach from that of
+Plan~9's \x{rfork()}~\cite{Pike90plan9} or Linux's \x{clone()},
+%both of
+which allow a continuum of sharing
+%between identical threads and independent processes,
+at the cost of implementation complexity. %which we wish to avoid.
+%A task's address space can be edited through two system
+%calls that add and delete contiguous regions of memory.
+%Students are expected to implement zero-fill-on-demand,
+%but copy-on-write and demand-loading of executables are
+%optional.
+%Threads can print text to and read lines of text from
+%the simple console that students implemented at
+%the start of the semester.
+
+Widely regarded as the most difficult concurrency problem in the project
+is that of coordinating a parent and a child task that ``simultaneously''
+exit:
+% invoke \x{vanish()}:
+when a task completes,
+live children and exited zombies must be handed off
+to the task's parent or to the system's \x{init} process,
+at a time when the task's parent may itself be
+exiting;
+meanwhile, threads in tasks that receive new children
+may need to be awakened from the \x{wait()} system call.
+Due to design constraints imposed by other parts of the kernel specification,
+careless solutions %solutions which are not carefully designed
+are prone to data races or deadlocks.
+
+{\bf Threads.}
+%Within a task,
+Threads are created via
+\x{thread_fork}, which closely
+mirrors the specification of \x{fork()}:
+the new thread begins with identical %an exact copy of the
+register values,
+%of the old thread, except that
+%the return-value register, \x{\%eax}, contains
+%zero;
+excepting \x{\%eax}, containing zero;
+in the old thread, \x{\%eax} holds the thread ID
+of the new thread.
+This minimal formulation defers all policy decisions
+%(e.g., stack size, location, and contents)
+to the
+user-space thread library.
+A thread may suspend its execution via the
+\x{deschedule()} system call,
+and a blocked thread can be reactivated via
+\x{make_runnable()}.
+
+Each thread
+can register an exception handler
+%has the ability to register a handler
+%for hardware exceptions (illegal instruction,
+%division by zero, etc.)
+via \x{swexn()},
+which specifies the addresses of handler code
+and a handler stack.
+%When a thread encounters an exception,
+The kernel reflects exceptions to user space
+by
+de-registering the handler,
+pushing the thread's register state onto the handler stack,
+and invoking the handler code.
+The handler
+%has the ability to
+can re-register itself
+(or some other handler),
+run arbitrary code,
+and/or atomically adopt a new set of register
+values.
+%The \x{swexn()} facility is used to enable
+\x{swexn()} enables
+the thread library to detect %when a managed
+thread crashes
+%thread has crashed
+and %, more importantly,
+to enable user-space automatic stack growth.
+%implementation of automatically-growing stack
+%regions.
+%Removing the auto-stack policy and mechanism from
+%its traditional position in Unix-like kernels
+%simplfies the kernel and
+%front-loads policy questions to an earlier
+%part of the course,
+%before students are facing the substantial pressure
+%of the kernel project.
+
+
+
+\subsubsection{\pebbles Extension}
+
+Students who complete the kernel project on time
+then work on a kernel-extension project.
+Past projects have included
+a sound card driver,
+a filesystem,
+suspend-to-disk,
+profiling,
+and an in-kernel debugger.
+Two recent, more aggressive, projects have been
+paravirtualization
+%so that their kernels can host guest kernels and
+and multi-processor support.
+%to their single-processor kernels.
+
+In the multi-processor project, students
+%extended their kernels to
+scheduled multiple threads across up to eight cores.
+We provided base code for determining the CPU count, booting the application processors, and sending inter-processor interrupts (IPIs).
+% Students needed to design a way to synchronize removing virtual memory mappings in the TLB,
+% to implement moving threads between processors,
+% and
+% to redesign their scheduler's locking primitives to account for the fact that disabling interrupts on a CPU no longer necessarily prevents concurrent accesses.
+Students must move threads between processors,
+synchronize memory unmapping across multiple TLBs,
+%and account for the fact that disabling interrupts on a CPU doesn't prevent concurrent data accesses.
+and find a way to prevent concurrent data access apart from disabling local CPU interrupts.
+%
+%To allow struggling groups to make progress without solving every synchronization challenge,
+To help struggling groups,
+we allowed
+%the use of
+a ``big kernel lock'', and rewarded groups according to how little they used it.
+Submissions were also graded according to
+correctness of the scheduler and spinlocks,
+stability on a suite of stress tests,
+and efficient use of IPIs. %for efficient processor coordination.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Simics}
+
+The main execution and debugging
+platform used in the class is
+Wind River Simics~\cite{simics}.
+%originally developed by the Swedish Institute of
+%Computer Science and
+%currently a product of Wind River.
+Unlike some emulators,
+which focus on fast execution of correct code,
+Simics
+provides very faithful bit-level support
+not only for correct code %that behaves correctly
+but also for kernels that accidentally ``abuse'' hardware.
+%{but also for code that is ``incorrect within reason.''
+%Occasionally student code manages to invoke an unsupported
+%function of some hardware device or even to cause the
+%simulator to crash, but this is quite rare, and in almost
+%every case when the ``bad event'' is characterized it turns
+%out that what the software requested from the hardware was
+%a mistake.
+%Meanwhile, inside its large envelope, Simics supports
+%\textit{very} detailed models of various x86 processors.}
+Unlike hardware virtualization environments,
+Simics contains substantial debugger support:
+single-stepping,
+printing of source-level symbolic
+expressions,
+stack tracing,
+display of TLB entries,
+and even summaries of x86
+%hardware-defined
+descriptor tables.
+%Unlike some symbolic debuggers,
+%Simics is scriptable in Python,
+%and it is possible to interpose user-written measurement
+%frameworks to evaluate proposed hardware
+%features~\shortversion{\cite{SIMFLEX}}{\cite{SIMFLEX,UW-GEMS,FeS2}}.
+%\shortversion{}{Performance is very reasonable (Simics can simulate certain
+%cases, such as a CPU halted awaiting a clock interrupt,
+%much faster than real time).}
+%\shortversion{}{A major advantage of using Simics over the QEMU emulator in particular
+%is that QEMU only issues timer interrupts at basic-block boundaries,
+%which dramatically undermines our goal of teaching students that threads can interleave with each other at any time.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Limitations}
+
+At present the course accepts the following limitations
+or core assumptions.
+
+\textbf{32-bit x86.}
+%\subsubsection{x86}
+%\shortversion{}{Students write code that runs on one specific
+%hardware platform.}
+We target x86 PCs because machines of this type are
+available from many manufacturers at many price points.
+This means that it is easy for students to obtain access
+to a machine (virtual or real) which will let them
+test their code.
+%boot
+%up their code, type commands, and observe the results.
+%\violence{}{Also, unlike many System-on-a-Chip platforms,
+%detailed hardware descriptions are readily available.}
+%% rather than being proprietary or "documented"
+%% by labyrinthine Linux source code
+%\shortversion{}{Finally, the platform is fairly stable---with only a
+%little care, it is possible to write a compliant
+%kernel which runs on anything newer than a 486DX processor,
+%i.e., almost any PC hardware which is likely to be in
+%working condition.}
+%
+%\subsubsection{32-bit}
+We target the 32-bit
+subset of x86, for multiple reasons.
+%%% I'm not sure I believe this is an advantage. Instead of having
+%%% to verify if each register is correct, students now have to verify
+%%% both registers and stack slots. Otherwise this paragraph is good. -- bblum
+%First, while the small number of registers is
+%frustrating for compiler writers,
+%\shortversion{the}{from the point of view of OS students, the}
+%existence of fewer registers means less work
+%when it is necessary to verify that each register's
+%value is correct.
+%Likewise,
+The calling convention's old-fashioned focus on the stack
+makes it easier to track function parameter values.
+Second, implementing virtual memory on x86-64 as
+opposed to x86-32 requires more code and more
+debugging time without imparting greater
+insight.
+%\shortversion{insight.}{insight. Finally, since it is impossible for an x86 processor
+%to be in 64-bit mode with virtual memory off,
+%students would need to be coached through the
+%32-bit--to--64-bit transition or would need
+%to be given a template virtual-memory implementation.}
+%All in all, at present we are satisifed with
+%the 32-bit choice.
+
+\textbf{Memory model.}
+At present we allow students
+to reason about concurrency based on a
+sequentially-consistent view of
+% TODO: add a citation?
+memory.
+%which is consistent with
+%existing x86 hardware~\cite{SewellSOZNM:x86tso-cacm10}
+%but simplistic compared to most other
+%architectures.
+Lecture material educates students about
+%the general topic of
+out-of-order memory systems
+and fencing,
+but at present the hands-on experience does not
+reinforce that material.
+
+\textbf{Reduced breadth of implementation.}
+One cost of programming to the complexities of
+real hardware is that
+within %the scope of
+a single semester,
+students do not %\violence{not}{not have the opportunity to}
+implement common features of many kernels,
+such as a file system, interprocess communication,
+a real-time scheduler,
+or networking.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Grading}
+
+Thread libraries and kernels
+are graded through a combination
+of three methods:
+performance on a test suite,
+compliance with ``hurdle criteria,''
+and detailed code review by a member of the course staff.
+
+\subsubsection{Automated tests}
+
+%While developing their code,
+Students will uncover both bugs
+and design misunderstandings by running test code we
+provide.
+%Some tests are simple, exercising one feature or condition
+%(e.g., allocating and freeing a large amount of memory),
+%while other tests exercise a mix of kernel features
+%simultaneously (creating and destroying processes,
+%some of which do I/O while others handle or are killed
+%by various exceptions) over an extended period of time.
+The test suite is a number of user-space programs
+which test
+%functionality including
+basic thread and process lifecycles, robustness
+against corner-case security vulnerabilities, and long-term stability
+under large stress tests.
+%
+%When students submit their thread libraries and kernels,
+%we use an automated testing harness to
+%run a superset of the public test suite.
+%
+Of course, due to the nondeterministic nature of many bugs in student code,
+these tests can provide only a rough estimate of a submission's correctness,
+rather than verifying it with certainty.
+(This hit-or-miss nature motivated our work on Landslide.)
+%Nevertheless, performance on these tests constitutes 30\% of the kernel project's grade.
+
+\subsubsection{Hurdle completion criteria}
+
+Because of the ambitious learning objectives,
+we employ a very detailed notion of completeness
+for the thread library and kernel projects.
+The ``hurdle'' model is based on the following observations:
+
+% TODO: Figure out how to left-justify these bullet poince.
+\begin{itemize}
+	\item Students learn more from bugs
+		that are harder to find.
+		In extreme cases, code may do
+		almost everything right, but the last bug may
+		demonstrate a deep misunderstanding which requires a re-design.
+
+	\item Because concurrency bugs are triggered rarely,
+		finding them requires code capable of running
+		for a long period without crashing.
+
+	\item Robust code often requires a different structure
+		than a ``usually works'' solution.
+		It is easy to %write task-exit code which
+		implement \x{vanish()} by
+		allocating memory to notify the parent task.
+		%parent that it has exited.
+		However, such a design suffers from ``terminal irony'':
+		a program wishing to exit,
+		which would free up memory,
+		cannot do so if kernel memory has been exhausted.
+\end{itemize}
+
+%For these reasons, \shortversion{much}{we believe much} of the learning
+%associated with the kernel project necessarily occurs
+%at the end of the experience,
+%so it is important for students to finish the process.
+% [suppressed: bad to build P4 on a shaky P3]
+%\shortversion{It}{We believe it} would be particularly
+It would be detrimental to
+assign partial credit to a large body of non-working
+code.
+Instead, we require student thread libraries and kernels to pass a
+specified percentage of tests
+%each segment of the test suite
+to be considered complete.
+Furthermore,
+because the test suite cannot detect certain
+structural shortcuts (e.g., ``fixing'' a concurrency
+problem by disabling interrupts during \textit{all}
+kernel execution),
+we require students to certify, in writing, that
+their code possesses certain properties.
+
+% TODO: Talk about P2 hurdle
+
+A ``complete'' kernel can boot up and run the shell,
+can pass 80\% of the basic system-call sanity test,
+70\% of the solidity tests (which
+invoke system calls in illegal
+%or non-trivial
+ways),
+and two of the three long-running multi-feature tests.
+%In addition,
+%a complete kernel is certified by the authors to
+Students also certify their thread libraries and kernels to
+be free of ``concurrency shortcuts,''
+to handle resource exhaustion,
+and to avoid certain distasteful x86-specific code structures.
+
+%Students who pass the completeness hurdle submit their kernels
+%and can move on to the kernel-extension project.
+%\shortversion{Students}{Meanwhile, students} who were unable to meet the
+%hurdle criteria on time receive additional time
+%to finish up and improve their code quality.
+%%---this
+%%requirement is based on our belief that important
+%%learning experiences are obtained by solving the
+%%hard problems,
+%%which turn up at the end of the kernel implementation.
+%The hurdle criteria constitute 50\% of the kernel project's grade.
+%
+
+\subsubsection{Code review and interview}
+
+Finally, both to make up for the tests' incompleteness and to provide personalized human feedback,
+each student submission is manually graded by a member of course staff.
+The instructors and teaching assistants print each group's submitted code and mark it with red ink, auditing it for style, architectural issues, races, and preemptibility.
+Furthermore, after the kernel project, each group meets with their grader for a ``kernel interview'', essentially a debriefing for correcting any misconceptions.
+% TODO: and what for p2?
+Staff discretionary points constitute 20\% of the kernel project's grade.
+
