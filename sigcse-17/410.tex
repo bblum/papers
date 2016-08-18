@@ -110,16 +110,17 @@ The game enables students to test their drivers.
 %
 
 This project and the remaining ones are written in
-C with a bit of x86-32 assembly code,
+C with some x86-32 assembly,
 which is then
 compiled and linked into an ELF executable,
-stored into a 1.44-megabyte 3.5-inch floppy-disk image,
+stored into a %1.44-megabyte 3.5-inch
+floppy-disk image,
 and booted via GRUB.
 If the image is copied to a real floppy or CD,
 %or \shortversion{compact disc,}{embedded into an ``El Torito'' bootable compact disc image,}
-it can be booted on standard PC hardware.
+it can boot on standard PC hardware.
 However, students most often use
-the Simics system emulator \cite{simics} (described below).
+Simics \cite{simics} (described in \sect{\ref{sec:simics}}).
 
 \subsubsection{User-space Thread Library}
 
@@ -421,6 +422,7 @@ and efficient use of IPIs. %for efficient processor coordination.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Simics}
+\label{sec:simics}
 
 The main execution and debugging
 platform used in the class is
@@ -469,8 +471,8 @@ descriptor tables.
 
 \subsection{Limitations}
 
-At present the course accepts the following limitations
-or core assumptions.
+%At present the course accepts the following limitations
+%or core assumptions.
 
 \textbf{32-bit x86.}
 %\subsubsection{x86}
@@ -559,8 +561,7 @@ performance on a test suite,
 compliance with ``hurdle criteria,''
 and detailed code review by a member of the course staff.
 
-\subsubsection{Automated tests}
-
+\textbf{Automated tests.}
 %While developing their code,
 Students will uncover both bugs
 and design misunderstandings by running test code we
@@ -588,8 +589,7 @@ rather than verifying it with certainty.
 (This hit-or-miss nature motivated our work on Landslide.)
 %Nevertheless, performance on these tests constitutes 30\% of the kernel project's grade.
 
-\subsubsection{Hurdle completion criteria}
-
+\textbf{Hurdle completion criteria.}
 Because of the ambitious learning objectives,
 we employ a very detailed notion of completeness
 for the thread library and kernel projects.
@@ -599,24 +599,25 @@ The ``hurdle'' model is based on the following observations:
 \begin{itemize}
 	\item Students learn more from bugs
 		that are harder to find.
-		In extreme cases, code may do
-		almost everything right, but the last bug may
+		In extreme cases, %code may do
+		%almost everything right, but the last bug may
+		subtle bugs may
 		demonstrate a deep misunderstanding which requires a re-design.
 
-	\item Because concurrency bugs are triggered rarely,
-		finding them requires code capable of running
+	\item %Because concurrency bugs are triggered rarely,
+		Finding rare concurrency bugs requires code capable of running
 		for a long period without crashing.
 
 	\item Robust code often requires a different structure
 		than a ``usually works'' solution.
 		It is easy to %write task-exit code which
 		implement \x{vanish()} by
-		allocating memory to notify the parent task.
+		allocating memory. %to notify the parent task.
 		%parent that it has exited.
 		However, such a design suffers from ``terminal irony'':
 		a program wishing to exit,
 		which would free up memory,
-		cannot do so if kernel memory has been exhausted.
+		cannot do so if memory is exhausted.
 \end{itemize}
 
 %For these reasons, \shortversion{much}{we believe much} of the learning
@@ -669,8 +670,7 @@ and to avoid certain distasteful x86-specific code structures.
 %The hurdle criteria constitute 50\% of the kernel project's grade.
 %
 
-\subsubsection{Code review and interview}
-
+\textbf{Code review and interview.}
 Finally, both to make up for the tests' incompleteness and to provide personalized human feedback,
 each student submission is manually graded by a member of course staff.
 The instructors and teaching assistants print each group's submitted code and mark it with red ink, auditing it for style, architectural issues, races, and preemptibility.
