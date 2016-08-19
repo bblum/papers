@@ -1,4 +1,89 @@
-\section{\landslide}
+\section{Landslide}
 \label{sec:landslide}
 
-TODO
+Motivated by the stress tests' inconsistency at finding concurrency bugs,
+% TODO camready
+we have built Landslide%\cite{landslide}
+, a stateless model checker for \pebbles kernels and thread libraries.
+Stateless model checking \cite{verisoft} offers an alternative
+%concurrency testing approach
+to stress testing,
+in which the testing framework controls scheduling to force a new thread interleaving to execute in each iteration of a test.
+It follows in the footsteps of related tools such as CHESS \cite{chess},
+but also provides several important features for use in an educational setting,
+such as heuristics to handle unusual student solutions, kernel-level testing, and user-friendly progress reports and HTML debugging traces.
+
+\subsection{Design}
+
+Conceptually,
+Landslide is designed as follows.
+Through several annotations in the kernel source, Landslide tracks
+%the scheduler state to know
+which threads are running or runnable.
+(For testing thread libraries, these annotations are already provided in the reference kernel binary;
+for testing kernels, the student must add them by hand.)
+When execution reaches certain interesting {\em preemption points},
+Landslide triggers artificial clock interrupts
+to force the scheduler to run a different thread.
+When a test finishes execution according
+to one pattern of thread switches,
+Landslide rewinds the simulation state
+and resumes the test according to a different interleaving.
+After each instruction,
+Landslide applies several bug-detection predicates to
+the program state to detect
+illegal heap accesses,
+deadlock, infinite loops, and panics.
+
+{\bf Example.}
+Figure \ref{fig:paradise}(a) shows an example concurrency bug which we will use as a running example.
+The code implements a producer/consumer program, in which one thread sends data to the other through a shared list,
+synchronized with a mutex and condition variable.
+However, because the consumer code only checks the list size once before blocking,
+multiple simultaneous consumers can race,
+causing a segfault when one receives a null \x{data} pointer. %and tries to dereference it
+
+{\bf State space exploration.}
+To trigger the interleaving which exposes this bug, threads must be preempted at the boundaries of the synchronization primitives (either when \x{cond_wait} blocks or at the end of \x{mutex_unlock}).
+Landslide automatically considers these boundaries to be {\em preemption points}: candidate sites for timer-driven thread switches.
+It can also add preemption points dynamically,
+as identified by an integrated data-race analysis \cite{tsan,fasttrack},
+to expose shared-memory bugs when synchronization is absent.
+
+The branching possibilities arising from each preemption point produce an execution tree, or state space,
+as shown in Figure \ref{fig:paradise}(b).
+%As these state spaces are exponentially-sized,
+Landslide uses Dynamic Partial Order Reduction \cite{dpor} to identify and prune equivalent interleavings
+to mitigate the exponential explosion of these state spaces.
+% TODO make sure this gets mentioned later, if not here
+%and state space estimation \cite{estimation} to predict which
+% TODO CAMREADY: cite oopsla
+% In principle, the combination of synchronization API and data-race preemption points is sufficient to expose all bugs that are reachable by any combination of timer interrupts on any instructions.
+
+\subsection{Identifying Bugs}
+
+Landslide checks for bugs in several ways.
+It can identify assertion failures, use-after-free and other invalid heap accesses, and
+deadlocks, and also includes a heuristic check for infinite loops and livelock.
+%Note that our use of the term ``race condition'' throughout this paper refers to concurrency errors in general, a category that includes data races, atomicity violations, and nondeterministic deadlocks.
+%In contrast with analyses that directly detect data races~\cite{tsan},
+Although Landslide employs a data-race analysis to decide where to preempt,
+it does not directly classify suspicious memory accesses as bugs,
+but rather seeks concrete, observable failures that can arise from many different types of errors.
+
+% TODO: make fig trace
+
+When Landslide identifies a bug, it outputs an HTML-formatted
+{\em preemption trace}.
+Figure~\ref{fig:trace} shows a typical output for the example bug in Figure \ref{fig:paradise}.
+The trace reports what kind of bug was detected
+and each preemption point in the current interleaving:
+which thread was running, a trace of its stack when it was preempted, and the thread that ran next.
+Hence, students can bypass tediously reconstructing the schedule using \x{printf},
+and hopefully better understand the concurrent execution that exposed the bug,
+
+\subsection{Heuristics}
+
+TODO talk about heuristics
+
+
