@@ -647,20 +647,21 @@
 
 \def \rightsstatementlicensed {%
   \noindent
-  Permission to make digital or hard copies of part or all of this work for
-  personal or classroom use is granted without fee provided that copies are
-  not made or distributed for profit or commercial advantage and that copies
-  bear this notice and the full citation on the first page. Copyrights for
-  components of this work owned by others than ACM must be honored.
-  Abstracting with credit is permitted. To copy otherwise, to republish, to
-  post on servers, or to redistribute to lists, contact the Owner/Author(s).
-  Request permissions from permissions@acm.org or Publications Dept., ACM,
-  Inc., fax +1~(212) 869-0481. \par
-  \vspace{2pt}
-  \noindent \textsl{\@conferencename}\quad \@conferenceinfo \par
-  \noindent Copyright \copyright\ \@copyrightyear\ held by owner/author(s). Publication rights licensed to ACM. \par
-  ACM \@copyrightdata \dots \@reprintprice\par
-  \setcopyrightdoi}
+  %Permission to make digital or hard copies of part or all of this work for
+  %personal or classroom use is granted without fee provided that copies are
+  %not made or distributed for profit or commercial advantage and that copies
+  %bear this notice and the full citation on the first page. Copyrights for
+  %components of this work owned by others than ACM must be honored.
+  %Abstracting with credit is permitted. To copy otherwise, to republish, to
+  %post on servers, or to redistribute to lists, contact the Owner/Author(s).
+  %Request permissions from permissions@acm.org or Publications Dept., ACM,
+  %Inc., fax +1~(212) 869-0481. \par
+  %\vspace{2pt}
+  %\noindent \textsl{\@conferencename}\quad \@conferenceinfo \par
+  %\noindent Copyright \copyright\ \@copyrightyear\ held by owner/author(s). Publication rights licensed to ACM. \par
+  %ACM \@copyrightdata \dots \@reprintprice\par
+  %\setcopyrightdoi
+  }
 
 \if \@notp{\@legacycopyright}%
   \publicationrights{licensed}%
