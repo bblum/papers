@@ -124,11 +124,16 @@ and \waitsimple, for process lifecycle system calls\footnote{
 	so each test could only be run on a subset of the 78 submissions; see ``Number tested'' in Table~\ref{tab:drbugs}.
 }.
 The source code of all 9 test cases is available at
-{\em [submitted as supplementary material]}.
-For all tests, we used {\tt without\_function} to blacklist PPs on {\tt malloc}'s internal lock.
+\url{https://github.com/bblum/oopsla-dataset}.
+For all tests,
+%we used \revisionz{preemption sealing (\sect{\ref{sec:landslide}})}
+%{\tt without\_function}
+%to blacklist PPs on {\tt malloc}'s internal lock.
+\revisionz{we blacklisted PPs on {\tt malloc}'s internal lock
+using \landslide's {\tt without\_function} command (\sect{\ref{sec:landslide}}).}
 In total, our evaluation comprises 629 unique tests (i.e., pairs of a test program and a Pintos or P2),
 % at least 157 of which could expose bugs.
-at least 173 of which will expose bugs under one or more MC trials. % QS bugs + bugs where SSSMC found but QS didnt
+at least \revisionz{181} of which will expose bugs under one or more MC trials. % QS bugs + bugs where SSSMC found but QS didnt
 
 %\begin{table}[t]
 %	\begin{tabular}{l|l|l}
@@ -309,7 +314,6 @@ found dramatically fewer bugs (just 1)\footnote{
 %Though for many applications of MC, assuming a correct lock implementation is sufficient,
 Though it often suffices to assume correctly-implemented locks \cite{dbug-thesis},
 we consider this strong evidence that new low-level synchronization code must be verified with data-race PPs.
-% TODO CAMREADY: Report on SSS-MC-Shared-Mem's mutex testing results.
 
 %% RIP this.
 %Furthermore, we plotted another line from this dataset, QS-no-DR-bugs,
