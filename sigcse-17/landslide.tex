@@ -120,7 +120,7 @@ mutex_unlock(mx);
 To trigger the interleaving which exposes this bug, threads must be preempted at the boundaries of the synchronization primitives (either when \x{cond_wait} blocks or at the end of \x{mutex_unlock}).
 Landslide automatically considers these boundaries to be {\em preemption points}: candidate sites for timer-driven thread switches.
 It can also add preemption points dynamically,
-as identified by an integrated data-race analysis \cite{tsan,fasttrack},
+as identified by an integrated data-race analysis \cite{hybriddatarace,fasttrack},
 to expose shared-memory bugs when synchronization is absent.
 
 The branching possibilities arising from each preemption point produce an execution tree, or state space,
@@ -226,7 +226,7 @@ To avoid getting stuck in a cyclic (infinite) state space, Landslide keeps a ``y
 when a thread \x{yield}s 10 times without otherwise making progress, Landslide marks it blocked.
 %
 In extreme cases, this may erroneously seem like deadlock when all threads \x{yield} many times coincidentally.
-To avoid wasting student time with false alarms, % the ultimate sin
+To avoid wasting precious student attention with false alarms, % the ultimate sin
 Landslide will reset all blocked threads' yield-loop counters,
 retrying potentially up to 128 times before reporting a true deadlock.
 
@@ -236,3 +236,4 @@ so to catch these patterns, it
 %learns the size of the \x{mutex} struct, then
 checks accesses against stored lock addresses blocked on by other threads.
 Similarly, these rogue unlock accesses may unblock a yield-looping thread.
+These heuristics have enabled Landslide to test over 100 student thread libraries from the past 5 semesters fully automatically.
