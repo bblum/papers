@@ -217,4 +217,22 @@ Users must also list all core scheduler, context switch, and timer handling rout
 
 \subsection{Heuristics}
 
-TODO talk about heuristics
+Student submissions may behave in extraordinary ways which violate the assumptions of many modern model checkers.
+Landslide refuses to test code which fails the hurdle criteria (\sect{\ref{sec:grading}}),
+but it must support testing any legal, yet distasteful, solution.
+%Hence, we added several heuristic
+For example, students may use open-coded \x{yield} or \x{xchg} loops rather than the mutex abstraction. %(though it is discouraged).
+To avoid getting stuck in a cyclic (infinite) state space, Landslide keeps a ``yield loop'' counter for each thread;
+when a thread \x{yield}s 10 times without otherwise making progress, Landslide marks it blocked.
+%
+In extreme cases, this may erroneously seem like deadlock when all threads \x{yield} many times coincidentally.
+To avoid wasting student time with false alarms, % the ultimate sin
+Landslide will reset all blocked threads' yield-loop counters,
+retrying potentially up to 128 times before reporting a true deadlock.
+
+Students may also break abstraction by open-coding a \x{mutex_unlock} sequence.
+Landslide must track lock operations for accurate data-race analysis,
+so to catch these patterns, it
+%learns the size of the \x{mutex} struct, then
+checks accesses against stored lock addresses blocked on by other threads.
+Similarly, these rogue unlock accesses may unblock a yield-looping thread.
