@@ -41,12 +41,22 @@ this work focuses on reporting races to the user only when accompanied by direct
 \label{fig:example}
 \end{figure}
 
-% TODO CAMREADY: Fix this figure
+%\begin{figure}[t]
+%	\begin{tabular}{c}
+%	\includegraphics[width=0.42\textwidth]{tree-maximal-only.pdf}
+%	\end{tabular}
+%	\caption{\revisionz{The state space of possible interleavings is represented as a tree,
+%	which stateless model checkers test exhaustively.
+%	This state space arises when preempting on synchronization APIs used by the program in Figure~\ref{fig:example};
+%	other state spaces are possible with more, or fewer, preemption points.}}
+%	\label{fig:tree-maximal}
+%\end{figure}
+
 \begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{trees-v2-squashed.pdf}
+	\includegraphics[width=0.48\textwidth]{trees.pdf}
 	\caption{Iterative Deepening example.
-		The minimal state space (A) includes only voluntary thread switches, such as {\tt yield()}. %or {\tt cond\_wait()}.
-		Multiple further tests can be run: preempting on calls to {\tt mutex\_lock} alone (B), {\tt mutex\_unlock} alone (C), or both together (D).
+		The minimal state space (a) includes only voluntary thread switches, such as {\tt yield()}. %or {\tt cond\_wait()}.
+		Multiple further tests can be run: preempting on calls to {\tt mutex\_lock} alone (b), {\tt mutex\_unlock} alone (c), or both together (d).
 Each option increases the state space size unpredictably, so multiple state spaces should be tested in parallel.
 Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
 }
@@ -57,7 +67,7 @@ The checker defines the granularity of thread interleavings by the {\em preempti
 Most model checkers \cite{chess,dbug-ssv} choose synchronization/thread library API boundaries for these points;
 in our example program, these would be lines 1, 4, and 7.
 Figure~\ref{fig:id} shows several possible resulting state spaces.
-The approach of prior work is to enable all preemption points simultaneously, i.e., to test only the state space denoted (D).
+The approach of prior work is to enable all preemption points simultaneously, i.e., to test only the state space denoted (d).
 
 To mitigate the exponential explosion,
 Dynamic Partial Order Reduction \cite{dpor} identifies equivalent execution sequences according to Mazurkiewicz trace theory \cite{mazurkiewicz},
