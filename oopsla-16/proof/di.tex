@@ -1,5 +1,48 @@
 \section{Definitions}
 
+\subsection{System Model}
+
+To reason about programs at the executable level, we will define them as a list of assembly-like instructions,
+including certain concurrency primitives which we evaluate atomically, assuming the runtime provides correct implementations for them.
+\begin{eqnarray*}
+	\mathcal{P} &::=& [\mathcal{I}] \\
+	\mathcal{I} &::=& v \leftarrow \mathsf{read}(a) \quad | \quad \mathsf{write}(a,v) \quad | \quad \mathsf{xchg}(a,v) \\
+	&|& a \leftarrow \mathsf{malloc}(n) \quad | \quad \mathsf{free}(a) \\
+	&|& \mathsf{mutex\_lock}(m) \quad | \quad \mathsf{mutex\_unlock}(m) \\
+	&|& \mathsf{deschedule} \quad | \quad \mathsf{make\_runnable}(t) \\
+	&|& v \leftarrow \mathsf{thread\_fork} \quad | \quad \mathsf{thread\_exit} \\
+	&|& \mathsf{local}
+\end{eqnarray*}
+
+For the sake of brevity, we will not explicitly define execution semantics, though they are straightforward:
+The execution state consists of any number of threads, each represented by a list of instructions to execute ($[\mathcal{I}]$),
+a stack of value maps of thread-local variables ($v$),
+and an indicator of whether the thread is runnable.
+The state also includes a map of global memory, indexed by addresses denoted $a$,
+and a set of mutex objects, denoted $m$.
+To execute one step, arbitrarily choose one runnable thread, and evaluate the first element of its instruction list.
+This gives rise to thread concurrency which can interleave at instruction granularity,
+although it assumes a sequentially-consistent memory model \cite{tsopso}.
+\begin{eqnarray*}
+	\mathcal{E} &::=& [\mathcal{T}] \times [a \rightarrow \mathsf{int}] \times [m \rightarrow \mathsf{bool}] \\
+	\mathcal{T} &::=& [\mathcal{I}] \times [v \rightarrow \mathsf{int}] \times \mathsf{bool}
+\end{eqnarray*}
+
+{\bf Memory.} $\mathsf{read}$, $\mathsf{write}$, and $\mathsf{xchg}$ access global or heap memory shared by all threads, indicated by some address $a$, and copying and/or modifying a thread-local variable $v$. % cmpxchg, xadd, etc omitted for brevity
+$\mathsf{malloc}$ and $\mathsf{free}$ provide access to fresh memory accessible by all threads. % free is irrelevant to the system model in terms of expressive power
+
+{\bf Threads.} $\mathsf{mutex\_lock}$ and
+$\mathsf{mutex\_unlock}$ provide mutual exclusion:
+a thread cannot evaluate $\mathsf{mutex\_lock}$ until that lock is released.
+$\mathsf{deschedule}$ and $\mathsf{make\_runnable}$ allow threads to manipulate their runnability,
+and $\mathsf{thread\_fork}$ and $\mathsf{thread\_exit}$ allow creation and destruction of new threads.
+$\mathsf{thread\_fork}$ is defined in the Pebbles manner \cite{kspec};
+we omit higher-level abstractions such as $\mathsf{create}$ or $\mathsf{join}$, which can be implemented using these primitives \cite{thrlib}.
+
+{\bf Local state.}
+$\mathsf{local}$ represents any thread-local instruction, such as flow control, function definition/calling, and modifying local variables.
+For brevity, we omit a detailed list, although note that $\mathsf{call}$ would be implemented by modifying the instruction stream $[\mathcal{I}]$ and creating a new frame on the stack of local variables.
+
 \subsection{Stateless model checking terms}
 
 \begin{definition}[Preemption point (PP)]

@@ -63,6 +63,12 @@
 
 }
 
+\DeclareOption{proof}{
+  \@setflag \@preprint = \@false
+  \@setflag \@copyrightwanted = \@false
+  \sigplanfooter
+}
+
 \ProcessOptions\relax
 
 \def\@@ptsize{10pt}

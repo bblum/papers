@@ -6,7 +6,7 @@
 %
 %\documentclass[pldi]{../sigplanconf-pldi15}
 \documentclass[10pt,times,numbers]{../sigplanconf}
-\usepackage[1stsubmission]{../oopsla2016}
+\usepackage[proof]{../oopsla2016}
 
 %
 % the following standard packages may be helpful, but are not required
@@ -59,7 +59,7 @@ This document presents two proofs concerning the technique.
 
 First, we prove that given enough time, Iterative Deepening will converge to the same degree of schedule coverage that would be provided by a na\"{i}ve model checker (MC) preempting on every single instruction.
 In other words, when Iterative Deepening finishes generating new data-race PPs, and completes all associated state spaces,
-it serves as a full verification of {\em all possible} thread schedules of the given test case.
+it serves as a full verification of {\em all possible} schedules of the given test case.
 
 Second, we prove the soundness of the {\em malloc-recycle} false-positive-elimination tactic we discuss in the paper.
 Despite many powerful reduction techniques, the state spaces are still exponentially sized,
@@ -67,7 +67,7 @@ so any way to avoid exploring some in advance is obviously beneficial.
 We prove that for the special case of {\em malloc-recycle} false positives, it is safe to eliminate these immediately upon discovering them, without bothering to explore their associated state spaces.
 
 
-This document is supplemental material to our main paper; we assume the reader is already familiar with our motivation and terminology.
+	This document is supplemental material to our main paper \cite{quicksand}; we assume the reader is already familiar with our motivation and terminology.
 \end{abstract}
 
 \input{di}
@@ -83,8 +83,10 @@ This document is supplemental material to our main paper; we assume the reader i
 
 \section{Acknowledgements}
 
-{\em removed for double blind review}
-% Michael J. ``Sully'' Sullivan, Carlo Angiuli, and Nathaniel Filardo double-checked the proof and provided valuable feedback on notation style and the flow of explanation.
+%{\em removed for double blind review}
+Michael J. ``Sully'' Sullivan, Carlo Angiuli, and Nathaniel Filardo double-checked the proof and provided valuable feedback on notation style and the flow of explanation.
+Thanks as well to the anonymous OOPSLA reviewer \#4, whose suggestions helped improve the formality of our definitions.
+This work was supported in part by the U.S. Army Research Office under grant number W911NF0910273.
 
 \bibliographystyle{abbrvnat}
 \bibliography{../citations}{}
