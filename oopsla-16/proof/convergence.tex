@@ -12,7 +12,7 @@ Hence, our convergence statement is as follows:
 \end{theorem}
 
 The contrapositive statement offers more structure for an easier proof\footnote{
-For the reader who likes to avoid non-constructive proofs, % \cite{vargomax}, % TODO CAMREADY: uncomment
+For the reader who likes to avoid non-constructive proofs \cite{vargomax},
 note that we are using the constructive contrapositive direction:
 Theorem~\ref{thm:convergence} is $A \rightarrow B$ and Theorem~\ref{thm:totalverif} is $\neg B \rightarrow \neg A$.}:
 
@@ -198,7 +198,6 @@ and ending with the next sync API PP in $\beta$, which we'll call $\pbk$.
 Again, the only certainly-executed instruction by $\alpha$ after $\tai$ is $\ppinstr{\mathcal{I}}{\alpha}{i}$.
 It is even possible that neither $\ppinstr{\mathcal{I}}{\alpha}{i}$ nor any other instruction by thread $\alpha$ will conflict with any other thread,
 until a different data race PP between two other threads is discovered.
-% TODO CAMREADY
 %as shown in Figure~\ref{fig:threethreads}.
 
 It follows from the inductive hypothesis (which covers the prefix indicated by ``$...$''),

@@ -251,7 +251,6 @@ To soundly suppress heap-overrun malloc-recycle candidates,
 we must strengthen our configuration of DPOR as follows:
 accesses from {\tt malloc}'s internal implementation will not be ignored when computing the shared memory conflict relation,
 and we will automatically insert a synchronization API PP at the start and end of each {\tt malloc} and {\tt free} call.
-% TODO CAMREADY: uncomment footnote (it's commented because it seems like it's advertising landslide too much)
 %\footnote{
 %	As a practical matter, in a large codebase where parts of it are trusted to avoid heap overflows, while others are not,
 %	a user could use {\sc Landslide}'s {\tt within\_function} command to restrict such PPs, as we describe in the main paper.
@@ -278,7 +277,4 @@ Lemma~\ref{lem:reorder} finishes.
 
 Theorem~\ref{thm:recycle} is modified to simply include this lemma in addition to Lemmas~\ref{lem:greedo} and \ref{lem:han}.
 
-% TODO CAMREADY cite landslide
-%%\cite{landslide} % uncomment post-double-blind review
-%
 %This spells QED so we are done.
