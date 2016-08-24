@@ -5,28 +5,28 @@
 To reason about programs at the executable level, we will define them as a list of assembly-like instructions,
 including certain concurrency primitives which we evaluate atomically, assuming the runtime provides correct implementations for them.
 \begin{eqnarray*}
-	\mathcal{P} &::=& [\mathcal{I}] \\
+	\mathcal{P} &::=& [n, \mathcal{I}] \\
 	\mathcal{I} &::=& v \leftarrow \mathsf{read}(a) \quad | \quad \mathsf{write}(a,v) \quad | \quad \mathsf{xchg}(a,v) \\
 	&|& a \leftarrow \mathsf{malloc}(n) \quad | \quad \mathsf{free}(a) \\
 	&|& \mathsf{mutex\_lock}(m) \quad | \quad \mathsf{mutex\_unlock}(m) \\
 	&|& \mathsf{deschedule} \quad | \quad \mathsf{make\_runnable}(t) \\
-	&|& v \leftarrow \mathsf{thread\_fork} \quad | \quad \mathsf{thread\_exit} \\
-	&|& \mathsf{local}
+	&|& t \leftarrow \mathsf{thread\_fork} \quad | \quad \mathsf{thread\_exit} \quad | \quad \mathsf{yield} \\
+	&|& \textit{local}
 \end{eqnarray*}
 
-For the sake of brevity, we will not explicitly define execution semantics, though they are straightforward:
 The execution state consists of any number of threads, each represented by a list of instructions to execute ($[\mathcal{I}]$),
-a stack of value maps of thread-local variables ($v$),
+a stack of variable maps for thread-local state ($v$),
 and an indicator of whether the thread is runnable.
 The state also includes a map of global memory, indexed by addresses denoted $a$,
-and a set of mutex objects, denoted $m$.
-To execute one step, arbitrarily choose one runnable thread, and evaluate the first element of its instruction list.
-This gives rise to thread concurrency which can interleave at instruction granularity,
-although it assumes a sequentially-consistent memory model \cite{tsopso}.
+and a set of mutex objects, denoted $m$. Thus:
 \begin{eqnarray*}
 	\mathcal{E} &::=& [\mathcal{T}] \times [a \rightarrow \mathsf{int}] \times [m \rightarrow \mathsf{bool}] \\
-	\mathcal{T} &::=& [\mathcal{I}] \times [v \rightarrow \mathsf{int}] \times \mathsf{bool}
+	\mathcal{T} &::=& \mathcal{P} \times [[v \rightarrow \mathsf{int}]] \times \mathsf{bool}
 \end{eqnarray*}
+For the sake of brevity, we will not explicitly define execution semantics, though they are straightforward:
+To execute one step, arbitrarily choose one runnable thread, and evaluate the first element of its instruction list.
+This gives rise to thread concurrency which can interleave at instruction granularity,
+although it assumes a sequentially-consistent memory model. For a treatment of DPOR with relaxed memory, we refer the reader to \cite{tsopso}.
 
 {\bf Memory.} $\mathsf{read}$, $\mathsf{write}$, and $\mathsf{xchg}$ access global or heap memory shared by all threads, indicated by some address $a$, and copying and/or modifying a thread-local variable $v$. % cmpxchg, xadd, etc omitted for brevity
 $\mathsf{malloc}$ and $\mathsf{free}$ provide access to fresh memory accessible by all threads. % free is irrelevant to the system model in terms of expressive power
@@ -34,35 +34,80 @@ $\mathsf{malloc}$ and $\mathsf{free}$ provide access to fresh memory accessible 
 {\bf Threads.} $\mathsf{mutex\_lock}$ and
 $\mathsf{mutex\_unlock}$ provide mutual exclusion:
 a thread cannot evaluate $\mathsf{mutex\_lock}$ until that lock is released.
-$\mathsf{deschedule}$ and $\mathsf{make\_runnable}$ allow threads to manipulate their runnability,
+$\mathsf{deschedule}$ and $\mathsf{make\_runnable}$ allow threads to manipulate their own or another's runnability, respectively,
 and $\mathsf{thread\_fork}$ and $\mathsf{thread\_exit}$ allow creation and destruction of new threads.
 $\mathsf{thread\_fork}$ is defined in the Pebbles manner \cite{kspec};
 we omit higher-level abstractions such as $\mathsf{create}$ or $\mathsf{join}$, which can be implemented using these primitives \cite{thrlib}.
+$\mathsf{yield}$ has no effect under these execution semantics, but is included for the sake of synchronization API preemption points (see below).
 
 {\bf Local state.}
-$\mathsf{local}$ represents any thread-local instruction, such as flow control, function definition/calling, and modifying local variables.
+$\textit{local}$ represents any thread-local instruction, such as modifying local variables, flow control, function definition/calling, assertions, and side effects.
 For brevity, we omit a detailed list, although note that $\mathsf{call}$ would be implemented by modifying the instruction stream $[\mathcal{I}]$ and creating a new frame on the stack of local variables.
+
+\begin{definition}[Blocked threads]
+	A thread is blocked when either its runnable flag is false, or when its next instruction is a $\mathsf{mutex\_lock}$ on an unavailable mutex.
+\end{definition}
+
+Model checkers often also include heuristics to identify threads using open-coded $\mathsf{yield}$ loops to block,
+but for the sake of our proofs, we assume such patterns are implemented more tastefully with a condition-variable-like primitive built upon $\mathsf{deschedule}$.
+
+\begin{definition}[Interleaving]
+	An interleaving is a sequence of execution steps, beginning with some initial program state and ending when all threads are blocked or have exited, and/or when a bug is observed.
+\end{definition}
 
 \subsection{Stateless model checking terms}
 
 \begin{definition}[Preemption point (PP)]
-	A PP is a code location between two instructions at which we may force threads to switch.
+	%A PP is a code location between two instructions at which we may force threads to switch.
+	A PP is a predicate on the execution state which identifies a class of instruction pairs between which we may force threads to switch.
 \end{definition}
 
 In the main paper, we identified PPs by predicates on the instruction pointer and current thread ID. Hence, the ``same'' PP may occur multiple times during an execution; for example, {\tt mutex\_lock()} may be called from {\tt foo()} and later again from {\tt bar()}.
-For the sake of this proof, we separate such cases into multiple unique PPs: each PP is simply a label denoting the end of a single transition.
+%For the sake of this proof, we separate such cases into multiple unique PPs: each PP is simply a label denoting the end of a single transition.
+In our proofs, we will use the term ``PP'' to indicate specific instruction sites at which a PP predicate holds.
+
+We also use ``synchronization API PPs'' to denote the class of
+%statically-available
+PPs which occur immediately {\em after} any of
+$\mathsf{mutex\_lock}$,
+$\mathsf{mutex\_unlock}$,
+$\mathsf{deschedule}$,
+$\mathsf{make\_runnable}$,
+$\mathsf{thread\_fork}$,
+$\mathsf{thread\_exit}$,
+$\mathsf{yield}$.
+Because no other instruction affects a thread's runnability, it is always possible to execute a program by switching the currently-executing thread only at synchronization API PPs.
+
+All data-race PPs will occur immediately {\em before} a $\mathsf{read}$, $\mathsf{write}$, or $\mathsf{xchg}$.
 
 \begin{definition}[Transition]
-A sequence of instructions executed by the program between two preemption points (PPs).
+A sequence of execution steps from a program's evaluation between two preemption points (PPs).
 \label{def:transition}
+
 \end{definition}
-Our model checker provides the invariant that each transition's instructions are associated with exactly one thread. (That is, the set of PPs always includes all thread switches.)
-We also include a trace of all memory accesses in the representation of transitions.
+We require the invariant that each transition's instructions are associated with exactly one thread. (That is, the set of PPs always includes all thread switches.)
+The set of synchronization API PPs provides this invariant, and all other PP sets in these proofs will be supersets of those.
+We also assume a trace of all memory accesses is available in the representation of transitions.
+
+\begin{definition}[State space]
+Given a set of PP predicates, a state space is
+a set of interleavings representing all possible execution sequences which switch threads only on those PPs.
+\end{definition}
 
 \begin{definition}[Must-happen-before (MHB)]
-	Given two transitions $A$ and $B$, we say $A$ MHB $B$ if $B$ cannot be reordered to occur before $A$.
+%Given two transitions $A$ and $B$, we say $A$ MHB $B$ if $B$ cannot be reordered to occur before $A$.
+Let $t_1$ and $t_2$ be two transitions of an interleaving, and $T1$ and $T2$ be the corresponding thread IDs,
+and let $t_1$ occur before $t_2$.
+Then $t_1$ MHB $t_2$ if
+\begin{enumerate}
+	\item $T2$ is blocked immediately preceding $t_1$ and not blocked immediately afterward,
+		and there does not occur another $t_2'$ by $T2$ between $t_1$ and $t_2$; or
+	\item there occurs some $t_3$ by thread $T3$ such that $t_1$ MHB $t_3$, $t_3$ MHB $t_2$, and $T3 \ne T2$; or
+	\item $T1 = T2$.
+\end{enumerate}
 \end{definition}
-All transitions of the same thread are trivially MHB-related.
+
+Intuitively, MHB expresses the "cannot be reordered with" (or "enables") relation between transitions.
 Two transitions $A$ and $B$ of different threads MHB if some synchronization event in $A$ causes $B$ to become runnable while it was previously blocked. Such synchronization events include {\tt thread\_create}, {\tt cond\_signal}, {\tt sem\_post}, but {\em not} {\tt mutex\_lock} or {\tt mutex\_unlock}.
 
 Note how our {\em must}-happen-before relation differs from the conventional definition of happens-before (``observed to happen before'') \cite{lamport-clocks}.
@@ -70,8 +115,8 @@ Our use of MHB matches the ``limited happens-before'' used in \cite{hybriddatara
 the advantage of this over pure-happens-before detectors in producing fewer false negatives is well-argued in those prior works\footnote{
 Because pure-HB data race detectors avoid false positives altogether, they would have no trouble avoiding our malloc-recycle false positives.
 However, as prior work has shown, they miss many other bugs involving unprotected variables accessed alternately before and after mutex-protected critical sections.
-Indeed, because most concurrent malloc implementations are protected by a lock,
-our malloc-recycle false positives are indistinguishable from such false negatives under pure-HB.
+%Indeed, because most concurrent malloc implementations are protected by a lock,
+%our malloc-recycle false positives are indistinguishable from such false negatives under pure-HB.
 }.
 We illustrate the difference in Figure~\ref{fig:mhb}.
 
@@ -95,10 +140,12 @@ We illustrate the difference in Figure~\ref{fig:mhb}.
 	Under MHB, they are; although after trying to reorder them, it will be classified as a false positive.}
 	\label{fig:mhb}
 \end{figure}
-Intuitively, $A$ MHB $B$ can be thought to mean ``$B$ cannot be reordered before $A$''.
-Note also that, while lock-protected critical sections can be reordered around each other (i.e., line 1 not MHB lines 8-9),
+
+Note also that although transitions of the same thread are related by MHB,
+MHB is transitive only when the latter two transitions are not by the same thread (condition 2).
+While lock-protected critical sections can be reordered around each other (i.e., line 1 not MHB lines 8-9),
 one cannot be reordered to be in the middle of the other (i.e, lines 3-4 MHB line 6).
-Hence, MHB is not necessarily transitive.
+%Hence, MHB is not necessarily transitive.
 In the latter case, the MHB relation is established by the mutex's blocking mechanism used during contention.
 
 In our main paper, we refer to this relation as Limited HB.
@@ -107,9 +154,10 @@ In our main paper, we refer to this relation as Limited HB.
 A pair of memory accesses between two threads to the same address where at least one of them is a write.
 \end{definition}
 
-\begin{definition}[Interleaving]
-	An ordered list of transitions and preemption points between them.
-\end{definition}
+% Outdated. See above.
+%\begin{definition}[Interleaving]
+%	An ordered list of transitions and preemption points between them.
+%\end{definition}
 
 \begin{definition}[Independent transitions]
 Two transitions between different threads are independent if the intersection of their shared memory accesses contains no conflicts.
@@ -123,20 +171,28 @@ Intuitively, the behaviour of a program could change by reordering two transitio
 All possible interleavings of a program can be partitioned into equivalence classes,
 so only one interleaving from each equivalence class need be tested to ensure total schedule coverage \cite{mazurkiewicz}.
 
-\begin{definition}[State space]
-	A set of interleavings subject to the constraint that, given the preemption points used, all equivalence classes of possible interleavings are represented by at least one member.
-\end{definition}
+% Outdated. See above.
+%\begin{definition}[State space]
+%	A set of interleavings subject to the constraint that, given the preemption points used, all equivalence classes of possible interleavings are represented by at least one member.
+%\end{definition}
 
 \begin{definition}[Dynamic Partial Order Reduction (DPOR)]
-	A state-space search algorithm for stateless model checkers,
-	guaranteed to reorder transitions of two threads
-	iff they are not independent and are not related by MHB \cite{dpor}.
+	A state-space search algorithm for stateless model checkers;
+	given a state space $\mathcal{S}$, it will test at least one interleaving from each equivalence class in $\mathcal{S}$.
+	%guaranteed to reorder transitions of two threads
+	%iff they are not independent and are not related by MHB \cite{dpor}.
 	\label{def:dpor}
 \end{definition}
 
-The soundness of DPOR guarantees that if a program behaviour can possibly be exposed by any thread interleaving around the given transitions/PPs,
-that interleaving will eventually be tested by reordering only such conflicting transitions.
-In other words, reordering memory-independent thread transitions cannot possibly affect program behaviour.
+Considering an interleaving $\mathcal{I}$ in $\mathcal{S}$, if two transitions $t_1$ and $t_2$ by different threads are not independent and not related by MHB, let $\mathcal{J}$ be the interleaving which reorders $t_1$ with $t_2$. DPOR is then guaranteed to test some interleaving in $\mathcal{S}$ equivalent to $\mathcal{J}$ \cite{dpor}.
+
+Because equivalent interleavings produce identical execution states,
+DPOR guarantees to expose all reachable execution states by testing its subset of interleavings.
+We refer to this property as {\em the soundness of DPOR}.
+
+%The soundness of DPOR guarantees that if a program behaviour can possibly be exposed by any thread interleaving around the given transitions/PPs,
+%that interleaving will eventually be tested by reordering only such conflicting transitions.
+%In other words, reordering memory-independent thread transitions cannot possibly affect program behaviour.
 
 \subsection{Data race and other memory terms}
 
