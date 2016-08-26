@@ -8,9 +8,9 @@ In \fourten, the Operating Systems Design and Implementation class at \cmu,
 students complete aggressively low-level thread library and kernel projects,
 which run on real hardware,
 in which they implement threads and processes.
-Presented with a kernel specification called \pebbles%
+Presented with a kernel specification called \pebbles
 % TODO camready
-%\cite{kspec}
+\cite{kspec-anonymized}
 , students build a user-space threading and synchronization library on top of a \pebbles-compliant kernel in a two-week project, and subsequently, in a six-week project, implement their own multi-threaded kernel.
 %During these projects
 The students face demanding synchronization problems, including how to implement locking primitives and how to coordinate the possibly-simultaneous exiting of parent and child processes.
@@ -18,7 +18,7 @@ The students face demanding synchronization problems, including how to implement
 
 In comparison with other educational kernel projects,
 \pebbles focuses more on ground-up design than on teaching a broad feature set.
-At Stanford, students build kernels following the Pintos architecture \cite{pintos}, and at MIT, using Xv6/JOS \cite{xv6}.
+At Berkeley, Stanford, and the University of Chicago, among others, students build kernels following the Pintos architecture \cite{pintos}, and at MIT, using Xv6/JOS \cite{xv6}.
 In both courses, student kernels support multiprocessor execution;
 however, students are also supplied with starter code that already implements thread creation/destruction, context switching, and locking primitives.
 In \fourten, we provide starter code for the machine boot sequence and for a minimal C library (\x{printf()}, \x{malloc()}), leaving students to design threading and scheduling primitives from scratch.
@@ -35,9 +35,8 @@ Hence, we have built \landslide%
 as an alternative to the conventional stress tests.
 %to force kernel threads to take execution paths that expose concurrency bugs.
 \landslide tests student thread libraries fully automatically, and can test kernels provided some manual instrumentation.
-We present our experience sharing \landslide with volunteering students who used it to find bugs in their own code,
+It also features an experimental, fully automatic, Pintos testing mode.
+We present our experience sharing \landslide with volunteering \fourten students who used it to find bugs in their own code,
 and discuss the possibility for integrating it as a main component of operating systems curricula.
-
-% TODO: Put a list of pintos schools here for the sake of argment! Have to convince those non-cmu plebs.
 
 % TODO: After submission, email the PC "Paper #1337 was submitted with an anonymized citation; here is the deanonymized version and the camera ready of the paper in case you need to confirm our claims about pintos"
