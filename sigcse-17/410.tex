@@ -175,8 +175,8 @@ which then run on a ``reference kernel'' provided in binary form.
 %the course staff
 %and provided in binary form.
 The reference kernel's behavior is specified
-% TODO: Anonymize this citation
-in a twelve-page document~\cite{kspec}.
+% TODO CAMREADY: deanonymize
+in a twelve-page document~\cite{kspec-anonymized}.
 In addition to providing a reliable execution
 substrate,
 the reference kernel
@@ -597,7 +597,6 @@ we employ a very detailed notion of completeness
 for the thread library and kernel projects.
 The ``hurdle'' model is based on the following observations:
 
-% TODO: Figure out how to left-justify these bullet poince.
 \begin{itemize}
 	\item Students learn more from bugs
 		that are harder to find.
@@ -643,9 +642,10 @@ kernel execution),
 we require students to certify, in writing, that
 their code possesses certain properties.
 
-% TODO: Talk about P2 hurdle
-
-A ``complete'' kernel can boot up and run the shell,
+The thread library hurdle requires students to pass a suite of five test cases,
+which test mutex locking/unlocking and thread creation, exit, and joining in moderately stressful ways.
+%
+A hurdle-passing kernel can boot up and run the shell,
 can pass 80\% of the basic system-call sanity test,
 70\% of the solidity tests (which
 invoke system calls in illegal

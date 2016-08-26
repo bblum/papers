@@ -135,6 +135,15 @@ to mitigate the exponential explosion of these state spaces.
 This reduction requires only tracing the memory accesses of each thread,
 so we are able to perform it behind-the-scenes, without consuming any student attention.
 
+Apart from which test program to run, \landslide's user interface requires just one option:
+students specify how much time they are willing to wait.
+%Considering this CPU budget,
+\landslide then uses state space estimation \cite{estimation} to predict
+% TODO CAMREADY: deanonymize
+which combinations of preemption points will produce appropriately-sized state spaces for the given CPU-time budget \cite{quicksand-anonymized}.
+If no bug is found before time runs out, \landslide displays a progress report summarizing the estimated remaining time for each state space,
+so ambitious students can decide whether to increase the time limit and retry.
+
 \subsection{Identifying Bugs}
 
 Landslide checks for bugs in several ways.
@@ -145,15 +154,6 @@ deadlocks, and also includes a heuristic check for infinite loops and livelock.
 Although Landslide employs a data-race analysis to decide where to preempt,
 it does not directly classify suspicious memory accesses as bugs,
 but rather seeks concrete, observable failures that can arise from many different types of errors.
-
-When Landslide identifies a bug, it outputs an HTML-formatted
-{\em preemption trace}.
-Figure~\ref{fig:trace} shows a typical output for the example bug in Figure \ref{fig:paradise}.
-The trace reports what kind of bug was detected
-and each preemption point in the current interleaving:
-which thread was running, a trace of its stack when it was preempted, and the thread that ran next.
-Hence, students can bypass tediously reconstructing the schedule using \x{printf},
-and hopefully better understand the concurrent execution that exposed the bug,
 
 \newcommand\hilight[2]{\color{#1}#2\color{black}\xspace}
 \definecolor{orange}{RGB}{192,96,0}
@@ -192,6 +192,15 @@ and hopefully better understand the concurrent execution that exposed the bug,
 	\caption{Example preemption trace provided by Landslide as debugging output for the bug in Figure~\ref{fig:paradise}.}
 	\label{fig:trace}
 \end{figure*}
+
+When Landslide identifies a bug, it outputs an HTML-formatted
+{\em preemption trace}.
+Figure~\ref{fig:trace} shows a typical output for the example bug in Figure \ref{fig:paradise}.
+The trace reports what kind of bug was detected
+and each preemption point in the current interleaving:
+which thread was running, a trace of its stack when it was preempted, and the thread that ran next.
+Hence, students can bypass tediously reconstructing the schedule using \x{printf},
+and hopefully better understand the concurrent execution that exposed the bug,
 
 \subsection{Instrumentation}
 
