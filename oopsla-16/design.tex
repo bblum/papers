@@ -38,7 +38,7 @@ Algorithm~\ref{alg:algorithm0} demonstrates this na\"ive approach.
 It is seeded with the set of all statically-known synchronization API PPs,
 and invoked whenever a new data-race candidate is found.
 %
-Our proofs in \sect{\ref{sec:totalverif}},
+Our proofs in \sect{\ref{sec:soundness}},
 being concerned with the verification guarantee provided when \quicksand~completes within the CPU budget,
 are based on this simple version of Iterative Deepening.
 %
@@ -277,7 +277,7 @@ Similarly, whenever a job finds a bug, we cancel all pending superset jobs, as t
 We also account for the inherent inaccuracy of ETA estimates.
 Line 1 heuristically scales up the time remaining to avoid suspending jobs too aggressively
 in case their ETAs are actually overestimated.
-Lines 12-14 account for the
+Lines 12-15 account for the
 %bizarre
 possibility that among two suspended jobs,
 %given two jobs,

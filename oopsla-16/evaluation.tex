@@ -629,11 +629,11 @@ which would falsely classify it as nondeterministic.
 	\label{fig:dr-falsenegs}
 \end{figure}
 Figure~\ref{fig:dr-falsenegs} compares the types of data-race candidates necessary to expose each data-race bug in our test suite.
-The first series represents the bugs found using PPs from single-pass data-race candidates,
+The first and third series represent the bugs found using PPs from single-pass data-race candidates,
 % not entirely true, as portend could be given data-race traces from an MC,
 %but they don't do it in their paper, so i feel comfortable making this claim
 i.e., the state-of-the-art approach used by \cite{racefuzzer,portend}.
-The second series shows all data-race bugs \quicksand~found,
+The second and fourth series show all data-race bugs \quicksand~found,
 which includes the former type as well as new bugs involving nondeterministic data-races.
 \revisionz{QS-LHB found 69 data-race bugs in total, 15} of which could \revisionz{not} be found with single-pass data-race candidates alone.
 \revisionz{QS-PHB is even more dependent on nondeterministic data-race PPs, requiring nondeterministic data-race PPs in 21 cases among its 44 total data-race bugs.}

@@ -28,9 +28,9 @@ to prune some or all such repeated work.
 whenever the maximal job finishes with no new data-races, future implementations could immediately prune all subset jobs and declare a total verification.}
 
 {\bf Finer-grained PP subsets.}
-\quicksand~was able to partially guarantee safety for some PPs in 89\% of tests with too-large maximal state spaces.
-However, in 4 cases, no more than the minimal state space could be verified,
-and in 6 others, no state spaces were completed at all.
+\quicksand~was able to partially guarantee safety for some PPs in \revisionz{93\%} of tests with too-large maximal state spaces.
+However, in \revisionz{6} cases, no more than the minimal state space could be verified,
+and in \revisionz{18} others, no state spaces were completed at all.
 %Larger state spaces often result from finer-grained locking,
 %which can indicate a more intricate concurrent algorithm or an unnecessarily complicated design.
 %Such programs may require even more rigorous verification than a program with a single global lock.
@@ -84,7 +84,7 @@ some jobs with data-race PPs will time out.
 We cannot guarantee those races are
 %false positives or
 benign, even though no bug was found.
-In the ``Untested DR PPs'' column of Table~\ref{tab:drstatistix}, we show how many such candidates we could not verify (32\%).
+In the ``Untested DR PPs'' column of Table~\ref{tab:drstatistix}, we show how many such candidates we could not verify (\revisionz{38\%}).
 For a more formal treatment of these cases, we refer the reader to the {\em k-witness harmless} metric introduced by \cite{portend},
 which could be combined with \quicksand~in future work.
 % Future work: Add parallel DPOR so you can fill your spare CPUs when there are fewer than the max number of jobs.

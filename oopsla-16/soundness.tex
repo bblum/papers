@@ -66,7 +66,7 @@ In other words, we have transformed $p$ into $p'$ such that $\ppnext{p'} = i$, w
 All PPs in the input trace can be inductively converted in the same manner.
 
 \begin{definition}[Reachability]
-A data race candidate, and its associated PPs, are reachable if it will be identified by an MC configured to preempt only on already-reachable PPs.
+A data race candidate, and its associated PPs, are reachable if it will be identified by a MC configured to preempt only on already-reachable PPs.
 \end{definition}
 Initially, the statically-available synchronization API PPs are reachable. Reachability of data-race PPs is transitive.
 
@@ -119,7 +119,7 @@ Figure~\ref{fig:recycle} shows a common code pattern and interleaving which can 
 If the {\tt malloc} on line 4 returns the same address passed to {\tt free} on line 2, then lines 1 and 7 will be flagged as a \revision{potential}~data race.
 We call this a {\em malloc-recycle data race \revision{candidiate}}.
 To the human eye, this is obviously a false positive: reordering lines 4-7 before lines 1-2 will change {\tt malloc}'s return value, causing {\tt x} and {\tt y} to no longer collide.
-Here, Thread 2's logic usually corresponds to an initialization pattern \cite{eraser}, but for generality we have added a {\tt publish} action on line 6.
+Here, Thread 2's logic usually corresponds to an initialization pattern \cite{eraser}, but for generality we have added an arbitrary {\tt publish} action on line 6.
 
 %However,
 When limited to a single test execution, suppressing any data race \revision{candidate}~matching this pattern is unsound.

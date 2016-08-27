@@ -3,7 +3,7 @@
 % blah blah trite opening sentence
 %As parallelism becomes ever more important for achieving high performance in modern-day programs,
 %so too do advanced concurrency testing techniques become important for verifying the correctness of those programs.
-Concurrency bugs are notoriously hard to find and reproduce because they only appear in specific thread interleavings, which arise at random during normal program execution.
+Concurrency bugs are notoriously hard to find and reproduce because they appear only in specific thread interleavings, which arise at random during normal program execution.
 {\em Stateless model checking} \cite{verisoft} offers a method for finding such bugs,
 or verifying their absence,
 %by systematically executing a program along as many distinct interleavings as possible,
@@ -23,7 +23,7 @@ On the other hand, SPIN \cite{spin} %and Inspect \cite{inspect}
 %are able to preempt
 preempts threads before any shared memory access.
 Such fine granularity would automatically check each data race for the possibility of failure, but risks timing out before the state space can be completed. %makes full state space completion intractable for even modestly-sized tests.
-\revisionx{Some tools, such as CHESS and Inspect \cite{inspect} can strike a middle ground by using compiler instrumentation to statically add preemption points on memory accesses.
+\revisionx{Some tools, such as CHESS and Inspect \cite{inspect}, can strike a middle ground by using compiler instrumentation to statically add preemption points on memory accesses.
 Nevertheless,}
 choosing preemption points is a tradeoff between schedule coverage and feasibility of completion:
 %but

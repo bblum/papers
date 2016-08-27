@@ -64,7 +64,7 @@ Estimation techniques~\cite{estimation} inform which state spaces to prioritize.
 \end{figure}
 
 The checker defines the granularity of thread interleavings by the {\em preemption points} it uses to switch threads.
-Most model checkers \cite{chess,dbug-ssv} choose synchronization/thread library API boundaries for these points;
+Most model checkers \cite{chess,dbug-ssv} choose synchronization and thread library API boundaries for these points;
 in our example program, these would be lines 1, 4, and 7.
 Figure~\ref{fig:id} shows several possible resulting state spaces.
 The approach of prior work is to enable all preemption points simultaneously, i.e., to test only the state space denoted (d).
