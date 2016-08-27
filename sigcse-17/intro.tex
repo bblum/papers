@@ -35,7 +35,13 @@ as an alternative to the conventional stress tests.
 %to force kernel threads to take execution paths that expose concurrency bugs.
 \landslide tests student thread libraries fully automatically, and can test kernels provided some manual instrumentation.
 It also features an experimental, fully automatic, Pintos testing mode.
-We present our experience sharing \landslide with volunteering \fourten students who used it to find bugs in their own code,
-and discuss the possibility of integrating it as a main component of the operating systems curriculum.
+%We present our experience sharing \landslide with volunteering \fourten students who used it to find bugs in their own code,
+%and discuss the possibility of integrating it as a main component of the operating systems curriculum.
+
+We describe the \fourten curriculum in detail (\sect{\ref{sec:410}}),
+highlight \landslide's design and functionality (\sect{\ref{sec:landslide}}),
+present our experience sharing \landslide with volunteering students who used it to find concurrency bugs (\sect{\ref{sec:eval}}),
+%and discuss the possibility of integrating it as a main component of the operating systems curriculum (\sect{\ref{sec:warpzone}}).
+and discuss ongoing work to incorporate it into the curriculum at \cmu and other schools (\sect{\ref{sec:warpzone}}).
 
 % TODO: After submission, email the PC "Paper #1337 was submitted with an anonymized citation; here is the deanonymized version and the camera ready of the paper in case you need to confirm our claims about pintos"
