@@ -3,9 +3,9 @@
 
 We made \landslide available to students for the thread library project
 during the Spring '15, Fall '15, and Spring '16 semesters of \fourten.
-We introduced stateless model checking and gave a demo during a special lecture,
+We introduced stateless model checking in class, %and gave a demo during a special lecture,
 and required students to pass the thread library hurdle (\sect{\ref{sec:grading}}) to use \landslide.
-Of 90 total two-student groups in those semesters, 47 tested their thread libraries with \landslide.
+Of 90 two-student groups in those semesters, 47 tested their thread libraries with \landslide.
 
 Whenever a student ran \landslide,
 it recorded which options were used (test program and time limit),
@@ -26,8 +26,9 @@ by identifying whether \landslide needed to test multiple interleavings before f
 \begin{table}[t]
 	\begin{tabular}{r|cc|cc}
 	%det bugs found	det bugs fixed	races fixed	races found
-	& \multicolumn{2}{c|}{Deterministic bugs} & \multicolumn{2}{c}{Nondeterministic bugs} \\
-	\# bugs	& found & fixed & found & fixed \\
+	& \multicolumn{4}{c}{Number of groups} \\
+	Number & \multicolumn{2}{c|}{Deterministic bugs} & \multicolumn{2}{c}{Nondeterministic bugs} \\
+	of bugs	& found & fixed & found & fixed \\
 	\hline
 	0	& 27	& 32	& 15	& 23	\\
 	1	& 6	& 5	& 7	& 11	\\
@@ -55,7 +56,7 @@ In total, \landslide found 44 deterministic bugs and 85 concurrency bugs.
 verifying their update with a succesful re-run of the same test.
 
 \begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{p2-distribution-large.pdf}
+	\includegraphics[width=0.48\textwidth]{p2-distribution-logos.pdf}
 	\caption{Distribution of thread library grades.}
 	\label{fig:p2-distribution}
 \end{figure}

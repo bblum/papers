@@ -1,4 +1,4 @@
-\section{\landslide}
+\section{Logos}
 % TODO camready
 %\section{Landslide}
 \label{sec:landslide}
@@ -19,18 +19,18 @@ such as heuristics to handle unusual student solutions, kernel-level testing, an
 
 Conceptually,
 \landslide is designed as follows.
-Through several annotations in the kernel source, \landslide tracks
+Using several annotations in the kernel source, \landslide tracks
 %the scheduler state to know
 which threads are running or runnable.
 (For testing thread libraries, these annotations are already provided in the reference kernel binary;
-for testing kernels, the student must add them by hand.)
+for testing kernels, students must add them by hand.)
 When execution reaches certain interesting {\em preemption points},
 \landslide triggers artificial clock interrupts
 to force the scheduler to run a different thread.
 When a test finishes execution according
 to one pattern of thread switches,
 \landslide rewinds the simulation state
-and resumes the test according to a different interleaving.
+and resumes the test according to a different thread interleaving.
 After each instruction,
 \landslide applies several bug-detection predicates to
 the program state to detect
@@ -119,8 +119,9 @@ mutex_unlock(mx);
 \end{figure}
 
 {\bf State space exploration.}
-To trigger the interleaving which exposes this bug, threads must be preempted at the boundaries of the synchronization primitives (either when \x{cond_wait} blocks or at the end of \x{mutex_unlock}).
-\landslide automatically considers these boundaries to be {\em preemption points}: candidate sites for timer-driven thread switches.
+To trigger the interleaving which exposes this bug, threads must be preempted when invoking the synchronization primitives (either when \x{cond_wait} blocks or at the end of \x{mutex_unlock}).
+\landslide automatically considers these boundaries to be {\em preemption points}:
+candidate sites for artificial timer-driven thread switches.
 It can also add preemption points dynamically,
 as identified by an integrated data-race analysis \cite{hybriddatarace,fasttrack},
 to expose shared-memory bugs when synchronization is absent.
@@ -130,17 +131,15 @@ as shown in Figure \ref{fig:paradise}(b).
 %As these state spaces are exponentially-sized,
 \landslide uses Dynamic Partial Order Reduction (DPOR) \cite{dpor} to identify and prune equivalent interleavings
 to mitigate the exponential explosion of these state spaces.
-% TODO make sure this gets mentioned later, if not here
-%and state space estimation \cite{estimation} to predict which
-% TODO CAMREADY: cite oopsla
 % In principle, the combination of synchronization API and data-race preemption points is sufficient to expose all bugs that are reachable by any combination of timer interrupts on any instructions.
 This reduction requires only tracing the memory accesses of each thread,
 so we are able to perform it behind-the-scenes, without consuming any student attention.
 
 Apart from which test program to run, \landslide's user interface requires just one option:
-students specify how much time they are willing to wait.
+students specify how long they are willing to wait.
 %Considering this CPU budget,
-\landslide then uses state space estimation \cite{estimation} to predict
+% TODO CAMREADY: deanonymize
+\landslide then uses state space estimation \cite{estimation-anonymized} to predict
 % TODO CAMREADY: deanonymize
 which combinations of preemption points will produce appropriately-sized state spaces for the given CPU-time budget \cite{quicksand-anonymized}.
 If no bug is found before time runs out, \landslide displays a progress report summarizing the estimated remaining time for each state space,
@@ -199,7 +198,7 @@ When \landslide identifies a bug, it outputs an HTML-formatted
 {\em preemption trace}.
 Figure~\ref{fig:trace} shows a typical output for the example bug in Figure \ref{fig:paradise}.
 The trace reports what kind of bug was detected
-and each preemption point in the current interleaving:
+and each preemption point encountered in the current interleaving:
 which thread was running, a trace of its stack when it was preempted, and the thread that ran next.
 Hence, students can bypass tediously reconstructing the schedule using \x{printf},
 and hopefully better understand the concurrent execution that exposed the bug,
@@ -214,7 +213,7 @@ The userspace \x{malloc} and \x{assert} are also provided in the basecode, and t
 so it searches the student's code for functions named \x{mutex_lock} and \x{mutex_unlock} (as mandated by the assignment handout),
 and assumes they at least provide mutual exclusion\footnote{
 	To relax this assumption, we provide a special test case for mutexes,
-	in which \landslide may preempt and search for data races in the mutex implementation itself.
+	in which \landslide will preempt and search for data races in the mutex implementation itself.
 }.
 All other thread library components are treated as unknown, and subject to preemption anywhere.
 
@@ -226,16 +225,16 @@ Instead, we provide a set of functions named with the prefix
 \texttt{tell\_\landslide}
 %\x{tell_landslide}
 to denote when a thread runs \x{fork}, \x{sleep}, or \x{vanish}, when a thread is added to or removed from the runqueue, and when a thread becomes blocked on a mutex.
-Users must also list all core scheduler, context switch, and timer handling routines, so \landslide can ignore their memory accesses for the sake of DPOR
+Users must also list all scheduler, context switch, and timer handling routines, so \landslide can ignore their memory accesses for the sake of DPOR
 (otherwise, threads would always conflict with each other and DPOR would achieve no reduction).
 
 \subsection{Heuristics}
 
-Student submissions may behave in extraordinary ways which violate the assumptions of many modern model checkers.
+Student submissions may behave in extraordinary ways, violating the assumptions of many modern model checkers.
 \landslide refuses to test code which fails the hurdle criteria (\sect{\ref{sec:grading}}),
-but it must support testing any legal, yet distasteful, solution.
+but it must support testing any legal, if distasteful, solution.
 %Hence, we added several heuristic
-For example, students may use open-coded \x{yield} or \x{xchg} loops rather than the mutex abstraction. %(though it is discouraged).
+For example, students may use potentially infinite \x{yield} or \x{xchg} loops rather than the mutex abstraction. %(though it is discouraged).
 To avoid getting stuck in a cyclic (infinite) state space, \landslide keeps a ``yield loop'' counter for each thread;
 when a thread \x{yield}s 10 times without otherwise making progress, \landslide marks it blocked.
 %
@@ -250,4 +249,10 @@ so to catch these patterns, it
 %learns the size of the \x{mutex} struct, then
 checks accesses against stored lock addresses blocked on by other threads.
 Similarly, these rogue unlock accesses may unblock a yield-looping thread.
-These heuristics have enabled \landslide to test over 100 student thread libraries from the past 5 semesters fully automatically.
+
+%So far,
+These heuristics have enabled \landslide to test over 100 student thread libraries
+%from the past 5 semesters
+fully automatically
+(47 in progress in our evaluation, plus
+79 submitted over the past 5 semesters).

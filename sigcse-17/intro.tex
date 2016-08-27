@@ -5,13 +5,12 @@
 
 In this paper we describe our experience teaching concurrent programming at the operating-system level to advanced undergraduate students at \carnegiemellon (\cmu).
 In \fourten, the Operating Systems Design and Implementation class at \cmu,
-students complete aggressively low-level thread library and kernel projects,
+students complete low-level thread library and kernel projects,
 which run on real hardware,
 in which they implement threads and processes.
 Presented with a kernel specification called \pebbles
 % TODO camready
-\cite{kspec-anonymized}
-, students build a user-space threading and synchronization library on top of a \pebbles-compliant kernel in a two-week project, and subsequently, in a six-week project, implement their own multi-threaded kernel.
+\cite{kspec-anonymized}, students build a user-space threading and synchronization library on top of a \pebbles-compliant kernel in a two-week project, and subsequently, in a six-week project, implement their own multi-threaded kernel.
 %During these projects
 The students face demanding synchronization problems, including how to implement locking primitives and how to coordinate the possibly-simultaneous exiting of parent and child processes.
 % Finally, in another two-week project, students implement an extension to their Pebbles kernel. This project changes every semester, and recently has involved supporting symmetric multiprocessing (SMP).
@@ -23,7 +22,7 @@ In both courses, student kernels support multiprocessor execution;
 however, students are also supplied with starter code that already implements thread creation/destruction, context switching, and locking primitives.
 In \fourten, we provide starter code for the machine boot sequence and for a minimal C library (\x{printf()}, \x{malloc()}), leaving students to design threading and scheduling primitives from scratch.
 
-Incorporating SMP into the \fourten curriculum would expand the challenges students face in a single semester.
+Incorporating symmetric multiprocessing (SMP) into the \fourten curriculum would expand the challenges students face in a single semester.
 However, we wish to avoid compromising the complexity
 %, hardware fidelity,
 and learning experience of the project set.
@@ -37,6 +36,6 @@ as an alternative to the conventional stress tests.
 \landslide tests student thread libraries fully automatically, and can test kernels provided some manual instrumentation.
 It also features an experimental, fully automatic, Pintos testing mode.
 We present our experience sharing \landslide with volunteering \fourten students who used it to find bugs in their own code,
-and discuss the possibility for integrating it as a main component of operating systems curricula.
+and discuss the possibility of integrating it as a main component of the operating systems curriculum.
 
 % TODO: After submission, email the PC "Paper #1337 was submitted with an anonymized citation; here is the deanonymized version and the camera ready of the paper in case you need to confirm our claims about pintos"

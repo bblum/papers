@@ -4,7 +4,9 @@
 \fourten, Operating System Design and Implementation,
 is an upper-level undergraduate class
 designed for juniors and seniors in Computer Science
-and Electrical and Computer Engineering.
+% garth removed this, i guess
+%and Electrical
+and Computer Engineering.
 For CS students it is one of five courses which fulfill
 a ``systems programming'' degree requirement.
 %
@@ -81,7 +83,7 @@ This project
 %language-runtime concepts from the
 %prerequisite course;
 %it
-introduces students to our expectations about
+introduces students to course expectations about
 design, analysis, and making choices;
 %finally,
 and
@@ -91,6 +93,7 @@ to consider robustness.
 % and we READ THEIR CODE
 % ^^ LOL, classic dave.
 This project is built using a standard C tool chain
+% FIXME garth wants to cite gdb
 and debugged as students see fit (generally \x{printf()} and GDB).
 
 \subsubsection{Device Drivers and Game}
@@ -110,16 +113,18 @@ The game enables students to test their drivers.
 %
 
 This project and the remaining ones are written in
-C with some x86-32 assembly,
+C with a small amount of x86-32 assembly code,
 which is then
 compiled and linked into an ELF executable,
 stored into a %1.44-megabyte 3.5-inch
 floppy-disk image,
+% FIXME garth wants to cite grub
 and booted via GRUB.
 If the image is copied to a real floppy or CD,
 %or \shortversion{compact disc,}{embedded into an ``El Torito'' bootable compact disc image,}
 it can boot on standard PC hardware.
 However, students most often use
+the x86 hardware simulator
 Simics \cite{simics} (described in \sect{\ref{sec:simics}}).
 
 \subsubsection{User-space Thread Library}
@@ -128,6 +133,7 @@ The third project is implementing a 1:1 thread library for
 user-space programs,
 %essentially a stripped-down
 %version of POSIX Pthreads.
+% FIXME garth wants to cite pthreads
 similar to POSIX Pthreads.
 The primary goal is
 for students to experiment
@@ -182,7 +188,8 @@ substrate,
 the reference kernel
 schedules user-space threads created by
 student code using a variety of
-interleaving policies.
+interleaving policies,
+with the ad-hoc goal of exposing concurrency bugs.
 %\shortversion{}{In order to aid debugging of concurrency problems,
 %the \x{misbehave()} system call enables
 %students to manually select an interleaving policy.}
@@ -209,7 +216,7 @@ threads and processes
 (re-using their game-project device drivers).
 These ingredients are combined to yield
 twenty-five system calls,
-which we list in Table~\ref{tab:syscalls}.
+listed in Table~\ref{tab:syscalls}.
 %(life-cycle, thread management, memory management,
 %console I/O, and miscellaneous),
 %which we discuss further in Section~\ref{sec:pebbles}.}
@@ -247,8 +254,8 @@ which we list in Table~\ref{tab:syscalls}.
 		\hline
 		\multicolumn{2}{c}{\em Console I/O} \\
 		\hline
-		\x{getchar}* & Reads one character from kbd input. \\
-		\x{readline} & Reads the next line from kbd input. \\
+		\x{getchar}* & Reads one character from keyboard. \\
+		\x{readline} & Reads the next line from keyboard. \\
 		\x{print} & Prints a memory buffer to the console. \\
 		\x{set_term_color} & Sets color for future console output. \\
 		\x{set_cursor_pos} & Sets the console cursor location. \\
@@ -261,7 +268,7 @@ which we list in Table~\ref{tab:syscalls}.
 		\x{misbehave}* & Selects thread-scheduling policy. \\
 		\hline
 	\end{tabular}
-	\caption{The \pebbles specifcation defines 25 system calls. Students are not required to implement ones marked with an asterisk (*), though the reference kernel provides them. }
+	\caption{The \pebbles specifcation defines 25 system calls. Students are not required to implement calls marked with an asterisk (*), though the reference kernel provides them. }
 	\label{tab:syscalls}
 \end{table}
 
@@ -303,7 +310,8 @@ at the cost of implementation complexity. %which we wish to avoid.
 %the simple console that students implemented at
 %the start of the semester.
 
-Widely regarded as the most difficult concurrency problem in the project
+%Widely regarded as
+The most difficult concurrency problem in the project
 is that of coordinating a parent and a child task that ``simultaneously''
 exit:
 % invoke \x{vanish()}:
@@ -390,7 +398,7 @@ a filesystem,
 suspend-to-disk,
 profiling,
 and an in-kernel debugger.
-Two recent, more aggressive, projects have been
+Two more aggressive, projects have been
 paravirtualization
 %so that their kernels can host guest kernels and
 and multi-processor support.
@@ -565,9 +573,8 @@ and detailed code review by a member of the course staff.
 
 \textbf{Automated tests.}
 %While developing their code,
-Students will uncover both bugs
-and design misunderstandings by running test code we
-provide.
+Students uncover both bugs
+and design misunderstandings by running course-provided test code.
 %Some tests are simple, exercising one feature or condition
 %(e.g., allocating and freeing a large amount of memory),
 %while other tests exercise a mix of kernel features
@@ -579,7 +586,7 @@ which test
 %functionality including
 basic thread and process lifecycles, robustness
 against corner-case security vulnerabilities, and long-term stability
-under large stress tests.
+under long-running stress tests.
 %
 %When students submit their thread libraries and kernels,
 %we use an automated testing harness to
@@ -593,7 +600,7 @@ rather than verifying it with certainty.
 
 \textbf{Hurdle completion criteria.}
 Because of the ambitious learning objectives,
-we employ a very detailed notion of completeness
+we employ a detailed notion of completeness
 for the thread library and kernel projects.
 The ``hurdle'' model is based on the following observations:
 
@@ -657,7 +664,7 @@ and two of the three long-running multi-feature tests.
 Students also certify their thread libraries and kernels to
 be free of ``concurrency shortcuts,''
 to handle resource exhaustion,
-and to avoid certain distasteful x86-specific code structures.
+and to avoid certain prohibited x86-specific code structures.
 
 %Students who pass the completeness hurdle submit their kernels
 %and can move on to the kernel-extension project.
