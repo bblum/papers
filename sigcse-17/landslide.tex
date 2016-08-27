@@ -74,8 +74,6 @@ mutex_unlock(mx);
 \end{lstlisting}
 	\end{tabular}
 	{\bf (a}) A buggy producer/consumer program, in which the consumer thread only checks \x{work_exists()} once.
-	\vspace{1em}
-	\\
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %	\begin{tabular}{l|l|l}
 %	\cellcolor{thread1} {\bf Thread 1} & \cellcolor{thread2} {\bf Thread 2} & \cellcolor{thread3} {\bf Thread 3} \\
@@ -147,15 +145,6 @@ so ambitious students can decide whether to increase the time limit and retry.
 
 \subsection{Identifying Bugs}
 
-\landslide checks for bugs in several ways.
-It can identify assertion failures, use-after-free and other invalid heap accesses, and
-deadlocks, and also includes a heuristic check for infinite loops and livelock.
-%Note that our use of the term ``race condition'' throughout this paper refers to concurrency errors in general, a category that includes data races, atomicity violations, and nondeterministic deadlocks.
-%In contrast with analyses that directly detect data races~\cite{tsan},
-Although \landslide employs a data-race analysis to decide where to preempt,
-it does not directly classify suspicious memory accesses as bugs,
-but rather seeks concrete, observable failures that can arise from many different types of errors.
-
 \newcommand\hilight[2]{\color{#1}#2\color{black}\xspace}
 \definecolor{orange}{RGB}{192,96,0}
 \definecolor{olivegreen}{RGB}{0,127,0}
@@ -193,6 +182,16 @@ but rather seeks concrete, observable failures that can arise from many differen
 	\caption{Example preemption trace provided by \landslide as debugging output for the bug in Figure~\ref{fig:paradise}.}
 	\label{fig:trace}
 \end{figure*}
+
+\landslide %checks for bugs in several ways.
+%It can identify
+identifies assertion failures, use-after-free and other invalid heap accesses, and
+deadlocks, and also includes a heuristic check for infinite loops and livelock.
+%Note that our use of the term ``race condition'' throughout this paper refers to concurrency errors in general, a category that includes data races, atomicity violations, and nondeterministic deadlocks.
+%In contrast with analyses that directly detect data races~\cite{tsan},
+Although \landslide employs a data-race analysis to decide where to preempt,
+it does not directly classify suspicious memory accesses as bugs,
+but rather seeks concrete, observable failures that can arise from many different types of errors.
 
 When \landslide identifies a bug, it outputs an HTML-formatted
 {\em preemption trace}.

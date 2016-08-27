@@ -18,10 +18,9 @@ and how many of those were fixed before submission
 (i.e., the students changed their code and re-ran the same test successfully).
 %
 We also distinguished {\em deterministic} bugs from concurrency bugs
-by identifying whether \landslide needed to test multiple interleavings before finding the bug\footnote{
-	For example, many students found deterministic use-after-free bugs,
-	previously overlooked because the unit tests do not provide heap checking like \landslide does.
-}.
+by identifying whether \landslide needed to test multiple interleavings before finding the bug.
+(For example, many students found deterministic use-after-free bugs,
+previously overlooked because the unit tests do not provide heap checking like \landslide does.)
 
 \begin{table}[t]
 	\begin{center}
@@ -58,7 +57,7 @@ In total, \landslide found 44 deterministic bugs and 85 concurrency bugs.
 verifying their update with a succesful re-run of the same test.
 
 \begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{p2-distribution-logos.pdf}
+	\includegraphics[width=0.48\textwidth]{p2-distribution-logos-squashed.pdf}
 	\caption{Distribution of thread library grades.}
 	\label{fig:p2-distribution}
 \end{figure}
