@@ -24,10 +24,11 @@ by identifying whether \landslide needed to test multiple interleavings before f
 }.
 
 \begin{table}[t]
+	\begin{center}
 	\begin{tabular}{r|cc|cc}
 	%det bugs found	det bugs fixed	races fixed	races found
 	& \multicolumn{4}{c}{Number of groups} \\
-	Number & \multicolumn{2}{c|}{Deterministic bugs} & \multicolumn{2}{c}{Nondeterministic bugs} \\
+	Number & \multicolumn{2}{c|}{Deterministic bugs} & \multicolumn{2}{c}{Concurrency bugs} \\
 	of bugs	& found & fixed & found & fixed \\
 	\hline
 	0	& 27	& 32	& 15	& 23	\\
@@ -43,6 +44,7 @@ by identifying whether \landslide needed to test multiple interleavings before f
 	Total bugs
 		& 44	& 34	& 85	& 53	\\
 	\end{tabular}
+	\end{center}
 	\caption{Summary of how many bugs were found and/or fixed by how many groups.
 	Each column counts how many groups found/fixed the number of bugs in each row;
 	for instance, two groups found 5 concurrency bugs, one of which fixed all 5.}
@@ -69,10 +71,11 @@ those who did scored on average 3\% higher. % that's rough, buddy.
 %on account of not enough free time to volunteer for \landslide,
 However, the latter distribution is potentially biased towards struggling students
 who lack enough free time to volunteer for \landslide.
-To account for this, we also checked grades from prior semesters when \landslide was not available.
+%To account for this,
+Thus, we also checked grades from prior semesters when \landslide was not available.
 %This distribution is indistiguishable from the experimental group,
 Although the minimum grade among the experimental group is 17\% higher than the minimum from prior semesters,
 the middle 50\% of the distributions are quite similar,
-suggesting that \landslide's benefit is largely offset by the time investment required.
+suggesting that \landslide's measurable benefit is largely offset by the time investment required.
 %
-In future work, we will streamline the user experience to help students fix as many concurrency bugs with a smaller time investment.
+%In future work, we will streamline the user experience to help students fix as many concurrency bugs with a smaller time investment.

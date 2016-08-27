@@ -116,7 +116,7 @@ We report on our experience giving students \landslide during the thread library
 %and kernel projects.
 project,
 %Although kernel-mode \landslide requires manual instrumentation, testing thread libraries is fully automatic.
-showing that it allows them to find and fix previously-overlooked bugs.
+showing that it allows them to find and fix many previously-overlooked concurrency bugs.
 %% no :( :(
 % Further, %even struggling students can take advantage of it,
 % \landslide's users achieve higher concurrency scores on average in subsequent projects,
@@ -143,7 +143,7 @@ showing that it allows them to find and fix previously-overlooked bugs.
 \end{CCSXML}
 
 \ccsdesc[500]{Software and its engineering~Software maintenance tools}
-\ccsdesc[300]{Computing methodologies~Concurrent algorithms}
+%\ccsdesc[300]{Computing methodologies~Concurrent algorithms}
 
 % End generated code
 
@@ -158,17 +158,26 @@ showing that it allows them to find and fix previously-overlooked bugs.
 
 \section{Conclusions and Future Work}
 
+\fourten, the undergraduate operating systems course at \cmu,
+features low-level thread library and kernel projects
+in which students tackle challenging concurrency problems.
+We have introduced \landslide, a stateless model checker,
+as an alternative debugger to conventional stress testing.
+In our evaluation over three semesters,
+\landslide helped more than half of volunteering students find and fix previously-overlooked concurrency bugs.
+So far, however, this benefit is not reflected in the grades students ultimately achieved.
+In future work, we will streamline the user experience to help students fix as many concurrency bugs with a smaller time investment.
+%helping students achieve more overall.
+
 We are presently extending \landslide to support Pintos kernels \cite{pintos},
 %used at many top CS schools including Stanford, Berkeley, and University of Chica
 another instructional kernel popular at many top CS schools.
 %a more widely-used instructional kernel than \pebbles.
 Because Pintos mandates more internal APIs than \pebbles,
-\landslide can more easily instrument student code without requiring manual annotations.
+\landslide can easily instrument student code without requiring manual annotations.
 In a preliminary experiment, we tested 79 student Pintos implementations with \landslide,
 finding 59 concurrency bugs with 10 CPU-hours allocated to each of 3 test cases \cite{quicksand-anonymized}.
 In future work, we hope to fully automate Pintos instrumentation, and offer \landslide at other schools beyond \cmu.
-
-%\fourten, the undergraduate operating systems course at \cmu, teaches concurrency in a
 
 % TODO camready
 % \section{Acknowledgments}
