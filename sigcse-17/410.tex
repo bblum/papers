@@ -94,7 +94,7 @@ to consider robustness.
 % ^^ LOL, classic dave.
 This project uses a standard C tool chain
 % FIXME garth wants to cite gdb
-and debugged as students see fit (generally GDB, a symbolic debugger, and \x{printf}).
+and debugged as students see fit (generally GDB, a symbolic debugger; and \x{printf}).
 
 \subsubsection{Device Drivers and Game}
 
@@ -259,7 +259,7 @@ listed in Table~\ref{tab:syscalls}.
 		\x{print} & Prints a memory buffer to the console. \\
 		\x{set_term_color} & Sets color for future console output. \\
 		\x{set_cursor_pos} & Sets the console cursor location. \\
-		\x{get_cursor_pos} & Retrieves the console cursor location. \\
+		\x{get_cursor_pos} & Retrieves same. \\ %the console cursor location. \\
 		\hline
 		\multicolumn{2}{c}{\em Miscellaneous} \\
 		\hline
@@ -291,9 +291,9 @@ listed in Table~\ref{tab:syscalls}.
 {\bf Lifecycle.} The process lifecycle is loosely based on the
 Unix \x{fork()}/\x{exec()}/\x{wait()} model.
 We adopt the Mach~\cite{DBLP:conf/usenix/AccettaBBGRTY86}
-distinction between ``tasks,''
+distinction between {\em tasks},
 which are resource containers,
-and threads,
+and {\em threads},
 each of which executes within a single task.
 This differs from %partitioning is a different approach from that of
 Plan~9's \x{rfork()}~\cite{Pike90plan9} or Linux's \x{clone()},
@@ -312,7 +312,7 @@ at the cost of implementation complexity. %which we wish to avoid.
 
 %Widely regarded as
 The most difficult concurrency problem in the project
-is that of coordinating a parent and a child task that ``simultaneously''
+is that of coordinating a parent and a child task that simultaneously
 exit:
 % invoke \x{vanish()}:
 when a task completes,
@@ -507,7 +507,7 @@ test their code.
 %
 %\subsubsection{32-bit}
 We target the 32-bit
-subset of x86, for multiple reasons.
+subset of x86 for multiple reasons.
 %%% I'm not sure I believe this is an advantage. Instead of having
 %%% to verify if each register is correct, students now have to verify
 %%% both registers and stack slots. Otherwise this paragraph is good. -- bblum
@@ -522,7 +522,7 @@ The calling convention's old-fashioned focus on the stack
 makes it easier to track function parameter values.
 Second, implementing virtual memory on x86-64 as
 opposed to x86-32 requires more code and more
-debugging time without imparting greater
+debugging time without imparting any greater
 insight.
 %\shortversion{insight.}{insight. Finally, since it is impossible for an x86 processor
 %to be in 64-bit mode with virtual memory off,

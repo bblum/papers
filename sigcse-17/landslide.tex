@@ -221,7 +221,7 @@ Because the kernel project leaves internal code structure as an open-ended desig
 \landslide cannot search for specific function names. % like it does for P2s.
 Instead, we provide a set of functions named with the prefix
 % TODO camready
-\texttt{tell\_\landslide}
+\texttt{tell\_logos}
 %\x{tell_landslide}
 to denote when a thread runs \x{fork}, \x{sleep}, or \x{vanish}, when a thread is added to or removed from the runqueue, and when a thread becomes blocked on a mutex.
 Users must also list all scheduler, context switch, and timer handling routines, so \landslide can ignore their memory accesses for the sake of DPOR
@@ -233,7 +233,7 @@ Student submissions may behave in extraordinary ways, violating the assumptions 
 \landslide refuses to test code which fails the hurdle criteria (\sect{\ref{sec:grading}}),
 but it must support testing any legal, if distasteful, solution.
 %Hence, we added several heuristic
-For example, students may use potentially infinite \x{yield} or \x{xchg} loops rather than the mutex abstraction. %(though it is discouraged).
+For example, students may use potentially-infinite \x{yield} or \x{xchg} loops rather than the mutex abstraction. %(though it is discouraged).
 To avoid getting stuck in a cyclic (infinite) state space, \landslide keeps a ``yield loop'' counter for each thread;
 when a thread \x{yield}s 10 times without otherwise making progress, \landslide marks it blocked.
 %
