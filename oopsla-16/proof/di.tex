@@ -71,7 +71,7 @@ Most importantly, we assume that threads switch only at instructions identified 
 
 We use {\em synchronization API PPs} to denote the set of predicates
 %statically-available
-which occur immediately after any of $\mathcal{A}_{sync}$.
+which occur immediately before or after any of $\mathcal{A}_{sync}$.
 %$\mathsf{mutex\_lock}$,
 %$\mathsf{mutex\_unlock}$,
 %$\mathsf{deschedule}$,
@@ -81,7 +81,7 @@ which occur immediately after any of $\mathcal{A}_{sync}$.
 %$\mathsf{yield}$.
 Because no other instruction affects a thread's runnability, it is always possible to execute a program by switching the currently-executing thread only at synchronization API PPs.
 
-All data-race PP predicates will occur immediately {\em before} a $\mathsf{read}$, $\mathsf{write}$, or atomic swap.
+All data-race PP predicates will occur immediately before a $\mathsf{read}$, $\mathsf{write}$, or atomic swap.
 Other predicates are possible, though we will show they are irrelevant.
 
 When generating execution traces, the evaluation semantics is parameterized by a set of active PP predicates.
@@ -128,8 +128,11 @@ Then $t_1$ MHB $t_2$ if
 \end{enumerate}
 \end{definition}
 
-Intuitively, MHB expresses the "cannot be reordered with" (or "enables") relation between transitions.
-Two transitions $A$ and $B$ of different threads MHB if some synchronization event in $A$ causes $B$ to become runnable while it was previously blocked. Such synchronization events include {\tt thread\_create}, {\tt cond\_signal}, {\tt sem\_post}, but {\em not} {\tt mutex\_lock} or {\tt mutex\_unlock}.
+Intuitively, MHB expresses the "cannot be reordered with" relation between transitions
+("enables" in DPOR terminology \cite{dpor}).
+Two transitions $A$ and $B$ of different threads MHB if some synchronization event in $A$ causes $B$ to become runnable while it was previously blocked.
+Such synchronization events include $\mathsf{thread\_fork}$, $\mathsf{make\_runnable}$,
+and sometimes but not always $\mathsf{mutex\_unlock}$.
 
 Note how our {\em must}-happen-before relation differs from the conventional definition of happens-before (``observed to happen before'') \cite{lamport-clocks}.
 Our use of MHB matches the ``limited happens-before'' used in \cite{hybriddatarace} and \cite{tsan};
@@ -191,6 +194,7 @@ Two interleavings are equivalent if one can be transformed into the other by per
 Intuitively, the behaviour of a program could change by reordering two transitions only if they contain a memory conflict.
 All possible interleavings of a program can be partitioned into equivalence classes,
 so only one interleaving from each equivalence class need be tested to ensure total schedule coverage \cite{mazurkiewicz}.
+Equivalence is, of course, transitive.
 
 % Outdated. See above.
 %\begin{definition}[State space]
@@ -316,13 +320,35 @@ In this section we provide (hopefully) intuitive summaries of both our proof goa
 %for readers not interested in double-checking the proofs' internal structure.
 
 {\bf Intuition for Iterative Deepening convergence.}
-In summary, we are proving that when Iterative Deepening finishes saturating the set of available data-race PPs,
-that set represents every single code location where a preemption could possibly affect the program's behaviour,
-and that completing the associated state spaces is as strong of a verification as testing all possible thread interleavings under any preemptions anywhere.
-Some data-races may be hidden in control-flow paths which could only be executed after preempting on a different data-race,
+In summary, we are proving that when Iterative Deepening saturates the set of data-race PPs,
+that set represents every single instruction where a preemption could possibly affect the program's behaviour,
+and that completing the associated state spaces is as strong of a verification as testing all possible thread interleavings by preempting anywhere.
+A data-race may be hidden in control-flow paths reachable only after preempting on a different data-race,
 but the technique's iterative nature will eventually find it.
 On the other hand, relying on the soundness of DPOR, preempting on an instruction which is neither a data-race or sync API boundary cannot affect the program's behaviour,
-so any PPs beyond the ones we consider are irrelevant.
+so any such PPs are irrelevant.
+
+Note that while we defined synchronization API PPs to occur both before and after any $\mathcal{A}_{sync}$ instruction,
+we will only add data-race PPs {\em before} their associated $\mathsf{read}$ or $\mathsf{write}$.
+Our proof requires preempting only before each racing instruction, not after,
+in order to fully saturate the PP set with all possible data races.
+Then, once saturated, preempting after each racing instruction would be extraneous,
+because all subsequent instructions before the next PP must be local operations or non-communicating reads/writes%.
+% Adding a PP both before and after could potentially expose some bugs sooner,
+% if the 'after' PP were redundant with another data-race PP but that other race would take forever to find.
+% So, I think it's an optimization to do it this way (although I haven't done a comparison experiment).
+%
+\footnote{Our implementation also optimizes the synchronization API PPs,
+generally preempting only {\em after} each synchronization instruction.
+$\mathsf{mutex\_lock}$ is the exception, as it can cause other threads to become blocked.
+All the others can only make blocked threads runnable, establishing MHB,
+which also provides MHB for the preceding transition of the invoking thread.
+Hence, coalescing those transitions does not exclude any possible interleavings.
+% If a third thread could "query" whether the 2nd thread is still blocked (or nonexistent),
+% that would break the soundness of this optimization, and you'd need to preempt before mx_unlock and thr_create after all.
+% XXX: In the implementation, such queries are actually possible with m_r or yield;
+% while they do not interact with mutex_unlock, I think an adversary could use them to interleave with thr_create/exit.
+}.
 
 {\bf Intuition for malloc-recycle soundness.}
 In summary, we are proving that if a malloc-recycle-pattern data race is a true race, rather than a false positive,

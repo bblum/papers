@@ -49,11 +49,17 @@ which would cheaply test the locks to an extent limited by the separate test cas
 or they could remove the data-race analysis's lockset tracking,
 which would expensively test all the main program's required locking properties in tandem with the program itself.
 
-{\bf No forcibly blocking other threads.}
-We assume the sync API behaves much like pthreads and/or message-passing:
-that is, a thread can cause itself to block on some condition,
-and other threads may wake it up,
-but there exists no primitive which one thread can use to revoke another thread's runnable status when that other thread is not itself using the sync API concurrently.
+%{\bf No forcibly blocking other threads.}
+%We assume the sync API behaves much like pthreads and/or message-passing:
+%that is, a thread can cause itself to block on some condition,
+%and other threads may wake it up,
+%but there exists no primitive which one thread can use to revoke another thread's runnable status when that other thread is not itself using the sync API concurrently.
+%
+%We require this because of the asymmetry between synchronization PPs (which occur {\em after}) synchronization operations)
+%and data-race PPs (which occur {\em before} their associated read/write).
+%For example, if a primitive $\mathsf{deschedule\_other}$ existed,
+%a transition such as $\mathsf{write}(a,v); \mathsf{deschedule\_other}(t_2)$ would lack a PP between the two instructions,
+%which could be necessary to expose some...
 
 {\bf Halting.}
 From a certain perspective, proving convergence is the same as proving completeness,
