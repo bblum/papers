@@ -2,96 +2,117 @@
 
 \subsection{System Model}
 
-To reason about programs at the executable level, we will define them as a list of assembly-like instructions,
-including certain concurrency primitives which we evaluate atomically, assuming the runtime provides correct implementations for them.
+To avoid relying on any particular programming language features,
+we leave the program syntax and execution semantics opaque,
+reasoning instead about execution traces.
+We require that a program's evaluation produce a trace of instructions of the following form:
 \begin{eqnarray*}
-	\mathcal{P} &::=& [n, \mathcal{I}] \\
-	\mathcal{I} &::=& v \leftarrow \mathsf{read}(a) \quad | \quad \mathsf{write}(a,v) \quad | \quad \mathsf{xchg}(a,v) \\
-	&|& a \leftarrow \mathsf{malloc}(n) \quad | \quad \mathsf{free}(a) \\
-	&|& \mathsf{mutex\_lock}(m) \quad | \quad \mathsf{mutex\_unlock}(m) \\
-	&|& \mathsf{deschedule} \quad | \quad \mathsf{make\_runnable}(t) \\
-	&|& t \leftarrow \mathsf{thread\_fork} \quad | \quad \mathsf{thread\_exit} \quad | \quad \mathsf{yield} \\
-	&|& \textit{local}
+	\mathcal{A} &::=& v \leftarrow \mathsf{read}(a) \quad | \quad \mathsf{write}(a,v) \quad | \quad \mathsf{xchg(a,v)} \\
+		&|& a \leftarrow \mathsf{malloc}(n) \quad | \quad \mathsf{free}(a) \\
+		&|& \textit{local} \\
+		&|& \mathcal{A}_{sync}
 \end{eqnarray*}
+The execution steps take the following forms:
 
-The execution state consists of any number of threads, each represented by a list of instructions to execute ($[\mathcal{I}]$),
-a stack of variable maps for thread-local state ($v$),
-and an indicator of whether the thread is runnable.
-The state also includes a map of global memory, indexed by addresses denoted $a$,
-and a set of mutex objects, denoted $m$. Thus:
-\begin{eqnarray*}
-	\mathcal{E} &::=& [\mathcal{T}] \times [a \rightarrow \mathsf{int}] \times [m \rightarrow \mathsf{bool}] \\
-	\mathcal{T} &::=& \mathcal{P} \times [[v \rightarrow \mathsf{int}]] \times \mathsf{bool}
-\end{eqnarray*}
-For the sake of brevity, we will not explicitly define execution semantics, though they are straightforward:
-To execute one step, arbitrarily choose one runnable thread, and evaluate the first element of its instruction list.
-This gives rise to thread concurrency which can interleave at instruction granularity,
-although it assumes a sequentially-consistent memory model. For a treatment of DPOR with relaxed memory, we refer the reader to \cite{tsopso}.
-
-{\bf Memory.} $\mathsf{read}$, $\mathsf{write}$, and $\mathsf{xchg}$ access global or heap memory shared by all threads, indicated by some address $a$, and copying and/or modifying a thread-local variable $v$. % cmpxchg, xadd, etc omitted for brevity
+{\bf Memory.}
+$\mathsf{read}$, $\mathsf{write}$, and $\mathsf{xchg}$ access global or heap memory shared by all threads, indicated by some address $a$.
+(Other atomic swap operataions are omitted for brevity.)
 $\mathsf{malloc}$ and $\mathsf{free}$ provide access to fresh memory accessible by all threads. % free is irrelevant to the system model in terms of expressive power
 
-{\bf Threads.} $\mathsf{mutex\_lock}$ and
+{\bf Local state.}
+$\textit{local}$ represents any thread-local instruction, such as modifying local variables, flow control, function calling, and assertions. %, and side effects.
+We omit a detailed list for brevity, as we do not need to reason about their nature in these proofs.
+%For brevity, we omit a detailed list, although note that $\mathsf{call}$ would be implemented by modifying the instruction stream $[\mathcal{I}]$ and creating a new frame on the stack of local variables.
+
+{\bf Threads.}
+$\mathcal{A}_{sync}$ denotes the subclass of evaluation steps which implement inter-thread synchronization; i.e., the {\em synchronization API}:
+\begin{eqnarray*}
+	\mathcal{A}_{sync} &::=& \mathsf{mutex\_lock}(m) \quad | \quad \mathsf{mutex\_unlock}(m) \\
+		&|& \mathsf{deschedule} \quad | \quad \mathsf{make\_runnable}(t) \\
+		&|& t \leftarrow \mathsf{thread\_fork} \quad | \quad \mathsf{thread\_exit} \quad | \quad \mathsf{yield}
+\end{eqnarray*}
+$\mathsf{mutex\_lock}$ and
 $\mathsf{mutex\_unlock}$ provide mutual exclusion:
-a thread cannot evaluate $\mathsf{mutex\_lock}$ until that lock is released.
-$\mathsf{deschedule}$ and $\mathsf{make\_runnable}$ allow threads to manipulate their own or another's runnability, respectively,
+a thread which evaluates $\mathsf{mutex\_lock}$ on some lock $m$ becomes blocked until no other thread holds $m$.
+% the second formulation here excludes the possibility of m_r waking a thread blocked on mutex_lock (which would be horrible)
+%$\mathsf{deschedule}$ and $\mathsf{make\_runnable}$ allow threads to manipulate their own or another's runnability, respectively,
+$\mathsf{deschedule}$ alows a thread to block itself until another thread wakes it with $\mathsf{make\_runnable}$,
+%
 and $\mathsf{thread\_fork}$ and $\mathsf{thread\_exit}$ allow creation and destruction of new threads.
 $\mathsf{thread\_fork}$ is defined in the Pebbles manner \cite{kspec};
-we omit higher-level abstractions such as $\mathsf{create}$ or $\mathsf{join}$, which can be implemented using these primitives \cite{thrlib}.
+we omit higher-level abstractions such as $\mathsf{cond\_wait}$, $\mathsf{create}$, or $\mathsf{join}$, which can be implemented using these primitives \cite{thrlib}.
 $\mathsf{yield}$ has no effect under these execution semantics, but is included for the sake of synchronization API preemption points (see below).
 
-{\bf Local state.}
-$\textit{local}$ represents any thread-local instruction, such as modifying local variables, flow control, function definition/calling, assertions, and side effects.
-For brevity, we omit a detailed list, although note that $\mathsf{call}$ would be implemented by modifying the instruction stream $[\mathcal{I}]$ and creating a new frame on the stack of local variables.
-
-\begin{definition}[Blocked threads]
-	A thread is blocked when either its runnable flag is false, or when its next instruction is a $\mathsf{mutex\_lock}$ on an unavailable mutex.
-\end{definition}
-
-Model checkers often also include heuristics to identify threads using open-coded $\mathsf{yield}$ loops to block,
-but for the sake of our proofs, we assume such patterns are implemented more tastefully with a condition-variable-like primitive built upon $\mathsf{deschedule}$.
-
 \begin{definition}[Interleaving]
-	An interleaving is a sequence of execution steps, beginning with some initial program state and ending when all threads are blocked or have exited, and/or when a bug is observed.
+An interleaving (or execution trace) is a list of these instructions, annotated to indicate the currently-running thread as well as the runnability of all existing threads:
+\begin{eqnarray*}
+	\mathcal{I} &::=& [\mathcal{A}, t, (t \rightarrow \mathsf{bool})]
+\end{eqnarray*}
 \end{definition}
+
+We say a {\em thread switch} occurs when adjacent elements in $\mathcal{I}$ have different thread IDs $t$.
+%
+We say a thread is {\em blocked} when its value in the runnability map is false.
+
+{\bf Interleaving invariants.}
+We require the evaluation semantics to produce interleavings which fulfil several invariants,
+apart from the obvious ones ensuring correct synchronization and $\mathsf{malloc}$ discipline.
+
+Model checkers often include heuristics to identify blocking via open-coded $\mathsf{yield}$ loops,
+but we assume here that such patterns are implemented more tastefully with a condition-variable-like primitive built upon $\mathsf{deschedule}$.
+
+Most importantly, we assume that threads switch only at instructions identified by the set of {\em preemption-point predicates}, defined below.
 
 \subsection{Stateless model checking terms}
 
-\begin{definition}[Preemption point (PP)]
-	%A PP is a code location between two instructions at which we may force threads to switch.
-	A PP is a predicate on the execution state which identifies a class of instruction pairs between which we may force threads to switch.
+\begin{definition}[Preemption point (PP) predicate]
+	A predicate on the execution state which identifies a class of instruction pairs between which we may force threads to switch.
 \end{definition}
 
-In the main paper, we identified PPs by predicates on the instruction pointer and current thread ID. Hence, the ``same'' PP may occur multiple times during an execution; for example, {\tt mutex\_lock()} may be called from {\tt foo()} and later again from {\tt bar()}.
-%For the sake of this proof, we separate such cases into multiple unique PPs: each PP is simply a label denoting the end of a single transition.
-In our proofs, we will use the term ``PP'' to indicate specific instruction sites at which a PP predicate holds.
-
-We also use ``synchronization API PPs'' to denote the class of
+We use {\em synchronization API PPs} to denote the set of predicates
 %statically-available
-PPs which occur immediately {\em after} any of
-$\mathsf{mutex\_lock}$,
-$\mathsf{mutex\_unlock}$,
-$\mathsf{deschedule}$,
-$\mathsf{make\_runnable}$,
-$\mathsf{thread\_fork}$,
-$\mathsf{thread\_exit}$,
-$\mathsf{yield}$.
+which occur immediately after any of $\mathcal{A}_{sync}$.
+%$\mathsf{mutex\_lock}$,
+%$\mathsf{mutex\_unlock}$,
+%$\mathsf{deschedule}$,
+%$\mathsf{make\_runnable}$,
+%$\mathsf{thread\_fork}$,
+%$\mathsf{thread\_exit}$,
+%$\mathsf{yield}$.
 Because no other instruction affects a thread's runnability, it is always possible to execute a program by switching the currently-executing thread only at synchronization API PPs.
 
-All data-race PPs will occur immediately {\em before} a $\mathsf{read}$, $\mathsf{write}$, or $\mathsf{xchg}$.
+All data-race PP predicates will occur immediately {\em before} a $\mathsf{read}$, $\mathsf{write}$, or atomic swap.
+Other predicates are possible, though we will show they are irrelevant.
+
+When generating execution traces, the evaluation semantics is parameterized by a set of active PP predicates.
+As long as the set contains the synchronization API PPs,
+the execution shall switch threads only when a PP predicate holds.
+
+\begin{definition}[Preemption point (PP)]
+	%A PP is a code location between two instructions at which we may force threads to switch.
+	%A PP is a predicate on the execution state which identifies a class of instruction pairs between which we may force threads to switch.
+	A PP is any site in an interleaving at which a PP predicate evaluated to true.
+\end{definition}
+
+As discussed above, all thread switches occur at PPs.
+However, an interleaving may also contain PPs at which the same thread continued running.
+
+In the main paper, we used ``PP'' largely to denote what we now call ``PP predicates''.
+Hence, the ``same'' PP could occur multiple times during an execution.
+%for example, {\tt mutex\_lock()} may be called from {\tt foo()} and later again from {\tt bar()}.
+In these proofs, we separate such cases into multiple unique PPs: each PP is simply a label denoting the end of a single transition.
 
 \begin{definition}[Transition]
-A sequence of execution steps from a program's evaluation between two preemption points (PPs).
+A sequence of execution steps from a program's evaluation between two PPs.
 \label{def:transition}
 
 \end{definition}
 We require the invariant that each transition's instructions are associated with exactly one thread. (That is, the set of PPs always includes all thread switches.)
 The set of synchronization API PPs provides this invariant, and all other PP sets in these proofs will be supersets of those.
-We also assume a trace of all memory accesses is available in the representation of transitions.
+%We also assume a trace of all memory accesses is available in the representation of transitions. %% It is, now.
 
 \begin{definition}[State space]
-Given a set of PP predicates, a state space is
-a set of interleavings representing all possible execution sequences which switch threads only on those PPs.
+	A state space $\mathcal{S}$ is a set of interleavings representing all execution sequences legal under a given set of PP predicates.
 \end{definition}
 
 \begin{definition}[Must-happen-before (MHB)]
@@ -120,7 +141,7 @@ However, as prior work has shown, they miss many other bugs involving unprotecte
 }.
 We illustrate the difference in Figure~\ref{fig:mhb}.
 
-\begin{figure}[t]
+\begin{figure}[h]
 	\small
 \begin{tabular}{rll}
 	& Thread 1 & Thread 2 \\
