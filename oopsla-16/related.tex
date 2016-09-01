@@ -6,7 +6,6 @@
 We build upon many established model-checking techniques, dating back
 % of course
 to Verisoft, the original C model checker \cite{verisoft}.
-%, and Eraser, the original data race detector \cite{eraser}.
 %Our model checker
 %\landslide~\cite{landslide} itself implements many techniques from prior work (\sect{\ref{sec:landslide}}).
 %itself implements DPOR \cite{dpor},
@@ -18,7 +17,6 @@ We compare related tools by their treatment of shared-memory thread communicatio
 Hence, they will miss any bugs that require interleaving threads at instruction granularity during a data race.
 %CHESS provides a data-race analysis to report any such violations of its concurrency model to the user, but does not incorporate data-race candidates as PPs in future tests.
 \revision{\cite{chess} discusses the ability of CHESS to add PPs using a single-pass data-race analysis,
-% FIXME... idk, "discusses (without explicit evaluation)..., but, as our evaluation shows..."?
 but does not evaluate either the increase in bug-finding capacity or the soundness properties.
 Our convergence theorem (\sect{\ref{sec:soundness}}) is a natural extension of \cite{chess-icb}'s Theorem 3,
 which alone provides soundness only for race-free programs.}
@@ -27,6 +25,7 @@ which alone provides soundness only for race-free programs.}
 limit thread communication to a message-passing API to more effectively test distributed systems.
 This eliminates the need for data-race analysis, but restricts the class of programs that can be tested.
 %Nevertheless, Iterative Deepening is applicable to these tools.
+% IDK if i should mention it, but OOPSLA 2015, protocol based verification of MPI concurrency paper. Different verification approach entirely; doesn't suffer exponential explosion but limited to programs with no shared state and MPI communication only
 
 {\bf Preempting at instruction granularity} is a prerequisite for using data-race PPs.
 However, the resulting state space explosion demands that any such tool either
@@ -109,6 +108,7 @@ However, ICB
 and can incorporate data-race PPs only when statically coded in advance}.
 \revisionx{Our results in \sect{\ref{sec:eval-sssmc}} outperform both such configurations of ICB.}
 %and to our knowledge no algorithm has been proposed to dynamically add data-race PPs during a test with ICB.
+% Note that BPOR paper claims that ICB(3+) repeats LOADS of work, and that makes it ok for landslide-ID to repeat work.
 
 \subsection{Data Race Detection}
 \label{sec:related-dr}
@@ -146,7 +146,6 @@ IFRit \cite{ifrit}
 improves the performance of HB using an interference analysis,
 which could allow future work to avoid tracing every memory access.
 %although in our context, we cannot admit false negatives (\sect{\ref{sec:totalverif}}).
-%FastTrack \cite{fasttrack} optimizes the performance of pure happens-
 
 \revisionx{{\bf Replay analysis.}}
 Closer to our work, replay analysis \cite{recordreplaydrs} also suppresses false positives by testing multiple thread interleavings.
@@ -174,13 +173,3 @@ which is necessary to find certain bugs (\sect{\ref{sec:eval-dr}}) or to provide
 % Not really true.
 %It also assumes the POSIX synchronization API, so cannot verify arbitrary synchronization algorithms such as we do with \mxtest.
 Future work could combine the two approaches, using MC to produce new data-race traces for Portend to classify, or using Portend's analysis to inform \quicksand's heuristic priorities.
-
-% \subsection{Other Concurrency Testing Approaches}
-%
-% blah blah pldi'15 symbiosis DSP
-
-% Note that BPOR paper claims that ICB(3+) repeats LOADS of work, and that makes it ok for landslide-ID to repeat work.
-
-% IDK if i should mention it, but OOPSLA 2015, protocol based verification of MPI concurrency paper. Different verification approach entirely; doesn't suffer exponential explosion but limited to programs with no shared state and MPI communication only
-
-% Probably NOT worth a mention: OOPSLA 2015, stateless model checking of event driven applications. Turning timer-driven model on its head and checking single-threaded, but asynch-event-driven programs (i.e. device-like signal handlers)

@@ -52,12 +52,8 @@ are based on this simple version of Iterative Deepening.
 \begin{algorithm}[t]
 	\revisionx{
 	\SetKwInOut{Input}{Input}
-	%\textbf{Function} GetBestJob($j_0$, PendingJobs, SuspendedJobs): \\
 	\Input{$j$, the currently-running job}
-	%\Input{$eta$, $j_0$'s predicted completion time}
 	\Input{\AllPPs, the set of all known preemption points} %, sorted by decreasing heuristic priority}
-	%\Input{\SuspendedJobs, the list of already-suspended jobs, sorted by increasing ETA}
-	%\Input{$T$, the remaining time in the CPU budget}
 	\eIf{$\exists p \in \AllPPs . p \not\in \GetPPSet{j}$}{
 		return NewJob(\AllPPs) // New maximal state space
 	}{
@@ -198,22 +194,6 @@ Being constrained by a CPU budget,
 we may time out before completing a data race's associated state space,
 in which case we report a potential false positive that the user must handle (\sect{\ref{sec:future}}).
 
-%When \landslide~detects a data race, it reports each of the two memory accesses involved in the race.
-%Each report indicates the program counter value (PC) associated with the access, as well as some further conditions to help filter away unrelated executions of the same instruction on different data.
-%(For example, many parts of a codebase might call {\tt list\_insert()}, but only one callsite does so without adequate locking.)
-%Ideally, the PC would be qualified by a full backtrace, but tracing the stack is too expensive to do for each shared memory access.
-%Instead, \landslide~qualifies the PC with
-%(a) the current thread ID and
-%% Oops! We don't actually do this.
-%(b) the most recent {\tt call} instruction.
-%% (a crude approximation of a stack trace)
-%% which are much cheaper, as we carry them around all the time already
-%Note that we do {\em not} qualify data races by the shared memory address,
-%which can change based on different interleavings of previous code
-%(for example, depending on the result of {\tt malloc()}).
-%% especially when malloc is involved.
-%%Figure~\ref{fig:dont-filter-dr-by-address} shows example code where qualifying by memory address will miss the bug.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Choosing the Best Job}
@@ -225,7 +205,6 @@ When the MC reports an ETA too high for some job,
 we compare with other pending and suspended jobs to find another one more likely to complete in time.
 %
 Our method,
-%for doing so,
 listed in Algorithm~\ref{alg:shouldworkblock}, is the heart of Iterative Deepening.
 %\footnote{
 %Though its worst-case performance is $O(mn)$ in the
@@ -244,7 +223,6 @@ Similarly, whenever a job finds a bug, we cancel all pending superset jobs, as t
 	\SetKwInOut{Input}{Input}
 	%\textbf{Function} GetBestJob($j_0$, PendingJobs, SuspendedJobs): \\
 	\Input{$j_0$, the currently-running job}
-	%\Input{$eta$, $j_0$'s predicted completion time}
 	\Input{\PendingJobs, the list of pending jobs, sorted by decreasing heuristic priority}
 	\Input{\SuspendedJobs, the list of already-suspended jobs, sorted by increasing ETA}
 	\Input{$T$, the remaining time in the CPU budget}
@@ -306,7 +284,6 @@ to express how pessimistic we are about the estimate's accuracy.
 We use a scaling factor defaulting to 2 based on the results in \cite{estimation}.
 %though we allow changing it via the command line.
 We also include a heuristic to
-%ignore ETAs entirely
 never suspend jobs before they pass a certain threshold of interleavings tested,
 with a default of 32,
 so that their ETAs have some time to stabilize.

@@ -60,7 +60,7 @@
 \definecolor{commentblue}{RGB}{0,0,192}
 
 \newcommand\numthrlibs{79}
-\newcommand\numpintoses{78} % 'di' is basecode. durr
+\newcommand\numpintoses{78}
 \newcommand\numstudence{157} % total pintoses plus p2s
 
 \special{papersize=8.5in,11in}
@@ -91,11 +91,20 @@
 %\newcommand\revisionz[1]{\hilight{purple}{#1}\xspace}
 \newcommand\revisionz[1]{#1\xspace}
 
-\title{Stateless Model Checking with Data-Race Preemption Points}
+% obfuscate title just a little bit to avoid the billion inevitable google searches
+% i don't mind if really dedicated people find their way here, but not everyone please
+\newcommand\titlec{l Check}
+\newcommand\titleg{ion Points}
+\newcommand\titleb{less Mode}
+\newcommand\titlee{h Data-R}
+\newcommand\titled{ing wit}
+\newcommand\titlef{ace Preempt}
+\newcommand\titlea{State}
+
+\title{\titlea\titleb\titlec\titled\titlee\titlef\titleg}
 
 \authorinfo{Ben Blum}{Carnegie Mellon University, USA}{bblum@cs.cmu.edu}
 \authorinfo{Garth Gibson}{Carnegie Mellon University, USA}{garth@cs.cmu.edu}
-%\authorinfo{\vspace{24pt}}{}{}
 
 \maketitle
 
@@ -167,18 +176,10 @@ In our evaluation, \quicksand~found
 %We are great. Accept our paper.
 
 We have presented Iterative Deepening and \quicksand, a new technique and tool for automating the choice of preemption points (PPs) during stateless model checking.
-% , and \quicksand, a tool which implements this technique tailored to the \landslide~model checker.
 \quicksand~incorporates data-race analysis to create new PPs tailored specifically to the program under test,
 and automatically finds state spaces that are appropriately sized to complete in a given CPU budget.
-%and manages multiple model checker instances to test many different PP subsets in a given CPU budget, even when the full state space of all PPs would be computationally intractable.
 
 We achieve better bug-finding results than either single-pass data-race detection or single-state-space model checking alone,
-%We dramatically reduce false-positive data race reports,
-%%by verifying the absence of bugs in their associated state spaces
-%and find bugs caused by nondeterministic data-races in alternate thread interleavings missed entirely by single-pass analysis.
-%Compared to prior work,
-%, we find bugs faster in smaller subset state spaces, %% not true, or at least, not by very much
-%when the maximal state space is too large to explore
 finding new bugs with data-race PPs that could not be exposed by preempting only on synchronization APIs.
 Moreover, when all data-race PPs can be fully tested within the CPU budget, we provide a verification as strong as if every single instruction had been used as a PP.
 Between data-race bugs and verifications, \quicksand~is shown to provide the best of both worlds.
@@ -195,15 +196,6 @@ They are available at:
 \url{https://github.com/bblum/oopsla-dataset}
 
 % TODO CAMREADY: Don't forget to anonymize the names of all your grupos.
-
-%\section{Acknowledgements}
-
-
-
-%\appendix
-%\section{Appendix Title}
-%
-%This is the text of the appendix, if you need one.
 
 \acks
 

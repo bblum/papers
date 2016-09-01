@@ -48,10 +48,6 @@ and instead}~tests smaller state spaces based on subsets of those preemption poi
 %%assuming state spaces will always be too big and
 %%at the expense of ultimate completion time,
 %which in turn sacrifices the potential for a full safety guarantee when no bugs exist.}
-%%search ordering strategies such as Iterative Context Bounding \cite{chess-icb}
-%%assume all state spaces will be too big,
-%%and optimize the search to uncover bugs more quickly at the expense of ultimate completion time.}
-%%/ by sacrificing the ability to complete a total verification quickly when possible.
 
 On the other hand, when the CPU budget is large enough to fully test all data-race preemption points,
 we prove that this constitutes a total verification of all possible thread schedules.

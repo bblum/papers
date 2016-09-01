@@ -38,8 +38,6 @@ Our evaluation answers the following questions:
 				% But to be fair, you have to count how many DRs are reported as "couldn't test these, check yourself" at the end.
 				% Also Include:
 				% How many false positives does the free-re-malloc technique suppress?
-				% to do (done) If you have time, re-run all of the dr-only bug tests, with DR_FALSE_NEG enabled, and see how much fewer bugs get found (how many bugs get pushed past the time limit?)
-				% Answer: Just 1. (for p2s at least; as of time of writing, pintos dr-falsenegs not run yet)
 			\item Does \quicksand~find data-race bugs that would be false-negatives during a single-execution analysis?%Do we avoid false negatives compared to single-pass?
 		\end{enumerate}
 \end{enumerate}
@@ -76,7 +74,7 @@ the P2s average 1807 lines of code, %C and x86 assembly (stddev 489.5),
 %	diff -ru /tmp/shit/pintoses/di/src/$2/ $1/src/$2 | diffstat | grep insertions | sed 's/.*changed, //' | sed 's/ insertion.*//'
 %}
 %for i in `ls -d /tmp/shit/pintoses/* | grep -v -- "-p1$"`; do
-%#for i in /tmp/shit/pintoses/daniel-deniz*; do
+%#for i in /tmp/shit/pintoses/*; do
 %	echo -ne "$i";
 %	tloc=`getloc $i threads`
 %	uloc=`getloc $i userprog`
@@ -106,8 +104,6 @@ and that our test suite's size allows for a more statistically significant compa
 \newcommand\alarmsimul{\texttt{alarm\_test}}
 
 We tested P2s with 6 multithreaded programs:
-% from the 410 test suite % XXX: I would like to say this but this is a lie; figure out what else i can say instead
-% each tailored to exercise a different part of the P2 project
 \mxtest, for locking algorithm correctness,
 \tej, a test of thread lifecycle,
 \bct~and \paraguay~for condition variables,
@@ -132,38 +128,7 @@ For all tests,
 \revisionz{we blacklisted PPs on {\tt malloc}'s internal lock
 using \landslide's {\tt without\_function} command (\sect{\ref{sec:landslide}}).}
 In total, our evaluation comprises 629 unique tests (i.e., pairs of a test program and a Pintos or P2),
-% at least 157 of which could expose bugs.
 at least \revisionz{181} of which will expose bugs under one or more MC trials. % QS bugs + bugs where SSSMC found but QS didnt
-
-%\begin{table}[t]
-%	\begin{tabular}{l|l|l}
-%			& QS bugs & SSS-MC bugs \\
-%		\hline
-%		\mxtest & eg 1000 & eg 0 \\
-%		\bct & & \\
-%		etc... & & \\
-%		\hline
-%		Total & & \\
-%	\end{tabular}
-%	\caption{Comparison of all bugs found, broken down by test case, among all P2s (top 6) and Pintoses (bottom 2)}
-%	\label{tab:allbugs}
-%\end{table}
-%
-%\begin{table}[t]
-%	\small
-%	\begin{tabular}{l|l|l||l|l}
-%	& QS bug & \begin{tabular}{c} SSS-MC \\ completed\end{tabular}
-%	& QS bug & \begin{tabular}{c}SSS-MC \\ timeout \end{tabular} \\
-%		\hline
-%		\mxtest & e.g. 5 & 10 & 0 & 0 \\
-%		\bct & & & & \\
-%		etc... & & & & \\
-%		\hline
-%		Total & & & & \\
-%	\end{tabular}
-%	\caption{Bugs requiring data-race PPs to expose, found by \quicksand~but missed by the single-state-space approach.}
-%	\label{tab:drbugs}
-%\end{table}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -242,7 +207,6 @@ we additionally show a wall-clock comparison in (b) to highlight the impact of \
 		% ---
 		& {\bf Num.} & \multicolumn{2}{c|}{\bf \revz{\quicksand}} & \multicolumn{3}{c||}{\bf \revz{Control (SSS-MC)}}
 		& \multicolumn{2}{c|}{\bf \revz{Limited HB}} & \multicolumn{2}{c||}{\bf \revz{Pure HB}} &
-		%& {\bf LHB DR} & {\bf Nondet.} & & &
 		{\bf Mutual} & {\bf Avg. tested} \\
 		% ---
 		{\bf Test} & {\bf tested} & {\bf LHB} & {\bf PHB} & {\bf ICB} & {\bf DPOR} & {\bf ShMem}
@@ -279,8 +243,6 @@ we additionally show a wall-clock comparison in (b) to highlight the impact of \
 \end{table*}
 
 {\bf Finding new data-race bugs.}
-%We quickly pull ahead of SSS-MC, and ultimately conclude with 179\% as many bugs in total.
-%The break-even point is at a negligible 90 seconds.
 \revision{Compared to \revisionx{SSS-MC-ICB (the fastest among the control experiments),} \quicksand~finds}~more bugs within any CPU budget greater than \revision{200}~seconds.
 \revisionx{Compared to SSS-MC-Shared-Mem (the best SSS-MC approach in the long term), \quicksand's Limited HB version} ultimately concludes 10 CPU-hours with \revisionx{125\%} as many bugs in total.
 \revision{Before the break-even point at 200 seconds,
@@ -310,20 +272,11 @@ In \mxtest, in which we do not trust the lock implementation's correctness,
 \revisionx{SSS-MC-ICB and SSS-MC-DPOR}
 found dramatically fewer bugs (just 1)\footnote{
 	The one bug SSS-MC found was in a fully-assembler lock implementation. {\tt yield()}'s return value clobbered a value stored in {\tt \%eax}, which could lead to a failure after two repeated contentions. Preempting only on {\tt yield()} (in the contention loop) was sufficient to find the bug.}.
-%Intuitively, this is due to our control experiment being able to preempt only on the boundaries of the API which
-%Though for many applications of MC, assuming a correct lock implementation is sufficient,
 Though it often suffices to assume correctly-implemented locks \cite{dbug-thesis},
 we consider this strong evidence that new low-level synchronization code must be verified with data-race PPs.
 
-%% RIP this.
-%Furthermore, we plotted another line from this dataset, QS-no-DR-bugs,
-%which represents only the bugs found in state spaces without any data-race PPs (like QS-no-DR-PPs, but paying any overhead for using data-race PPs).
-%Intuitively, this line shows that for programs with only benign data races,
-%\quicksand~can afford the extra overhead of verifying them while still slightly edging out SSS-MC.
-
 % Future work (for thesis maybe?) Compare QS-ETAs to QS-Random to evaluate "smaller is better" claim.
 {\bf Finding the same bugs faster.}
-%To test whether Iterative Deepening is effective even for MC domains without data races, %such as message-passing distributed systems,
 \revision{The QS-Sync-Only experiment tests whether}~Iterative Deepening is effective even for MC domains without data races.
 \revision{When \quicksand~ignores all data-race candidates,
 its results are competitive with SSS-MC-DPOR, but SSS-MC-ICB outperforms it.
@@ -336,22 +289,6 @@ This result suggests that in future work, \quicksand~should consider using ICB i
 %Because \quicksand~is not yet instrumented to subset hard-coded PPs beyond the 4 ways shown in Figure~\ref{fig:id},
 %we ran these tests for 2.5 hours on 4 CPUs each.
 %Future work could parallelize QS-no-DR-PPs further; see \sect{\ref{sec:future}}.}.
-
-%Even though SSS-MC mostly catches up to it by the end of the 10-hour budget,
-%and is faster in the first 60 seconds due to less start-up overhead,
-%QS-no-DR-PPs finds more of the bugs sooner thereafter.
-%Hence, for modest CPU budgets,
-%\quicksand~is likely to find bugs SSS-MC will miss.
-%and for more ambitiously-sized tests,
-%programmers can be more confident in the verification provided when \quicksand~times out with no bug found.
-%We conclude that for smaller arbitrary CPU budgets, especially less than 1 hour,
-%Iterative Deepening is likely to find bugs SSS-MC will miss.
-%Moreover, it is also easy to imagine scaling up the size of each test case to test ,
-%using more threads or longer sequences of API calls.
-%We hope that is compelling even to users willing to spend many CPU-hours on testing.
-%These results show explicitly that for arbitrary CPU-time budgets
-%\footnote{The initial perfect overlap between QS-*-HB and QS-Sync-Only indicates how long it takes before the first data-race bug is found.}
-%even after the extra overhead of verifying them, \quicksand~still slightly edges out SSS-MC
 
 \revision{
 On the other hand,
@@ -414,22 +351,13 @@ While recent work \cite{randomized-scheduler} attempts to quantify the probabili
 On \revisionz{229} tests, \revisionx{SSS-MC-ICB} timed out after 10 hours with no bugs found.
 Among these tests, \quicksand~found bugs in \revisionz{37}.
 For the other \revisionz{192}, we show the number of state spaces \quicksand~was able to complete in the ``Average tested subset SSes'' column of Table~\ref{tab:drbugs}.
-%and the number of unique PPs among them.
-%In 6 cases, \quicksand~also failed to complete anything; beyond these,
-%between 1 and 253 state spaces were completed for each test
-%Between 0 and 233 unique PPs were tested among some completed subsets, with a mean of 27.2 and median of 7.5.
 These completions guarantee that, if the test program could expose a bug,
-% Justify implicit hypothesis: Sync PPs + DR PPs = all possible relevant PPs.
 it would only be found by a new data-race PP not discovered yet, or by a superset combination of PPs not reached.
 \revision{
 %While obviously not as strong as full verification,
 Prior work \cite{sealing} has argued the value of similar {\em compositional testing} when full verification is intractable,
 deferring to the user's expertise to judge the value of each subset of PPs verified.
 }
-
-%Hence, in Table~\ref{tab:drbugs} we count how often \quicksand~uncovered a bug only in state spaces which included data-race PPs, while
-%
-%In Table~\ref{tab:allbugs} ....
 
 {\bf Full verification.}
 For 153 of our 629 tests, \revisionx{QS-Limited-HB} was able to provide the total verification guarantee described in \sect{\ref{sec:totalverif}},
@@ -438,16 +366,6 @@ In Figure~\ref{fig:totalverif} we plot the cumulative distribution of
 %total
 verifications provided by each approach.
 \revisionx{The next best approach for verifications was SSS-MC-Shared-Mem, which completed its search in only 39 cases.}
-
-%Though SSS-MC-Shared-Mem appears to outperform \quicksand, its safety guarantee is unsound,
-%as many tests break its assumption of stack-allocated memory being private.
-%For example, many P2 condvars use stack-allocated list nodes to track waiting threads.
-%While SSS-MC-Shared-Mem must avoid excessive PPs on every private stack access for performance,
-%\quicksand~detects these dynamically, without needing to discriminate between stack and heap.
-%In total, SSS-MC-Shared-Mem claimed to verify 21 tests
-%(across 7 of the 9 test cases)
-%in which QS-DR ultimately found bugs,
-%which further calls into question the rest of its completions.
 
 %\quicksand's total verifications
 %%before a given elapsed CPU consumption.
@@ -459,11 +377,6 @@ verifications provided by each approach.
 %	%Expanding the statically-coded PPs to include stack accesses would make SSS-MC-Shared-Mem's performance even worse.
 %	% Especially for testing kernel-level code, deciding which of a thread's memory accesses are shared versus private is nonstraightforward, as threads may share data structures allocated on their own stacks for synchronization. Hence, the common heuristic of ignoring stack accesses as private (which we employ for this control experiment) introduces some unsoundndess.
 %}.
-%\quicksand~outperforms SSS-MC, being able to verify safety for
-%{\bf 9999x}
-%as many tests in 10 CPU-hours.
-%We attribute this again to the overhead of the sheer number of statically-coded PPs that SSS-MC-Shared-Mem must use,
-%as well as to the work which ICB necessarily repeats when increasing its preemption bound.}
 
 Among \revisionx{QS-Limited-HB's} verified tests, 36 contained no data-race candidates whatsoever,
 so the same verification could be provided
@@ -483,22 +396,11 @@ while the SSS-MC-ICB approach could at best report such races to the user.
 We count these cases in Table~\ref{tab:drstatistix}.
 }
 
-% Actually, while SSS-MC-Shared-Mem proved competitive with \quicksand~at finding data-race-related bugs,
-% its heuristic to ignore threads' own stack accesses introduces unsoundness.
-% <Move contents of footnote here.>
-% Indeed, SSS-MC-Shared-Mem claimed a full verification on 999999 tests for which \quicksand~found bugs!
-% % Hence, no SSS-MC strategy competes with quicksand for truly sound verification
-% Hence, only SSS-MC-DPOR and SSS-MC-ICB compete with \quicksand for sound verification, and they are thoroughly outperformed.
-% Between data-race bugs and verifications, \quicksand~is shown to provide the best of both worlds.
-
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{totalverifs-v2.pdf}
 	\caption{Cumulative distribution of tests fully verified
 	\revisionx{by QS-Limited-HB, QS-Pure-HB, and SSS-MC-Shared-Mem}
 	(\sect{\ref{sec:totalverif}}).
-	%SSS-MC-Shared-Mem completed 1.37x as many tests, but 
-	%SSS-MC-Shared-Mem is unsound: 21 tests it completed hid bugs previously found in Figure~\ref{fig:dowefindbugsfaster}.
-	%previously found (Figure~\ref{fig:dowefindbugsfaster}).
 	%Some tests had no data-race candidates, and hence could also be verified by .}
 	36 data-race-free tests were also soundly verified by QS-Sync-Only, SSS-MC-DPOR, and SSS-MC-ICB.}
 	\label{fig:totalverif}
@@ -637,7 +539,6 @@ The second and fourth series show all data-race bugs \quicksand~found,
 which includes the former type as well as new bugs involving nondeterministic data-races.
 \revisionz{QS-LHB found 69 data-race bugs in total, 15} of which could \revisionz{not} be found with single-pass data-race candidates alone.
 \revisionz{QS-PHB is even more dependent on nondeterministic data-race PPs, requiring nondeterministic data-race PPs in 21 cases among its 44 total data-race bugs.}
-%In total, we found 189\% as many bugs by using nondeterministic data-race candidates as PPs.
 
 %When proving that [NONDET] dr buges exist, make sure to mention that, although
 %their frequency varies depending on test case (mx test: almost none; bct:
@@ -657,24 +558,3 @@ This result suggests that
 such tools could benefit from a similar feedback loop as is used in Iterative Deepening.
 %i.e., discovering transitively-reachable data races while testing initial ones.
 %although that would still not simultaneously be able to provide total verifications.
-
-
-% Figure out concretely what the data race tricks are that we do, so we can claim them as contributions in the paper. Then ACTUALLY EVALUATE THEM.
-%         - Speculative DR PPs.
-%                 Not a heuristic, rather how to make it work at all to begin with.
-%                 (Cite MS thesis, claim on backwards explorating finding bugs faster)
-%         - Free/re-malloc to eliminate some false positives. See #193.
-%                 Measure how many false positives are eliminated.
-%                 Check, ofc, to make ABSOLUTE SURE, that no bugs missed w/ this trick.
-%                         If there are, it could be because of the implementation
-%                         bug described in #193.
-%         - Using tid/last_call filtering because whole stack traces are too expensive.
-%                 Moderately optional, 1st priority since theoretically interesting:
-%                 Turn on/off and measure how resulting DR bug #s change.
-%         - Optional: Reprioritizing DRs based on "confirmed" / "suspected"
-%                 Shouldn't be hard just make ID wrapper print "s" or "c"!
-%                 Is it helpful for ID to put priorities on DR PPs?
-%                         Test by inverting the priority and see if fewer buges are found.
-%         // Super optional to talk about. Probably not worth the time.
-%         // - "Too suspicious" (during init/destroy)
-%         //      (Cite eraser, section 2.2)
