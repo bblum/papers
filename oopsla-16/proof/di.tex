@@ -86,7 +86,8 @@ Other predicates are possible, though we will show they are irrelevant.
 
 When generating execution traces, the evaluation semantics is parameterized by a set of active PP predicates.
 As long as the set contains the synchronization API PPs,
-the execution shall switch threads only when a PP predicate holds.
+%the execution shall switch threads only when a PP predicate holds.
+the thread-switch invariant discussed above will hold.
 
 \begin{definition}[Preemption point (PP)]
 	%A PP is a code location between two instructions at which we may force threads to switch.
@@ -97,18 +98,19 @@ the execution shall switch threads only when a PP predicate holds.
 As discussed above, all thread switches occur at PPs.
 However, an interleaving may also contain PPs at which the same thread continued running.
 
-In the main paper, we used ``PP'' largely to denote what we now call ``PP predicates''.
+In the main paper, ``PP'' referred to what we now call ``PP predicates''.
 Hence, the ``same'' PP could occur multiple times during an execution.
 %for example, {\tt mutex\_lock()} may be called from {\tt foo()} and later again from {\tt bar()}.
-In these proofs, we separate such cases into multiple unique PPs: each PP is simply a label denoting the end of a single transition.
+In these proofs, we separate such cases into multiple unique PPs:
+each PP is simply a label denoting the boundary between two transitions.
 
 \begin{definition}[Transition]
 A sequence of execution steps from a program's evaluation between two PPs.
 \label{def:transition}
 
 \end{definition}
-We require the invariant that each transition's instructions are associated with exactly one thread. (That is, the set of PPs always includes all thread switches.)
-The set of synchronization API PPs provides this invariant, and all other PP sets in these proofs will be supersets of those.
+The thread-switch invariant guarantees that each transition's instructions are associated with exactly one thread.
+%The set of synchronization API PPs provides this invariant, and all other PP sets in these proofs will be supersets of those.
 %We also assume a trace of all memory accesses is available in the representation of transitions. %% It is, now.
 
 \begin{definition}[State space]
@@ -128,8 +130,8 @@ Then $t_1$ MHB $t_2$ if
 \end{enumerate}
 \end{definition}
 
-Intuitively, MHB expresses the "cannot be reordered with" relation between transitions
-("enables" in DPOR terminology \cite{dpor}).
+Intuitively, MHB expresses when two transitions cannot be reordered
+(the ``enables'' relation in DPOR terminology \cite{dpor}).
 Two transitions $A$ and $B$ of different threads MHB if some synchronization event in $A$ causes $B$ to become runnable while it was previously blocked.
 Such synchronization events include $\mathsf{thread\_fork}$, $\mathsf{make\_runnable}$,
 and sometimes but not always $\mathsf{mutex\_unlock}$.
@@ -172,7 +174,7 @@ one cannot be reordered to be in the middle of the other (i.e, lines 3-4 MHB lin
 %Hence, MHB is not necessarily transitive.
 In the latter case, the MHB relation is established by the mutex's blocking mechanism used during contention.
 
-In our main paper, we refer to this relation (in conjunction with a lock-set analysis) as Limited HB.
+Our main paper refers to this relation (in conjunction with a lock-set analysis) as Limited HB.
 
 \begin{definition}[Shared memory conflict]
 A pair of memory accesses between two threads to the same address where at least one of them is a write.
@@ -224,21 +226,21 @@ We refer to this property as {\em the soundness of DPOR}.
 \begin{definition}[Data race]
 A shared memory conflict where furthermore:
 \begin{itemize}
-	\item The intersection of both threads' locksets is empty (i.e., the threads do not hold the same lock during each access), and
-	\item The threads' transitions are not related by MHB.
+	\item The intersection of both threads' locksets is empty (i.e., the same lock does not protect both accesses), and
+	\item The containing transitions are not related by MHB.
 \end{itemize}
 \end{definition}
 
 The same as in the paper, we distinguish between data-race {\em candidates} (or {\em potential} data races) and data-race {\em bugs}.
 For brevity, we now use ``data race'' to refer both to true races and to potential data-race candidates identified by MHB.
-In this proof we are concerned solely with candidates, and whether they can be observed to race or are false positives.
-It is up to the MC to decide whether true data races are benign or buggy.
+%In this proof we are concerned solely with candidates, and whether they can be observed to race or are false positives.
+%It is up to the MC to decide whether true data races are benign or buggy.
 
 \begin{definition}[False positive data race]
-	An apparent data race that cannot be observed in the opposite order from what was actually executed.
+	An apparent data race that cannot be executed in the opposite order from what was observed.
 \end{definition}
 
-False positives are caused when some data dependency based on some other shared state, invisible to the data-race analysis,
+False positives are caused when some data dependency based on some other shared state %, invisible to the data-race analysis,
 changes some variable values when the threads are reordered, such that the memory addresses no longer collide.
 
 \begin{definition}[Malloc-recycle data race]
@@ -248,10 +250,10 @@ changes some variable values when the threads are reordered, such that the memor
 Figures~\ref{fig:recycle} and \ref{fig:recycle-bug} show an example.
 In the case of malloc-recycle false positives, the allocation heap is the ``other shared state'' mentioned in the previous definition, and malloc's return value is the variable value that changed.
 
-Recent work \cite{sparc-ssm} has proposed hardware techniques for detecting many classes of stale heap pointer accesses, including the one shown in Figure \ref{fig:recycle-bug}.
-This approach could be combined with stateless model checking in future work to identify such bugs immediately,
+Recent work \cite{sparc-ssm} proposed hardware techniques for detecting many classes of stale heap pointer accesses, including the one shown in Figure \ref{fig:recycle-bug}.
+Future work could combine this approach with MC to identify such bugs immediately,
 rather than requiring Iterative Deepening to explore new state spaces corresponding to the data race.
-However, if the {\tt malloc} call were in thread 1 instead of thread 2, the bug would still be nondeterministic, requiring stateless model checking to expose.
+However, if the {\tt malloc} call were in thread 1 instead of thread 2, the bug would still be nondeterministic, requiring MC to expose.
 
 \begin{definition}[Use after free]
 	Any read or write to heap memory which was once allocated, but no longer is.
@@ -316,13 +318,15 @@ These can immediately be identified as failures by a MC which tracks allocation 
 
 \section{Intuition}
 
-In this section we provide (hopefully) intuitive summaries of both our proof goals.
+This section provides (hopefully) intuitive summaries of our proof goals.
 %for readers not interested in double-checking the proofs' internal structure.
 
 {\bf Intuition for Iterative Deepening convergence.}
-In summary, we are proving that when Iterative Deepening saturates the set of data-race PPs,
-that set represents every single instruction where a preemption could possibly affect the program's behaviour,
-and that completing the associated state spaces is as strong of a verification as testing all possible thread interleavings by preempting anywhere.
+%In summary, we are proving
+We will prove
+that when Iterative Deepening saturates the set of data-race PPs,
+that set represents every instruction where a preemption could possibly affect the program's behaviour
+Hence, completing the associated state spaces is as strong a verification as testing all possible thread interleavings by preempting anywhere.
 A data-race may be hidden in control-flow paths reachable only after preempting on a different data-race,
 but the technique's iterative nature will eventually find it.
 On the other hand, relying on the soundness of DPOR, preempting on an instruction which is neither a data-race or sync API boundary cannot affect the program's behaviour,
@@ -351,9 +355,11 @@ Hence, coalescing those transitions does not exclude any possible interleavings.
 }.
 
 {\bf Intuition for malloc-recycle soundness.}
-In summary, we are proving that if a malloc-recycle-pattern data race is a true race, rather than a false positive,
-then DPOR is guaranteed to ``reorder away the free and re-malloc''.
-In other words, DPOR's exploration will eventually interleave threads in such a way that the malloc-recycle pattern will disappear,
+%In summary, we are proving
+We prove that if a malloc-recycle-pattern data race is not a false positive, %a true race, rather than a false positive,
+then DPOR %is guaranteed to ``reorder away the free and re-malloc''.
+%In other words, DPOR's exploration
+will eventually interleave threads in such a way that the malloc-recycle pattern will disappear,
 while the access pair remains for the data-race detector to find, as shown in Figure~\ref{fig:recycle-goal}.
 Hence, in the same state space where the malloc-recycle data race was found, if it's a true race, the same race will also appear without the recycle pattern.
-So if that race hides a failure bug (assertion, segfault, etc.), Iterative Deepening will still be led to the necessary preemption point to find that bug.
+So if that race can lead to a failure, Iterative Deepening will still be led to the necessary preemption point to find it.
