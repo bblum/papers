@@ -1,24 +1,26 @@
 \section{Proof of Iterative Deepening convergence}
 
+\newcommand\naive{na\"{i}ve\xspace}
 We seek to prove that, given enough time, Iterative Deepening offers the same coverage of thread interleavings that could be achieved by preempting at every single instruction.
-We'll call the latter the {\em na\"{i}ve state space}, and call the condition of testing all its interleavings {\em convergence}.
-(It could also be called soundness, from the perspective of viewing Iterative Deepening as a search re-ordering heuristic that doesn't miss any interleavings.)
+We'll call the latter the {\em \naive state space}, and call the condition of testing all its interleavings {\em convergence}%
+\footnote{
+It could also be called soundness, taking the perspective that Iterative Deepening is a search ordering heuristic that doesn't miss any interleavings.}.
 Hence, our convergence statement is as follows:
 
 \begin{theorem}[Total verification]
-	If Iterative Deepening fully saturates its set of data-race PPs and completes all associated state spaces,
+	If Iterative Deepening fully saturates its data-race PP predicates and completes all associated state spaces,
 	it serves as a verification of all possible thread schedules of the given test program.
 	\label{thm:totalverif}
 \end{theorem}
 
 The contrapositive statement offers more structure for an easier proof\footnote{
 For the reader who likes to avoid non-constructive proofs \cite{vargomax},
-note that we are using the constructive contrapositive direction:
+note that we use the constructive contrapositive direction:
 Theorem~\ref{thm:convergence} is $A \rightarrow B$ and Theorem~\ref{thm:totalverif} is $\neg B \rightarrow \neg A$.}:
 
 %DPOR + Iterative Deepening will eventually test every nonequivalent thread interleaving that would be exposed by preempting at every single instruction
 \begin{theorem}[Convergence of Iterative Deepening]
-	If a bug is exposed by an interleaving in the na\"{i}ve state space, Iterative Deepening will eventually test an equivalent interleaving which exposes the same bug.
+	If a bug is exposed by an interleaving in the \naive state space, Iterative Deepening will eventually test an equivalent interleaving which exposes the same bug.
 	\label{thm:convergence}
 \end{theorem}
 
@@ -33,24 +35,30 @@ Let
 \[
 	\mathcal{I} = [ (t_{\alpha{}1}, p_{\alpha{}1}), (t_{\beta{}1}, p_{\beta{}1}), ... (t_{\alpha{}n}, p_{\alpha{}n}), ... ]
 \]
-be an interleaving trace, where the element $(\tai, \pai)$ represents the $i$th transition $t$ of thread $\alpha$, and the associated preemption point $p$ at its end.
+be an interleaving, where the element $(\tai, \pai)$ represents the $i$th transition $t$ of thread $\alpha$, and the associated preemption point $p$ at its end.
 We will use the following notation:
 \begin{itemize}
-	\item $\ppinstr{\mathcal{I}}{\alpha}{i}$ indicates the first instruction executed during $t_{\alpha{}(i+1)}$ (the {\em next} transition), i.e., the instruction of $\alpha$ that \pai preempted just before.
+	\item $\ppinstr{\mathcal{I}}{\alpha}{i}$ indicates the first instruction executed during $t_{\alpha{}(i+1)}$ (the {\em next} transition),
+		i.e., the instruction of $\alpha$ that $\pai$ preempted just before.
 	\item $\ppothers{\mathcal{I}}{\alpha}{i}$ indicates the set of all transitions by other threads between $\tai$ and $t_{\alpha{}(i+1)}$.
-	\item $\conflicts{t_\alpha}{t_\beta}$ indicates the set of memory access pairs between $t_\alpha$ and $t_\beta$ such that among each pair, one access belongs to each thread $\alpha$ and $\beta$, the address is the same, and at least one is a write; i.e., precisely the shared memory conflict relation required by DPOR to determine dependent interleavings.
+	\item $\conflicts{t_\alpha}{t_\beta}$ indicates the set of shared memory conflict pairs between $t_\alpha$ and $t_\beta$.
+		%memory access pairs between $t_\alpha$ and $t_\beta$ such that among each pair,
+		%one access belongs to each thread $\alpha$ and $\beta$, the address is the same, and at least one is a write;
+		%i.e., precisely the shared memory conflict relation required by DPOR to determine dependent interleavings.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Equivalence of irrelevant PPs}
 
-Iterative Deepening will not, of course, preempt on exactly the same instructions that an arbitrary naive interleaving would,
+Iterative Deepening will not, of course, preempt on exactly the same instructions that an arbitrary \naive interleaving would,
 as it is only capable of preempting on data races and sync API boundaries.
-Thus, our first task is to show that all naive interleavings have an equivalent interleaving with only data-race and sync API PPs.
+Thus, our first task is to show that all \naive interleavings have an equivalent interleaving which includes only data-race and sync API PPs.
 
 \begin{definition}[Relevant preemption point]
-	We say a PP $\pai$ is {\em relevant} if either $\ppinstr{\mathcal{I}}{\alpha}{i}$ is a sync API boundary (including a voluntary yield),
+	We say a PP $\pai$ is {\em relevant} if either
+	%$\ppinstr{\mathcal{I}}{\alpha}{i}$ is a sync API boundary (including a voluntary yield),
+	$\pai$ is a synchronization API PP,
 	or if
 	\[
 		\conflicts{\ppothers{\mathcal{I}}{\alpha}{i}}{\ppinstr{\mathcal{I}}{\alpha}{i}} \ne \emptyset
@@ -68,13 +76,13 @@ Thus, our first task is to show that all naive interleavings have an equivalent 
 \end{lemma}
 
 \begin{proof}
-	Let $\pai$ be the first irrelevant PP of a naive interleaving $\mathcal{I}$.
+	Let $\pai$ be the first irrelevant PP of a \naive interleaving $\mathcal{I}$.
 	We ask, did some thread among $\ppothers{\mathcal{I}}{\alpha}{i}$ conflict with any instruction from $t_{\alpha{}(i+1)}$, even though there was no conflict with $\ppinstr{\mathcal{I}}{\alpha}{i}$?
 	\begin{itemize}
 			% rho for relevant.
 			% no, scratch that.
 			% chi for conflict.
-		\item If $\conflicts{\ppothers{\mathcal{I}}{\alpha}{i}}{t_{\alpha{}(i+1)}} \ne \emptyset$, or if $\tai$ contains a sync API boundary instruction that's not already a PP,
+		\item If $\conflicts{\ppothers{\mathcal{I}}{\alpha}{i}}{t_{\alpha{}(i+1)}} \ne \emptyset$, or if $\tai$ contains a sync API instruction that's not already a PP,
 			then let $\chi$ be either the first instruction by $t_{\alpha{}(i+1)}$ among the conflicts or the first sync API instruction, whichever comes first.
 			Let $\pppfx{t_{\alpha{}(i+1)}}{\chi}$ denote the instruction sequence between $\ppinstr{\mathcal{I}}{\alpha}{i}$ and $\chi$, including the former but not the latter.
 			Now, we output the new interleaving:
@@ -87,16 +95,18 @@ Thus, our first task is to show that all naive interleavings have an equivalent 
 				\\
 			\end{tabular}
 
-			In other words, we have simply reordered $\ppothers{\mathcal{I}}{\alpha}{i}$ to between $\pppfx{t_{\alpha{}(i+1)}}{\chi}$ and $\chi$, removing the irrelevant $\pai$ and adding a new PP $\pai'$, which is relevant by the construction of $\chi$.
-			We know it must be possible to reorder $\ppothers{\mathcal{I}}{\alpha}{i}$ to after $\alpha$'s execution because no synchronization is done during $\pppfx{t_{\alpha{}(i+1)}}{\chi}$, hence the other threads' runnability cannot be affected.
+			In other words, we reorder $\ppothers{\mathcal{I}}{\alpha}{i}$ to between $\pppfx{t_{\alpha{}(i+1)}}{\chi}$ and $\chi$,
+			removing the irrelevant $\pai$ and adding a new PP $\pai'$, which is relevant by the construction of $\chi$.
+			It must be possible to reorder $\ppothers{\mathcal{I}}{\alpha}{i}$ to after $\alpha$'s execution because no synchronization occurs during $\pppfx{t_{\alpha{}(i+1)}}{\chi}$, hence the other threads' runnability cannot be affected.
 			Likewise $\pppfx{t_{\alpha{}(i+1)}}{\chi}$ is independent with $\ppothers{\mathcal{I}}{\alpha}{i}$, so by the soundness of DPOR, $\mathcal{I}' \equiv \mathcal{I}$.
-		\item Otherwise, $\conflicts{\ppothers{\mathcal{I}}{\alpha}{i}}{t_{\alpha{}(i+1)}} = \emptyset$, and no instructions among $t_{\alpha{}(i+1)}$ are a sync API boundary.
+		\item Otherwise, $\conflicts{\ppothers{\mathcal{I}}{\alpha}{i}}{t_{\alpha{}(i+1)}} = \emptyset$,
+			and no instructions among $t_{\alpha{}(i+1)}$ are synchronization.
 			Then we output the new interleaving:
 			\[
 				\mathcal{I}' = [..., (\tai \cup t_{\alpha(i+1)}, p_{\alpha(i+1)}), \ppothers{\mathcal{I}}{\alpha}{i},...]
 			\]
-			In other words, we have reordered {\ppothers{\mathcal{I}}{\alpha}{i}} with the entire next transition by thread $\alpha$.
-			We know this must be possible for the same reasons as above, and again, the transitions are independent, so $\mathcal{I}' \equiv \mathcal{I}$.
+			In other words, we reorder {\ppothers{\mathcal{I}}{\alpha}{i}} with the entire next transition by thread $\alpha$.
+			This must be possible for the same reasons as above, and again, the transitions are independent, so $\mathcal{I}' \equiv \mathcal{I}$.
 			%&$(t_{\alpha{}(i+1)}) \setminus \pppfx{t_{\alpha{}(i+1)}}{\chi}, p_{\alpha{}(i+1)}),$ & $ ...\}$ \\
 	\end{itemize}
 	This constitutes an algorithm for inductively converting (or removing) all irrelevant PPs to relevant ones.
@@ -107,14 +117,21 @@ Thus, our first task is to show that all naive interleavings have an equivalent 
 \subsection{Saturation of data-race PPs}
 
 Now we must show that, starting from a sync-PP-only state space,
-Iterative Deepening will eventually interleave threads sufficiently to expose all data races which are used as PPs in any buggy fully-relevant interleaving.
-The challenge of this proof is that some data-race candidates are nondeterministic to find;
-i.e., they may be hidden in an obscure control flow path which requires a prior preemption on a different data race to expose,
+Iterative Deepening will eventually
+%interleave threads sufficiently to expose
+encounter all data races which are used as PPs in any buggy fully-relevant interleaving.
+The challenge
+%of this proof
+is that some data-race candidates are nondeterministic to find;
+i.e., they may be hidden in
+%an obscure control flow path
+control flow which requires a prior preemption on a different data race to expose,
 as shown in Figure~\ref{fig:nondet-dr}.
 Hence, the maximal state space of statically-available sync API PPs will not necessarily uncover all possible data-race PPs;
-Iterative Deepening may need to iterate through some data-race state spaces before finding certain nondeterministic races.
+%Iterative Deepening
+we may need to iterate through some data-race state spaces before finding certain nondeterministic races.
 
-\begin{figure}[t]
+\begin{figure}[h]
 	\small
 	\begin{tabular}{rl}
 	& \multicolumn{1}{c}{~\texttt{int x = 0, y = 0;~~~~~~~~~~~~~~~~}} \\
@@ -134,7 +151,12 @@ Iterative Deepening may need to iterate through some data-race state spaces befo
 	10 & \texttt{~~~~\}} \\
 	11 & \texttt{\}} \\
 	\end{tabular}
-	\caption{Not all data races will immediately be uncovered by interleaving threads around sync API PPs alone. Here, preempting during the race on line 1 is necessary to force the program into the control flow which can race on line 5.}
+	\caption{Not all data races will immediately be uncovered by
+	%interleaving threads around
+	sync API PPs alone.
+	Here, preempting during line 1's race is necessary to force the program
+	%into the control flow which can race on line 5.
+	to execute the racy line 5.}
 	\label{fig:nondet-dr}
 \end{figure}
 
@@ -146,7 +168,7 @@ reachable data races.
 \end{definition}
 
 \begin{definition}[Reachable preemption point]
-	A PP $\pai$ such that either $\ppinstr{\mathcal{I}}{\alpha}{i}$ is part of a reachable data race, or a sync API boundary.
+	A PP $\pai$ such that either $\ppinstr{\mathcal{I}}{\alpha}{i}$ is part of a reachable data race, or a synchronization instruction.
 \end{definition}
 
 \begin{lemma}
@@ -161,9 +183,11 @@ reachable data races.
 \newcommand\coalesce[1]{\ensuremath{\mathsf{coalesce}(#1)}}
 
 \begin{proof}
-Let $\mathcal{I} = [(t_{\alpha{}1}, p_{\alpha{}1}), ...]$ be the fully-relevant interleaving and PP sequence in the premise of the lemma which exposed a bug.
-We proceed by induction on the PPs according to the order of their preemptions.
-(Note that this is not necessarily the same as the order of the racing instructions $\ppinstr{\mathcal{I}}{\alpha}{i}$, which occur in $t_{\alpha{}(i+1)}$, not in \tai.)
+Let $\mathcal{I} = [(t_{\alpha{}1}, p_{\alpha{}1}), ...]$ be the fully-relevant interleaving and PP sequence in the premise which exposed a bug.
+We proceed by induction on the PPs according to their order in $\mathcal{I}$%the order of their preemptions.
+\footnote{Note that this is not necessarily the same as the order of the racing instructions
+	$\ppinstr{\mathcal{I}}{\alpha}{i}$, which occur in $t_{\alpha{}(i+1)}$, not in \tai.
+}.
 For both the base case and inductive step, we know (vacuously, for the former) that for each other PP $\pbh$ with $\tbh \prec \tai \in \mathcal{I}$, $\pbh$ is reachable.
 We must show that a data race involving $\ppinstr{\mathcal{I}}{\alpha}{i}$
 is reachable, and we are not allowed to use $\pai$ until we find the data race between $\ppinstr{\mathcal{I}}{\alpha}{i}$ and $\ppothers{\mathcal{I}}{\alpha}{i}$.
@@ -247,20 +271,22 @@ that $\mathcal{K}$ is reachable.
 \newcommand\tgl{\ensuremath{t_{\gamma{}l}}}
 
 {\bf Finding the next reachable data-race PP.}
-Now, we show by induction that a data race on $\ppinstr{\mathcal{I}}{\alpha}{i}$ will be reachable.
+Now, we show by induction that a data race on $\ppinstr{\mathcal{I}}{\alpha}{i}$ is reachable.
 We assume that a state space $\mathcal{S}$ containing $\mathcal{K}$,
 plus $n$ unique data race PPs among $t_{\alpha{}(i+1)}'$ and $\ppothers{\mathcal{I}}{\alpha}{i}$,
 will be reachable.
-(In the base case, the number of new data-race PPs is 0, and $\mathcal{K}$'s reachability is justified above.)
+(In the base case, $n=0$, and $\mathcal{K}$'s reachability is justified above.)
 We must show that in this state space, if the $\ppinstr{\mathcal{I}}{\alpha}{i}$ data race is not reachable,
-a new unique data-race PP will instead be reachable.
+a new unique data-race PP will be reachable instead.
 
-By the definition of fully-relevant interleaving, $\mathcal{I}$ guarantees that some other thread $\omega$ can execute a data-racing instruction with $\ppinstr{\mathcal{I}}{\alpha}{i}$.
+By the definition of relevance, %fully-relevant interleaving,
+$\mathcal{I}$ guarantees that some other thread $\omega$ can execute a data-racing instruction with $\ppinstr{\mathcal{I}}{\alpha}{i}$.
 %
-By the soundness of DPOR, if a program behaviour is possible by interleaving threads at the boundaries of
+By the soundness of DPOR, if a program behaviour is possible by interleaving at the boundaries of
 the given transitions, that interleaving will be tested.
 By contrapositive,
-because $\omega$'s data-racing instruction was not tested in $\mathcal{S}$, one or more necessary sites of interleaving must be in the middle of some transition, rather than at its boundaries.
+because $\omega$'s data-racing instruction was not tested in $\mathcal{S}$,
+one or more necessary interleaving sites must be in the middle of some transition, rather than all at boundaries.
 
 However, we do not get a {\em single} such transition for free.
 We have arrived at the crux of the proof:
@@ -270,7 +296,7 @@ We require that in $\mathcal{S}$, there exists a single transition $\tbk$ that c
 and some other communicating transition $\tgl$ which conflicts with $\tbkb$.
 %i.e., $[\tbka, \tgl', \tbkb']$ exposes new program behaviour.
 
-We show this by contradiction:
+We show this by contradiction.
 % Sully points out that it's constructive because the set of interleavings / data races is finite.
 %\footnote{
 %Regrettably, we could not devise a constructive algorithm for this part of the proof.
@@ -291,8 +317,8 @@ By the soundness of DPOR, because any such $\tgl$ is independent with $\tbkb$,
 \]
 Hence, $\mathcal{S} \equiv \mathcal{S}'$. % This jump to full-state-space-equivalence seems a bit big, but the middle steps are all just more equivalence, obviously.
 Then, the above assumption also applies to $\mathcal{S}'$,
-which shows that for any {\em pair} of transitions such as $\tbk$, adding two new PPs cannot expose new program behaviour.
-Hence, inductively, no set of new PPs of any size would expose new program behaviour not already exposed in $\mathcal{S}$.
+showing that for any {\em pair} of transitions such as $\tbk$, adding two new PPs cannot expose new program behaviour.
+Inductively, no set of new PPs of any size would expose new behaviour not already exposed in $\mathcal{S}$.
 However, the instruction by $\omega$ which conflicts with $\ppinstr{\mathcal{I}}{\alpha}{i}$ was not observed in $\mathcal{S}$,
 so we have our contradiction.
 
@@ -307,7 +333,7 @@ Hence the memory conflict between $\tgl$ and $\tbkb$ will be identified as a dat
 Finally, because $\tbk$ was not previously split by a PP, the data-race was not already discovered.
 
 {\bf Reaching $\mathbf{p_{\alpha{}i}}$.}
-Hence either a data-race with $\ppinstr{\mathcal{I}}{\alpha}{i}$ will be identified,
+Hence either a data-race will be identified including $\ppinstr{\mathcal{I}}{\alpha}{i}$,
 or an infinite/nonterminating sequence of other unique data-race PPs will be identified,
 but by the halting assumption, this would constitute an infinite loop bug, which is sufficient.
 (Alternatively, for any program with a finitely-sized instruction listing, the number of unique instruction pairs is finite.)
@@ -321,7 +347,8 @@ Hence by the ``$\pai$ is reachable'' induction, all PPs in $\mathcal{I}$ are rea
 
 \setcounter{theorem}{1}
 \begin{theorem}[Convergence of Iterative Deepening]
-	If a bug is exposed by an interleaving in the na\"{i}ve state space, Iterative Deepening will eventually test an interleaving which exposes the same bug.
+	% restatement of same theorem from beginning
+	If a bug is exposed by an interleaving in the \naive state space, Iterative Deepening will eventually test an equivalent interleaving which exposes the same bug.
 \end{theorem}
 
 \begin{proof}
