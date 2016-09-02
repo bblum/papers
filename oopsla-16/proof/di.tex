@@ -148,7 +148,7 @@ We illustrate the difference in Figure~\ref{fig:mhb}.
 \begin{figure}[h]
 	\small
 \begin{tabular}{rll}
-	& Thread 1 & Thread 2 \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
 	1 & \texttt{\hilight{brickred}{my\_x->foo = ...;}} & \\
 	2 & \texttt{\hilight{olivegreen}{mutex\_lock(...);}} &\\
 	3 & \texttt{global\_x = my\_x;} & \\
@@ -267,7 +267,7 @@ These can immediately be identified as failures by a MC which tracks allocation 
 	& \multicolumn{2}{c}{\texttt{struct x \{ int foo; int baz; \} *x;}} \\
 	& \multicolumn{2}{c}{\texttt{struct y \{ int bar; \} *y;~~~~~~~~~~}} \\
 	\\
-	& Thread 1 & Thread 2 \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
 	1 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
 	2 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 	3 & & \texttt{\hilight{commentblue}{// x's memory recycled}} \\
@@ -283,7 +283,7 @@ These can immediately be identified as failures by a MC which tracks allocation 
 \begin{figure}[t]
 	\small
 \begin{tabular}{rll}
-	& Thread 1 & Thread 2 \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
 	1 & \texttt{publish(x1);} & \\
 	2 & & \texttt{x2 = get\_published\_x();} \\
 	3 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
@@ -299,7 +299,7 @@ These can immediately be identified as failures by a MC which tracks allocation 
 \begin{figure}[t]
 	\small
 \begin{tabular}{rll}
-	& Thread 1 & Thread 2 \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
 	1 & \texttt{publish(x1);} & \\
 	2 & & \texttt{x2 = get\_published\_x();} \\
 	3 & & \texttt{\hilight{commentblue}{// x not free, so malloc's}} \\
@@ -309,7 +309,7 @@ These can immediately be identified as failures by a MC which tracks allocation 
 	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
 	8 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 \end{tabular}
-\caption{Goal interleaving, which reorders the adversarial program's threads away from the pattern, while the data race remains.}
+\caption{Goal interleaving, reordering the adversarial threads away from the pattern, while the data race remains.}
 \label{fig:recycle-goal}
 \end{figure}
 

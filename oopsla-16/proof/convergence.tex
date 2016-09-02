@@ -138,7 +138,7 @@ we may need to iterate through some data-race state spaces before finding certai
 	& \multicolumn{1}{c}{\texttt{bool t1\_x = false, t1\_y = false;}} \\
 	& \multicolumn{1}{c}{\texttt{bool t2\_x = false, t2\_y = false;}} \\
 \\
-		& Thread 1 (Thread 2 similar, with {\tt t1} and {\tt t2} vars swapped) \\
+		& {\bf Thread 1} (Thread 2 similar, with {\tt t1} and {\tt t2} vars swapped) \\
 	1 & \texttt{\hilight{brickred}{x = x + 1;}} \\
 	2 & \texttt{t1\_x = true;} \\
 	3 & \texttt{\hilight{commentblue}{// "if x raced"}} \\
@@ -354,8 +354,11 @@ Hence by the ``$\pai$ is reachable'' induction, all PPs in $\mathcal{I}$ are rea
 \begin{proof}
 By Lemma~\ref{lem:equivalent}, there must be some equivalent fully-relevant interleaving.
 %the na\"{i}ve interleaving must be equivalent to some interleaving built of data-race PPs and sync API PPs.
-By Lemma~\ref{lem:saturation}, Iterative Deepening will eventually discover and enable all necessary data-race PPs, with sync API PPs being enabled by the maximal state space assumption\footnote{
-		In the paper we noted that when a bug is found, \quicksand~cancels all superset state spaces, anticipating that they would find the same bug.
-		Because we are concerned with verifying the absence of bugs, this also suffices for convergence, although we have left it implicit for brevity.}.
+By Lemma~\ref{lem:saturation}, Iterative Deepening will eventually discover and enable all necessary data-race PPs, with sync API PPs being enabled by the maximal state space assumption.
+%\footnote{
+%	In the paper we noted that when a bug is found, \quicksand~cancels all superset state spaces,
+%	anticipating the same bug.
+%	%Because we are concerned with verifying the absence of bugs, this also suffices for convergence, although we have left it implicit for brevity.
+%	This also suffices for the sake of verification.}.
 Then DPOR will find the buggy interleaving within this state space.
 \end{proof}

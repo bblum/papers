@@ -102,7 +102,7 @@ Hence, $p$ must be a data race of its own.
 \begin{figure}[t]
 	\small
 \begin{tabular}{rll}
-	& Thread 1 & Thread 2 \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
 
 	%1 & \texttt{p1 = \hilight{olivegreen}{malloc}(...);} & \\
 	1 & \texttt{\hilight{brickred}{p1->ptr = x1;}} & \\
@@ -158,7 +158,6 @@ and DPOR will reorder T2's execution to just after the publish action.
 As long as T2's execution occurs after the publish, it will receive the same value for its $a_2$, so the location of the data race does not change.
 Lemma~\ref{lem:reorder} concludes.
 %Hence for any type of publish action, there will be a PP between it and $a_1$, hence DPOR will reorder $a_2$ to before $a_1$ (without changing the address at which $a_2$ occurs), and Lemma~\ref{lem:reorder} finishes.
-
 \end{proof}
 
 %We will also say that T1 does the initial malloc which first returns $a_1$'s address; although certainly T2 or even a third thread could have malloced it, that would involve a thread switch to thread 1, and hence a PP by Definition~\ref{def:transition}.
@@ -202,7 +201,7 @@ Hence, our proofs so far show that suppressing malloc-recycle candidates is soun
 \begin{figure}[t]
 	\small
 \begin{tabular}{rll}
-	& Thread 1 & Thread 2 \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
 	1 & & \texttt{z = malloc(42);} \\
 	2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
 	3 & & \texttt{x2 = \&z[50];} \\
@@ -220,15 +219,15 @@ Hence, our proofs so far show that suppressing malloc-recycle candidates is soun
 \begin{figure}[t]
 	\small
 \begin{tabular}{rll}
-	& Thread 1 & Thread 2 \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
 	1 & & \texttt{z = malloc(42);} \\
-	2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
-	3 & & \texttt{x2 = \&z[50];} \\
-	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
-	5 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
-	6 & \texttt{x1 = malloc(...);} & \\
-	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
-	8 & \texttt{\hilight{olivegreen}{free}(x1);} \\
+	%2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
+	2 & & \texttt{x2 = \&z[50];} \\
+	3 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	4 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+	5 & \texttt{x1 = malloc(...);} & \\
+	6 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
+	7 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 \end{tabular}
 \caption{Without a PP between lines 4 and 5 of Figure~\ref{fig:overrun}, this is the only alternate interleaving DPOR would explore. The mallocs have been reordered and may no longer collide, which wrongly appears to be a false positive.}
 \label{fig:overrun-notenough}
@@ -238,15 +237,15 @@ Hence, our proofs so far show that suppressing malloc-recycle candidates is soun
 \begin{figure}[t]
 	\small
 \begin{tabular}{rll}
-	& Thread 1 & Thread 2 \\
+	& {\bf Thread 1} & {\bf Thread 2} \\
 	1 & & \texttt{z = malloc(42);} \\
-	2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
-	3 & & \texttt{x2 = \&z[50];} \\
-	4 & \texttt{x1 = malloc(...);} & \\
-	5 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
-	6 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
-	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
-	8 & \texttt{\hilight{olivegreen}{free}(x1);} \\
+	%2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
+	2 & & \texttt{x2 = \&z[50];} \\
+	3 & \texttt{x1 = malloc(...);} & \\
+	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	5 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+	6 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
+	7 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 \end{tabular}
 	\caption{Goal interleaving of Figure~\ref{fig:overrun}. To ensure collision, the sequence of malloc calls producing $a_1$ and $a_2$ must not be disrupted compared to the original interleaving.}
 	%, compared to the trace which originally exposed the malloc-recycle race.}
