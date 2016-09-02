@@ -7,21 +7,20 @@ we leave the program syntax and execution semantics opaque,
 reasoning instead about execution traces.
 We require that a program's evaluation produce a trace of instructions of the following form:
 \begin{eqnarray*}
-	\mathcal{A} &::=& v \leftarrow \mathsf{read}(a) \quad | \quad \mathsf{write}(a,v) \quad | \quad \mathsf{xchg(a,v)} \\
+	\mathcal{A} &::=& v \leftarrow \mathsf{read}(a) \quad | \quad \mathsf{write}(a,v) \quad | \quad \mathsf{xchg}(a,v) \\
 		&|& a \leftarrow \mathsf{malloc}(n) \quad | \quad \mathsf{free}(a) \\
-		&|& \textit{local} \\
-		&|& \mathcal{A}_{sync}
+		&|& \mathcal{A}_{local} \quad | \quad \mathcal{A}_{sync}
 \end{eqnarray*}
 The execution steps take the following forms:
 
 {\bf Memory.}
 $\mathsf{read}$, $\mathsf{write}$, and $\mathsf{xchg}$ access global or heap memory shared by all threads, indicated by some address $a$.
-(Other atomic swap operataions are omitted for brevity.)
+(Other atomic swap operations are omitted for brevity.)
 $\mathsf{malloc}$ and $\mathsf{free}$ provide access to fresh memory accessible by all threads. % free is irrelevant to the system model in terms of expressive power
 
 {\bf Local state.}
-$\textit{local}$ represents any thread-local instruction, such as modifying local variables, flow control, function calling, and assertions. %, and side effects.
-We omit a detailed list for brevity, as we do not need to reason about their nature in these proofs.
+$\mathcal{A}_{local}$ represents any thread-local instruction, such as modifying local variables, flow control, function calls, and assertions. %, and side effects.
+We omit a detailed list for brevity, as we do not need to reason about them in these proofs.
 %For brevity, we omit a detailed list, although note that $\mathsf{call}$ would be implemented by modifying the instruction stream $[\mathcal{I}]$ and creating a new frame on the stack of local variables.
 
 {\bf Threads.}
