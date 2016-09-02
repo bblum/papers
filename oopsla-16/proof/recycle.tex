@@ -1,7 +1,8 @@
 \section{Proof of malloc-recycle soundness}
 \label{sec:proof}
 
-We seek to prove that ignoring malloc-recycle data races cannot cause DPOR + Iterative Deepening to miss a bug that could be found by using the malloc-recycle race as a PP. Hence, our soundness statement is as follows:
+We seek to prove that ignoring malloc-recycle data race candidates cannot cause DPOR + Iterative Deepening to miss a bug
+that could be found by using the race as a PP predicate. Our soundness statement is as follows:
 
 \begin{theorem}[Soundness of eliminating malloc-recycle races]
 	If a malloc-recycle data race is not a false positive, DPOR will reorder threads such that either the same accesses will still race without fitting the malloc-recycle pattern, or a use-after-free bug will be reported immediately.
@@ -31,15 +32,15 @@ If either the middle free or middle malloc came from a third thread, the case is
 \end{proof}
 
 The keen reader might ask here, what if T1 contains some extra spurious malloc calls (not related to $a_1$) that affect what T2's malloc returns after being reordered?
-However, these could at best either cause {\tt x}'s memory to be recycled slightly differently (not affecting the proof), or not at all (which simply changes some cases to be immediate use-after-frees).
+These could at best either cause {\tt x}'s memory to be recycled differently (not affecting the proof), or not at all (which simply causes immediate use-after-free).
 %If such a malloc could affect $a_2$, the data race would be a false positive after all.
-In general, adding spurious mallocs that could affect $a_1$ or $a_2$ could only convert the program back into a false-positive scenario;
-and adding more spurious synchronization events could only make it more easy to find PPs we need to trigger the reordering.
-So, WLOG, we say that the only relevant events are the ones we mention explicitly.
+In general, extra spurious mallocs that could affect $a_1$ or $a_2$ could only convert the program back into a false-positive scenario;
+and extra spurious synchronization events could only make it more easy to find PPs we need to trigger the reordering.
+So we can safely assume the only relevant events are the ones we mention explicitly.
 
-By our last assumption, there must also be an ``original malloc'' which allocated the heap block to begin with.
+By our last assumption, there must also be an ``original malloc'' which allocated the block to begin with.
 We must ask, which thread did the malloc which returned $a_1$'s address in the first place?
-Because of our last assumption, we know that the other thread must obtain that address through some communication mechanism (which we'll reason about later).
+Our last assumption provides that the other thread must obtain that address through some communication mechanism (which we'll reason about later).
 
 \subsection{T2 originally malloced x}
 
@@ -87,12 +88,15 @@ Note why we assert the publish action must come before $a_1$: otherwise, T2 coul
 %\label{fig:recycle-bug}
 %\end{figure}
 
-We ask: was there a synchronization event (unlock or message-pass) between the publish action and $a_1$?
-If so, then by the maximal state space assumption, the event will be a PP, and we are done.
-If not, then  T1's lockset during publish will be the same as the lockset during $a_1$ (and the fact that there is no MHB cannot change).
+If there was a synchronization event between the publish action and $a_1$,
+then the maximal state space assumption provides the necessary PP, and we are done.
+%We ask: was there a synchronization event (unlock or message-pass) between the publish action and $a_1$?
+%If so, then by the maximal state space assumption, the event will be a PP, and we are done.
+%If not,
+Otherwise, T1's lockset will be the same during publish and during $a_1$ (and the MHB-ness cannot change).
 For T1's publish to reach T2, they must access the same memory ({\em outside} of the block containing $a_1$; T2 doesn't have that yet),
 which we'll call $p$.
-By the previous two statements, $p$ must be a data race of its own.
+Hence, $p$ must be a data race of its own.
 %(whether by writing {\tt x}'s address directly into the shared memory, or by sharing a pointer to a data structure containing {\tt x} -- doesn't matter which)
 
 \begin{figure}[t]
@@ -122,9 +126,9 @@ By the previous two statements, $p$ must be a data race of its own.
 \label{fig:induction}
 \end{figure}
 
-Because it's possible for $p$ to {\em also} be a malloc-recycle data race,
+Because $p$ may also be a malloc-recycle data race,
 as shown in Figure~\ref{fig:induction},
-we do not necessarily get the PP for free here.
+we do not necessarily get the PP for free.
 In this case we need to prove that DPOR will likewise reorder any intermediate malloc-recycle pattern to generate the PP we need\footnote{
 In \quicksand, data race PPs are not used immediately, but rather generate new state spaces to explore in the future. Anyway, under the maximal state space assumption, we will get to it eventually.}.
 We handle this with induction on T2's pointer chain leading to {\tt x}.
@@ -140,23 +144,22 @@ We handle this with induction on T2's pointer chain leading to {\tt x}.
 		% where \publish{n-1} is shared
 		sufficient to make the \publish{n-1}\texttt{->ptr} access not malloc-recycle after DPOR.
 		%DPOR will test some interleaving in which T1's
-		Hence a data race PP will be generated on the \publish{n-1}\texttt{->ptr} access.
-		Hence by Definition~\ref{def:dpor} and Lemma~\ref{lem:reorder},
+		Hence a data race PP will be generated on the \publish{n-1}\texttt{->ptr} access,
+		and by Definition~\ref{def:dpor} and Lemma~\ref{lem:reorder},
 		DPOR will reorder T1's and T2's subsequent accesses to \publish{n} sufficiently to place a PP on them.
 		% i.e., so that the p_n access no longer appears to be malloc-recycle.
 \end{itemize}
 
 Hence, even if the accesses by which T1 shares {\tt x} with T2 appear in a different malloc-recycle pattern,
-a PP will be identified on the publish location $p$.
-Hence by Definition~\ref{def:dpor} DPOR will reorder T2's execution to just after the publish action.
+a PP will be identified on the publish location $p$,
+%Hence by Definition~\ref{def:dpor}
+and DPOR will reorder T2's execution to just after the publish action.
 % XXX: Landslide does not do this! It only puts a PP immediately *before* the access. That's incompatible with this, which needs you to put one both before and after.
 As long as T2's execution occurs after the publish, it will receive the same value for its $a_2$, so the location of the data race does not change.
-Lemma~\ref{lem:reorder} finishes.
+Lemma~\ref{lem:reorder} concludes.
 %Hence for any type of publish action, there will be a PP between it and $a_1$, hence DPOR will reorder $a_2$ to before $a_1$ (without changing the address at which $a_2$ occurs), and Lemma~\ref{lem:reorder} finishes.
 
-
 \end{proof}
-
 
 %We will also say that T1 does the initial malloc which first returns $a_1$'s address; although certainly T2 or even a third thread could have malloced it, that would involve a thread switch to thread 1, and hence a PP by Definition~\ref{def:transition}.
 %As we will see, the main challenge of the proof is showing that enough PPs will exist at appropriate points, so adding more PPs by considering other threads for the initial malloc can only make the proof easier.
@@ -177,20 +180,24 @@ Lemma~\ref{lem:reorder} finishes.
 \subsection{Heap overruns}
 \label{sec:owned}
 
-If we relax the ``sharing heap addresses'' assumption, there is another way to share the allocation's address without T1 and T2 communicating outside of $a_1$/$a_2$. One thread can overrun a {\em different} heap block which happened to be adjacent to the one containing $a_1$/$a_2$ (call them the ``neighbour block'' and ``real block'' respectively).
+If we relax the ``sharing heap addresses'' assumption, there is another way to share the allocation's address without T1 and T2 communicating outside of $a_1$/$a_2$.
+One thread can overrun a {\em different} heap block adjacent to the one containing $a_1$/$a_2$ (call them the ``neighbour block'' and ``real block'' respectively).
 Figure~\ref{fig:overrun} shows an example.
 Heap overrun bugs are quite serious \cite{eternal-war}, so we do not wish to exclude them from our proof.
 
-In the evaluation of our main paper, we used the full ``sharing heap addresses'' assumption to heuristically reduce state space size,
-and not test reorderings of threads which could only change the addresses allocated by {\tt malloc}.
-This restricted the scope of our tests to exclude testing for heap-overflow bugs.
-We consider this justified because new techniques \cite{sparc-ssm} have recently emerged for finding such bugs quickly without the need for data-race PPs.
-However, for users wishing to test for this class of bug simultaneously with other concurrency bugs, we show in this section how to strengthen the configuration of DPOR to cover the weakened assumption.
+In our evaluation, we used the full ``sharing heap addresses'' assumption to heuristically reduce state space size,
+skipping reorderings which could only change the addresses allocated by $\mathsf{malloc}$.
+This restricted our tests' scope to exclude such heap-overflow bugs.
+We consider this justified because recent techniques \cite{sparc-ssm} can find such bugs quickly without the need for data-race PPs.
+However, for users wishing to test for this class of bug and concurrency bugs simultaneously,
+we show now how to strengthen the configuration of DPOR to cover the weakened assumption.
 
 Note also that even if malloc-recycle candidates are {\em not} suppressed,
 a DPOR which ignores malloc's internal metadata accesses would still be unsound with respect to these bugs.
-We illustrate this in Figure~\ref{fig:overrun-notenough}: even if there were PPs in arbitrary places, the two threads' transitions do not collide in this interleaving on anything but {\tt malloc}'s internal metadata, and hence DPOR would not attempt to reorder them.
-Hence, what we have already proved so far can be viewed as showing that suppressing malloc-recycle candidates is sound with respect only to the classes of bugs which DPOR is already sound to.
+We illustrate this in Figure~\ref{fig:overrun-notenough}:
+even with PPs in arbitrary places, the two threads' transitions conflict only on $\mathsf{malloc}$'s internal metadata,
+and hence DPOR would not attempt to reorder them.
+Hence, our proofs so far show that suppressing malloc-recycle candidates is sound with respect to the classes of bugs which DPOR is already sound to.
 
 \begin{figure}[t]
 	\small
@@ -223,7 +230,7 @@ Hence, what we have already proved so far can be viewed as showing that suppress
 	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
 	8 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 \end{tabular}
-\caption{Without a PP between lines 4 and 5 of Figure~\ref{fig:overrun}, this is the only alternate interleaving DPOR would explore. Because the mallocs have been reordered, they may no longer collide, which wrongly appears to be a false positive.}
+\caption{Without a PP between lines 4 and 5 of Figure~\ref{fig:overrun}, this is the only alternate interleaving DPOR would explore. The mallocs have been reordered and may no longer collide, which wrongly appears to be a false positive.}
 \label{fig:overrun-notenough}
 \end{figure}
 
@@ -241,7 +248,8 @@ Hence, what we have already proved so far can be viewed as showing that suppress
 	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
 	8 & \texttt{\hilight{olivegreen}{free}(x1);} \\
 \end{tabular}
-\caption{Goal interleaving of Figure~\ref{fig:overrun}. To ensure collision, the sequence of malloc calls which produce $a_1$ and $a_2$ must not be disrupted, compared to the trace which originally exposed the malloc-recycle race.}
+	\caption{Goal interleaving of Figure~\ref{fig:overrun}. To ensure collision, the sequence of malloc calls producing $a_1$ and $a_2$ must not be disrupted compared to the original interleaving.}
+	%, compared to the trace which originally exposed the malloc-recycle race.}
 \label{fig:overrun-goal}
 \end{figure}
 
@@ -249,8 +257,8 @@ Hence, what we have already proved so far can be viewed as showing that suppress
 To soundly suppress heap-overrun malloc-recycle candidates,
 %we must consider the cases where T1 mallocs the real block and T2 overflows a neighbour, and vice versa.
 we must strengthen our configuration of DPOR as follows:
-accesses from {\tt malloc}'s internal implementation will not be ignored when computing the shared memory conflict relation,
-and we will automatically insert a synchronization API PP at the start and end of each {\tt malloc} and {\tt free} call.
+accesses from $\mathsf{malloc}$'s internal implementation are not ignored when computing shared memory conflicts,
+and the synchronization API PP predicates are extended to include the start and end of each $\mathsf{malloc}$ and $\mathsf{free}$ call.
 %\footnote{
 %	As a practical matter, in a large codebase where parts of it are trusted to avoid heap overflows, while others are not,
 %	a user could use {\sc Landslide}'s {\tt within\_function} command to restrict such PPs, as we describe in the main paper.
@@ -265,9 +273,9 @@ and we will automatically insert a synchronization API PP at the start and end o
 \end{lemma}
 
 \begin{proof}
-WLOG, let T1's access in the original malloc-recycle race have come first.
+WLOG, let T1's access in the original malloc-recycle race occur first.
 We require that our strengthened DPOR will reorder T2's racing access to before T1's, such that both still occur on the same address.
-There will be a PP in T1's execution between its {\tt malloc} call and the subsequent racing access.
+There will be a PP in T1's execution between its $\mathsf{malloc}$ call and the subsequent racing access.
 If there are no other memory conflicts between T1 and T2, then by the soundness of DPOR, this PP suffices to reorder without changing the address.
 Otherwise, let $p$ be the latest conflicting access by T1 before its access $a_1$.
 By the same inductive reasoning as we used in Lemma~\ref{lem:han}, Iterative Deepening will add a data-race PP on $p$.
