@@ -40,7 +40,12 @@ $\mathsf{deschedule}$ alows a thread to block itself until another thread wakes 
 and $\mathsf{thread\_fork}$ and $\mathsf{thread\_exit}$ allow creation and destruction of new threads.
 $\mathsf{thread\_fork}$ is defined in the Pebbles manner \cite{kspec};
 we omit higher-level abstractions such as $\mathsf{cond\_wait}$, $\mathsf{create}$, or $\mathsf{join}$, which can be implemented using these primitives \cite{thrlib}.
-$\mathsf{yield}$ has no effect under these execution semantics, but is included for the sake of synchronization API preemption points (see below).
+%$\mathsf{yield}$ has no effect under these execution semantics, but is included for the sake of synchronization API preemption points (see below).
+$\mathsf{yield}$
+allows the execution semantics to switch threads %without blocking the invoker,
+while respecting the preemption-point-switching invariant discussed below.
+%would have no effect under an execution semantics which schedules threads arbitrarily
+%but is included for the sake of synchronization API preemption points (see below).
 
 \begin{definition}[Interleaving]
 An interleaving (or execution trace) is a list of these instructions, annotated to indicate the currently-running thread as well as the runnability of all existing threads:
