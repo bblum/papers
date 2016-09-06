@@ -22,6 +22,8 @@
 \usepackage{algpseudocode}
 \usepackage{graphicx}
 \usepackage{xspace}
+\usepackage{cmu-techreport}
+\usepackage{flushend}
 %\usepackage{setspace}
 \usepackage[colorlinks=true,allcolors=blue,breaklinks,draft=false]{hyperref}   % hyperlinks, including DOIs and URLs in bibliography
 % known bug: http://tex.stackexchange.com/questions/1522/pdfendlink-ended-up-in-different-nesting-level-than-pdfstartlink
@@ -49,45 +51,69 @@
 \definecolor{commentblue}{RGB}{0,0,255}
 
 %\title{Soundness Proof for Eliminating Malloc-Recycle Data Races in Stateless Model Checking}
-\title{Soundness Proofs for Iterative Deepening}
-\authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
+\title{\bf Soundness Proofs for Iterative Deepening}
+%\authorinfo{Ben Blum}{Carnegie Mellon University}{bblum@cs.cmu.edu}
+\author{Ben Blum}
 
-\maketitle
-\begin{abstract}
-In our paper we show the effectiveness of combining dynamic data-race detection \cite{eraser,hybriddatarace} with stateless model checking \cite{verisoft,dpor}.
-Our approach involves adding new state spaces to explore each time a new data-race candidate is found.
-This document presents two proofs concerning the technique.
+% tech report stuff
+\trnumber{CMU-PDL-16-103}
+\keywords{concurrency, stateless model checking, data race analysis, verification}
 
-First, we prove that given enough time, Iterative Deepening will converge to the same degree of schedule coverage that would be provided by a na\"{i}ve model checker (MC) preempting on every single instruction.
-In other words, when Iterative Deepening finishes generating new data-race PPs, and completes all associated state spaces,
-it serves as a full verification of {\em all possible} schedules of the given test case.
+\abstract{
+	\renewcommand{\baselinestretch}{1.0}
+	\small
+	\em
+	%We have developed the
+	The Iterative Deepening algorithm allows stateless model checkers to adjust preemption points on-the-fly.
+	%incorporate dynamic data-race analysis during testing.
+	%The algorithm
+	It uses dynamic data-race detection to avoid necessarily preempting on every shared memory access,
+	and ignores false-positive data race candidates arising from certain heap allocation patterns.
+	%When an Iterative Deepening test reaches completion,
+	An Iterative Deepening test that reaches completion soundly verifies all possible thread interleavings of that test.
+}
 
-Second, we prove the soundness of the {\em malloc-recycle} false-positive-elimination tactic we discuss in the paper.
-Despite many powerful reduction techniques, the state spaces are still exponentially sized,
-so any way to avoid exploring some in advance is obviously beneficial.
-We prove that for the special case of {\em malloc-recycle} false positives, it is safe to eliminate these immediately upon discovering them, without bothering to explore their associated state spaces.
-
-
-	This document is supplemental material to our main paper \cite{quicksand}; we assume the reader is already familiar with our motivation and terminology.
-\end{abstract}
-
-\input{di}
-\input{assumptions}
-\input{convergence}
-\input{recycle}
-
-\section{Acknowledgements}
-
-%{\em removed for double blind review}
-Michael J. ``Sully'' Sullivan, Carlo Angiuli, and Nathaniel Filardo double-checked the proof and provided valuable feedback on notation style and the flow of explanation.
+\support{\small{
+	{\bf Acknowledgements:}
+	Michael J. ``Sully'' Sullivan, Carlo Angiuli, and Nathaniel Filardo double-checked the proof and provided valuable feedback on notation style and the flow of explanation.
 Thanks as well to the anonymous OOPSLA reviewer \#4, whose suggestions helped improve the formality of our definitions.
-
-This work was supported in part by
+%This work was supported in part by
+We thank
 the member companies of the PDL Consortium (Broadcom,
 Citadel, EMC, Facebook, Google, Hewlett-Packard Labs, Hitachi, Intel,
 Microsoft Research, MongoDB, NetApp, Oracle, Samsung America, Seagate,
 Tintri, Two Sigma, Uber, Veritas and Western Digital)
 and by the U.S. Army Research Office under grant number W911NF0910273.
+}}
+
+\maketitle
+
+\section{Introduction}
+In our OOPSLA paper \cite{quicksand} we introduced Iterative Deepening,
+an algorithm which combines
+stateless model checking \cite{verisoft,dpor}
+and
+data-race analysis \cite{eraser,hybriddatarace}.
+It dynamically adds new state spaces to test each time a data-race candidate is found.
+We present here two proofs concerning the technique.
+
+First, we prove that given enough time, Iterative Deepening will converge to the same degree of schedule coverage that would be provided by a na\"{i}ve model checker (MC) preempting on every single instruction.
+In other words, when Iterative Deepening finishes generating new data-race PPs, and completes all associated state spaces,
+it serves as a full verification of {\em all possible} schedules of the given test case.
+
+Second, we prove the soundness of the {\em malloc-recycle} false-positive-elimination tactic discussed in the paper.
+Despite powerful reduction techniques, each state space is still exponentially sized,
+%so any way to avoid exploring some in advance is obviously beneficial.
+so we wish to avoid exploring any we could prove to be redundant.
+We prove that it is safe to eliminate malloc-recycle data race candidates immediately, %upon discovering them,
+without bothering to explore their associated state spaces.
+
+This tech report is supplemental material to our main paper; we assume the reader is already familiar with our motivation and terminology.
+
+\input{di}
+\input{assumptions}
+\input{convergence}
+\input{recycle}
 
 \bibliographystyle{abbrvnat}
 \bibliography{../citations}{}

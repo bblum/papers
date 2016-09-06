@@ -216,41 +216,6 @@ Hence, our proofs so far show that suppressing malloc-recycle candidates is soun
 \label{fig:overrun}
 \end{figure}
 
-\begin{figure}[t]
-	\small
-\begin{tabular}{rll}
-	& {\bf Thread 1} & {\bf Thread 2} \\
-	1 & & \texttt{z = malloc(42);} \\
-	%2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
-	2 & & \texttt{x2 = \&z[50];} \\
-	3 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
-	4 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
-	5 & \texttt{x1 = malloc(...);} & \\
-	6 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
-	7 & \texttt{\hilight{olivegreen}{free}(x1);} \\
-\end{tabular}
-\caption{Without a PP between lines 4 and 5 of Figure~\ref{fig:overrun}, this is the only alternate interleaving DPOR would explore. The mallocs have been reordered and may no longer collide, which wrongly appears to be a false positive.}
-\label{fig:overrun-notenough}
-\end{figure}
-
-
-\begin{figure}[t]
-	\small
-\begin{tabular}{rll}
-	& {\bf Thread 1} & {\bf Thread 2} \\
-	1 & & \texttt{z = malloc(42);} \\
-	%2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
-	2 & & \texttt{x2 = \&z[50];} \\
-	3 & \texttt{x1 = malloc(...);} & \\
-	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
-	5 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
-	6 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
-	7 & \texttt{\hilight{olivegreen}{free}(x1);} \\
-\end{tabular}
-	\caption{Goal interleaving of Figure~\ref{fig:overrun}. To ensure collision, the sequence of malloc calls producing $a_1$ and $a_2$ must not be disrupted compared to the original interleaving.}
-	%, compared to the trace which originally exposed the malloc-recycle race.}
-\label{fig:overrun-goal}
-\end{figure}
 
 % For shown it is in complexity class, not possible to complete,
 To soundly suppress heap-overrun malloc-recycle candidates,
@@ -285,3 +250,38 @@ Lemma~\ref{lem:reorder} finishes.
 Theorem~\ref{thm:recycle} is modified to simply include this lemma in addition to Lemmas~\ref{lem:greedo} and \ref{lem:han}.
 
 %This spells QED so we are done.
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& {\bf Thread 1} & {\bf Thread 2} \\
+	1 & & \texttt{z = malloc(42);} \\
+	2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
+	3 & & \texttt{x2 = \&z[50];} \\
+	4 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	5 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+	6 & \texttt{x1 = malloc(...);} & \\
+	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
+	8 & \texttt{\hilight{olivegreen}{free}(x1);} \\
+\end{tabular}
+\caption{Without a PP between lines 4 and 5 of Figure~\ref{fig:overrun}, this is the only alternate interleaving DPOR would explore. The mallocs have been reordered and may no longer collide, which wrongly appears to be a false positive.}
+\label{fig:overrun-notenough}
+\end{figure}
+
+
+\begin{figure}[t]
+	\small
+\begin{tabular}{rll}
+	& {\bf Thread 1} & {\bf Thread 2} \\
+	1 & & \texttt{z = malloc(42);} \\
+	2 & & \texttt{\hilight{commentblue}{// TODO bounds check??}} \\
+	3 & & \texttt{x2 = \&z[50];} \\
+	4 & \texttt{x1 = malloc(...);} & \\
+	5 & & \texttt{y~=~\hilight{olivegreen}{malloc}(sizeof *y);} \\
+	6 & & \texttt{\hilight{brickred}{x2->foo = ...;}} \\
+	7 & \texttt{\hilight{brickred}{x1->foo = ...;}} & \\
+	8 & \texttt{\hilight{olivegreen}{free}(x1);} \\
+\end{tabular}
+	\caption{Goal interleaving of Figure~\ref{fig:overrun}. To ensure collision, the sequence of malloc calls producing $a_1$ and $a_2$ must not be disrupted compared to the original interleaving.}
+	%, compared to the trace which originally exposed the malloc-recycle race.}
+\label{fig:overrun-goal}
+\end{figure}
